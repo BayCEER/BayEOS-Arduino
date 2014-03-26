@@ -1,0 +1,91 @@
+//Modified RTC-Library
+// S.Holzheu (holzheu@bayceer.uni-bayreuth.de)
+//
+//
+// A library for handling real-time clocks, dates, etc.
+// 2010-02-04 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
+// $Id: RTClib.h 7763 2011-12-11 01:28:16Z jcw $
+
+// Simple general-purpose date/time class (no TZ / DST / leap second handling!)
+#ifndef RTClib_H
+#define RTClib_H
+
+#include "../BayEOSBuffer/BayEOSBuffer.h"
+
+
+
+// RTC based on the DS1307 chip connected via I2C and the Wire library
+class RTC_DS1307 : public RTC {
+public:
+    void begin() {}
+    void adjust(const DateTime& dt);
+    DateTime now();
+
+};
+
+// RTC based on the PCF8563 chip connected via I2C and the Wire library
+// contributed by @mariusster, see http://forum.jeelabs.net/comment/1902
+class RTC_PCF8563 : public RTC {
+public:
+    void begin() {}
+    void adjust(const DateTime& dt);
+    DateTime now();
+
+};
+
+// RTC using the internal millis() clock, has to be initialized before use
+// NOTE: this clock won't be correct once the millis() timer rolls over (>49d?)
+class RTC_Millis : public RTC {
+public:
+    void begin() {}
+    void adjust(const DateTime& dt);
+    DateTime now();
+
+protected:
+    static long offset;
+};
+// RTC based on the DS3231
+//based on DS3231 Class is by Seeed Technology Inc(http://www.seeedstudio.com)
+class DS3231 : public RTC {
+public:
+    void begin();
+    void adjust(const DateTime& dt);
+    DateTime now();
+    uint8_t readRegister(uint8_t regaddress);
+    void writeRegister(uint8_t regaddress, uint8_t value);
+    //Decides the /INT pin's output setting
+    //periodicity can be any of following defines: EverySecond, EveryMinute, EveryHour
+    void enableInterrupts(uint8_t periodicity);
+    void enableInterrupts(uint8_t hh24, uint8_t mm,uint8_t ss);
+    void disableInterrupts();
+    void clearINTStatus();
+
+    void convertTemperature();
+    float getTemperature();
+protected:
+    uint8_t intType, intPeriodicity, intHH24, intMM;
+};
+
+// RTC RX8025 chip connected via I2C and uses the Wire library.
+// Only 24 Hour time format is supported in this implementation
+class R8025 : public RTC {
+public:
+    void begin(void);
+    void adjust(const DateTime& dt);  //Changes the date-time
+    DateTime now();            //Gets the current date-time
+
+    //Decides the /INTA pin's output setting
+    //periodicity cn be any of following defines: EverySecond, EveryMinute, EveryHour or EveryMonth
+    void enableINTA_Interrupts(uint8_t periodicity);
+    void enableINTA_Interrupts(uint8_t hh24, uint8_t mm);
+    void disableINTA_Interrupts();
+    void refreshINTA();
+    void changeOffset(uint8_t digitalOffset);
+protected:
+    uint8_t intType, intPeriodicity, intHH24, intMM;
+};
+
+
+
+#endif
+
