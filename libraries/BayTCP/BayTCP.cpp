@@ -1,9 +1,5 @@
 #include "BayTCP.h"
-
-char const* BayTCPInterface::urlencodedChars(void){
-	static char const* _chars="$&+,/:;=?@ <>#%{}|~[]`";
-	return _chars;
-}
+const char* const BayTCPInterface::_urlencodedChars="$&+,/:;=?@ <>#%{}|~[]`";
 
 const uint8_t* BayTCPInterface::parseMAC(const char* str){
 	uint8_t offset=0;
@@ -95,7 +91,7 @@ int BayTCPInterface::strlenURLencoded(const char *str){
 	if(! _urlencode) return strlen(str);
 	int count=0;
 	while(*str){
-		if(strchr(urlencodedChars(),*str)){
+		if(strchr(_urlencodedChars,*str)){
 			count+=3;
 		}
 		else count++;
@@ -111,7 +107,7 @@ void BayTCPInterface::printURLencoded(const char *str){
 		return;
 	}
 	while(*str){
-		if(strchr(urlencodedChars(),*str)){
+		if(strchr(_urlencodedChars,*str)){
 			print('%');
 			print(*str,HEX);
 		} else

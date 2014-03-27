@@ -167,11 +167,10 @@ protected:
 	uint16_t _mtu;
 	int strlenURLencoded(const char *str);
 	void printURLencoded(const char *str);
-	static char const* urlencodedChars(void);
-
-
+	static const char* const _urlencodedChars;
 
 };
+
 
 
 

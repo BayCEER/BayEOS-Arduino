@@ -41,6 +41,7 @@ uint8_t BayEth::connect(void){
 }
 
 void BayEth::disconnect(void){
+	EthernetClient::flush();
 	EthernetClient::stop();
 }
 
