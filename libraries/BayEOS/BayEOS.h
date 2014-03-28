@@ -2,6 +2,9 @@
  *
  * S.Holzheu (holzheu@bayceer.uni-bayreuth.de), O.Archner (archner@bayceer.uni-bayreuth.de)
  *
+ * Source Code is available on
+ * https://github.com/BayCEER/BayEOS-Arduino
+ *
  *  @section sec1 Introduction
  *  BayEOS Arduino is developed by BayCEER IT Group. It is a
  *  bunch of classes to facilitate sensor data acquisition with
