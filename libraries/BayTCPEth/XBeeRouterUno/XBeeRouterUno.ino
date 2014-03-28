@@ -51,11 +51,11 @@ uint16_t rx_panid;
 unsigned long last_alive;
 
 void setup(void){
-  RX_SERIAL.setRxBuffer(buffer, RX_BUFFER_SIZE); //only works with modified HardwareSerial
+  RX_SERIAL.setRxBuffer(buffer, RX_BUFFER_SIZE); 
   xbee_rx.setSerial(RX_SERIAL);
   xbee_rx.begin(38400);	
   client.readConfigFromStringPGM(
-    PSTR("GATEWAY-IP|80|gateway/frame/saveFlat|admin|xbee|TestEth|||||")
+    PSTR("192.168.0.1|80|gateway/frame/saveFlat|admin|xbee|DEMO-Router|||||")
   );
   Ethernet.begin(mac, ip);
   while(! rx_panid) rx_panid=getPANID(xbee_rx);
@@ -70,12 +70,12 @@ void loop(void){
       client.startDataFrame(BayEOS_Float32le);
       client.addToPayload((uint8_t) 0);
       client.addToPayload((float) millis()/1000);
-      client.sendOrBuffer();
+      client.writeToBuffer();
       //client.writeToBuffer();
     }
 
   handle_RX_data();
-  client.sendFromBuffer();
+  client.sendMultiFromBuffer();
 }
 
 

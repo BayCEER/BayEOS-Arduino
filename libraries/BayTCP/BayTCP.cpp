@@ -159,42 +159,65 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(int maxsize){
 		return (res+2);
 	}
 
+	uint16_t size;
 	unsigned long readpos=_buffer->readPos();
 
-	int size=7+strlenURLencoded(_sender)+1+9+strlenURLencoded(_password);
-
-
-	while(size<maxsize && readFromBuffer()){
-		base64_encode(_base64buffer,(char*) _payload,getPacketLength());
-		_base64buffer[base64_enc_len(getPacketLength())]=0;
-
-		size+=1+15+strlenURLencoded(_base64buffer);
-		_buffer->next();
+	//Guess size for the POST request:
+	//We need the size of the POST request for Content-Length. However ATMEGA cannot build up a
+	//several kb POST request in RAM. So we send a guess content length and fill up with dummy content
+	if(_buffer->available()>((unsigned long) maxsize)){
+		size=maxsize;
+	} else {
+		size=_buffer->available();
+		size<<=1; //Double size - This is just a guess. "bayeosframes[]=base64(frame)"
+		if(size<100) size=100; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
+		size+=7+strlenURLencoded(_sender)+1+9+strlenURLencoded(_password);
+		if(size>maxsize) size=maxsize;
 	}
-	_buffer->seekReadPointer(readpos);
-
 	printPostHeader(size);
 	flushMTU();
 
+	//Send Body - first part (sender)
 	printP("sender=");
  	printURLencoded(_sender);
 	printP("&password=");
  	printURLencoded(_password);
-	size=7+strlen(_sender)+1+9+strlen(_password);
-	uint16_t mtusize=0;
-	while(size<maxsize && readFromBuffer()){
+	uint16_t postsize=7+strlen(_sender)+1+9+strlen(_password);
+	uint16_t mtusize=postsize;
+
+	//Send Body - second part (frames)
+	uint8_t framesize;
+	while(postsize<(size-25) && readFromBuffer()){
 		if(_mtu && mtusize>_mtu){
 			flushMTU();
 			mtusize=0;
 		}
-	    printP("&bayeosframes[]=");
 		base64_encode(_base64buffer,(char*) _payload,getPacketLength());
 		_base64buffer[base64_enc_len(getPacketLength())]=0;
-		size+=1+15+strlenURLencoded(_base64buffer);
-		mtusize+=1+15+strlenURLencoded(_base64buffer);
-		printURLencoded(_base64buffer);
-		_buffer->next();
+		framesize=1+15+strlenURLencoded(_base64buffer);
+		postsize+=framesize;
+		if(postsize<=size){ //Still space in the POST for the frame
+			mtusize+=framesize;
+			printP("&bayeosframes[]=");
+			printURLencoded(_base64buffer);
+			_buffer->next();
+		} else { //Frame does not fitt in the POST
+			postsize-=framesize;
+			break;
+		}
 	}
+
+	//Fill up with dummy content
+	while(postsize<size){
+		if(_mtu && mtusize>_mtu){
+			flushMTU();
+			mtusize=0;
+		}
+		print("&");
+		postsize++;
+		mtusize++;
+	}
+
     println();
     println();
     write((uint8_t) 0x1a);

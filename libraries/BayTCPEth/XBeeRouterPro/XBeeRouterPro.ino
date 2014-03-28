@@ -211,6 +211,7 @@ void handle_RF24(void){
 #endif
 
 void setup(void) {
+//  Serial.begin(38400);
   attachInterrupt(0,tftOn,CHANGE);
   digitalWrite(18,HIGH); //Pullup for Interrupt INT5
   attachInterrupt(5,tftOn,FALLING);

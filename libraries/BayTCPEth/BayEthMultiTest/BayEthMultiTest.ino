@@ -28,7 +28,7 @@ void setup(void){
   //Ethernet.begin(mac);
 
   client.readConfigFromStringPGM(
-    PSTR("132.180.112.55|80|gateway/frame/saveFlat|admin|xbee|TestEth$&+,/:;=?@ <>#%{}|~[]`|||||")
+    PSTR("192.168.0.1|80|gateway/frame/saveFlat|admin|xbee|TestEth$&+,/:;=?@ <>#%{}|~[]`|||||")
   );
   myBuffer=BayEOSBufferRAM(500);
   client.setBuffer(myBuffer);
@@ -50,6 +50,6 @@ void loop(void){
      Serial.println(res);
      count=0;
    }
-   delay(2000);
+   delay(10000);
 }
 

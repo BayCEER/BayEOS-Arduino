@@ -99,14 +99,17 @@ public:
 	 * set as config value in config buffer
 	 */
 	void setConfig(const char *str,uint8_t index);
+
 	/**
 	 * read config from string - use | as field delimiter
-	 * 132.180.112.x|80|path|...
+	 * 132.180.112.x|80|path|user|password|Sender|APN|APN-PW|APN-USER|PIN|
 	 *
 	 */
 	void readConfigFromStringPGM(const char* string);
+
 	/**
 	 * read config from file (uses SdFat library!)
+	 * same format like for readConfigFromStringPGM
 	 */
 	void readConfigFromFile(const char* file);
 	/**
@@ -120,7 +123,7 @@ public:
 
 	/**
 	 * get pointer to config buffer
-	 * server\0port\0path\0user\0\0password\0sender\0apn\0prov_pw\0prow_user\0\pin\0
+	 * server\0port\0path\0user\0\0password\0sender\0apn\0apn_pw\0apn_user\0\pin\0
 	 */
 	const char* getConfig(void){ return _config_buffer; }
 
@@ -128,11 +131,15 @@ public:
 	const uint8_t* parseIP(const char* str);
 	uint8_t hex2int(const char c);
 
-
+	/**
+	 * get a pointer to a specific config buffer entry
+	 * e.g Serial.print(*getConfigPointer(APN));
+	 */
 	char** getConfigPointer(uint8_t index);
 
-	void printConfigName(uint8_t index);
-
+	/**
+	 * URL encode POST request. Default true
+	 */
 	boolean _urlencode=1;
 protected:
 	virtual void flushMTU(void);
