@@ -28,9 +28,9 @@ class TFTStream : virtual public Stream
     void lcdOff(void){_utft->lcdOff();};
     void lcdOn(void){_utft->lcdOn();};
 
-    virtual int available(void){return 0;};
-    virtual int peek(void){return 0;};
-    virtual int read(void){return 0;};
+    int available(void){return 0;};
+    int peek(void){return 0;};
+    int read(void){return 0;};
     virtual size_t write(uint8_t);
     using Print::write; // pull in write(str) and write(buf, size) from Print
     void flush(void);
