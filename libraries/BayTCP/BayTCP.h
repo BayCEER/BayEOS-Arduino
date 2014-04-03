@@ -140,7 +140,7 @@ public:
 	/**
 	 * URL encode POST request. Default true
 	 */
-	boolean _urlencode=1;
+	boolean _urlencode;
 protected:
 	virtual void flushMTU(void);
 	void printPostHeader(uint16_t size);

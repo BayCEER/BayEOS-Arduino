@@ -12,7 +12,9 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayEth(void){};
+	BayEth(void){
+		_urlencode=1;
+	};
 	//void begin(byte *ip,byte *mac);
 	uint8_t connect(void);
 	void disconnect(void);

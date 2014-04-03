@@ -246,6 +246,7 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 
 BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin):HardwareSerial(serial){
 	_powerPin=powerPin;
+	_urlencode=1;
 }
 
 uint8_t BayGPRS::begin(long baud){
@@ -255,6 +256,7 @@ uint8_t BayGPRS::begin(long baud){
 
 BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerPin):SoftwareSerial(rxPin,txPin){
 	_powerPin=powerPin;
+	_urlencode=1;
 }
 
 uint8_t BayGPRSsoftserial::begin(long baud){
