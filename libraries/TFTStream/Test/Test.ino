@@ -6,7 +6,7 @@ UTFT myGLCD(ITDB18SP,33,32,31,35,34);
 #define utftcols 16
 #define utftrows 13
 char utftbuffer[utftrows*(utftcols+1)];
-TFTStream TFT(&myGLCD,utftbuffer,utftrows,utftcols);
+TFTStreamDev TFT(&myGLCD,utftbuffer,utftrows,utftcols);
 
 void setup(void){
   pinMode(36, OUTPUT);

@@ -11,7 +11,7 @@ extern uint8_t SmallFont[];
 
 class TFTStream : virtual public Stream
 {
-  private:
+  protected:
     char *_tx_buffer;
     uint8_t _rows;
     uint8_t _cols;
@@ -28,13 +28,21 @@ class TFTStream : virtual public Stream
     void lcdOff(void){_utft->lcdOff();};
     void lcdOn(void){_utft->lcdOn();};
 
-    int available(void){return 0;};
-    int peek(void){return 0;};
-    int read(void){return 0;};
+
     virtual size_t write(uint8_t);
     using Print::write; // pull in write(str) and write(buf, size) from Print
     void flush(void);
     bool isOn(void){return _on;};
 };
 
+class TFTStreamDev : public TFTStream
+{
+	public:
+	TFTStreamDev(UTFT *utft, char *tx_buffer, uint8_t rows, uint8_t cols):
+		TFTStream(utft, tx_buffer, rows, cols){};
+	int available(void){return 0;};
+    int peek(void){return 0;};
+    int read(void){return 0;};
+
+};
 #endif

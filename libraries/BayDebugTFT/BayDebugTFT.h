@@ -27,9 +27,9 @@ public:
 	using Print::write;
 	size_t write(uint8_t b){return TFTStream::write(b);}
 private:
-	int available(void){return TFTStream::available();}
-	int read(void){return TFTStream::read();}
-    int peek(void){return TFTStream::peek();};
+    int available(void){return 0;};
+    int peek(void){return 0;};
+    int read(void){return 0;};
 
 };
 
