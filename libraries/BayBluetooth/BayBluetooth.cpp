@@ -3,6 +3,13 @@ BayBluetooth::BayBluetooth(HardwareSerial &serial):BaySerial(serial){
 }
 
 
+void BayBluetooth::inquirable(void){
+	  print("\r\n+STPIN=0000\r\n"); // Set pin to 0000
+	  delay(2000); // This delay is required.
+	  print("\r\n+INQ=1\r\n"); //make the slave bluetooth inquirable
+	  delay(2000); // This delay is required.
+	  flush();
+}
 
 void BayBluetooth::begin(long baud,const char* name){
 	  BaySerial::begin(baud);
@@ -11,11 +18,7 @@ void BayBluetooth::begin(long baud,const char* name){
 	  print(name);
 	  print("\r\n"); //set the bluetooth name
 	  print("\r\n+STOAUT=1\r\n"); // Permit Paired device to connect me
-	  print("\r\n+STAUTO=0\r\n"); // Auto-connection should be forbidden here
-	  print("\r\n+STPIN=0000\r\n"); // Set pin to 0000
-	  delay(2000); // This delay is required.
-	  print("\r\n+INQ=1\r\n"); //make the slave bluetooth inquirable
-	  delay(2000); // This delay is required.
+	  print("\r\n+STAUTO=1\r\n"); // Auto-connection should be forbidden here
 	  flush();
 }
 
@@ -32,10 +35,6 @@ void BayBluetooth::begin(long baud,int eeprom_offset,uint8_t start_byte){
       } else print("NA");
 	  print("\r\n"); //set the bluetooth name
 	  print("\r\n+STOAUT=1\r\n"); // Permit Paired device to connect me
-	  print("\r\n+STAUTO=0\r\n"); // Auto-connection should be forbidden here
-	  print("\r\n+STPIN=0000\r\n"); // Set pin to 0000
-	  delay(2000); // This delay is required.
-	  print("\r\n+INQ=1\r\n"); //make the slave bluetooth inquirable
-	  delay(2000); // This delay is required.
+	  print("\r\n+STAUTO=1\r\n"); // Auto-connection should be forbidden here
 	  flush();
 }

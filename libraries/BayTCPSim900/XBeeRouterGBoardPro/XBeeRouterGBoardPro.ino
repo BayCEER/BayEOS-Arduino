@@ -11,12 +11,6 @@ SD:CS: 4
 
  Router - XBee-GPRS with SD-Card Buffer and Watchdog 
 
- ATTENTION!
- This file will only complile replacing the original 
- arduino-1.0/hardware/arduino/cores/arduino/HardwareSerial.cpp
- arduino-1.0/hardware/arduino/cores/arduino/HardwareSerial.h 
- by the version distributed with the BayEOS arduino libraries
-
  
  */
 

@@ -218,8 +218,8 @@ void BayGPRSInterface::disconnect(void){
 	//sendATE0();
 	printlnP("AT+CIPCLOSE");
 	wait_forOK(2000);
-	printlnP("AT+CIPSHUT");
-	wait_forOK(2000);
+//	printlnP("AT+CIPSHUT");
+//	wait_forOK(2000);
 }
 
 uint8_t BayGPRSInterface::sendATE0(void){

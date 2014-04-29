@@ -35,13 +35,17 @@ public:
 	BayBluetooth(HardwareSerial &serial=Serial);
 
 	/**
-	 * Initit BT-Module as slave with baud and name
+	 * Init BT-Module as slave with baud and name
 	 */
 	void begin(long baud,const char* name);
 	/**
-	 * Initit BT-Module as slave with baud and name read from EEPROM
+	 * Init BT-Module as slave with baud and name read from EEPROM
 	 */
 	void begin(long baud,int eeprom_offset, uint8_t start_byte);
+	/**
+	 * make BT-Module inquirable
+	 */
+	void inquirable(void);
 
 
 };
