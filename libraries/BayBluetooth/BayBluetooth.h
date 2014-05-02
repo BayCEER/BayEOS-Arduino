@@ -47,6 +47,10 @@ public:
 	 */
 	void inquirable(void);
 
+	int available(void){
+		return BaySerial::available();
+	}
+
 
 };
 
