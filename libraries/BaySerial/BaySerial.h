@@ -53,6 +53,12 @@ public:
 	uint8_t sendPayload(void);
 
 	/**
+	 * Send the BayEOS payload
+	 * without waiting for a ACK
+	 */
+	void sendFrame(void);
+
+	/**
 	 * Read a frame from rx
 	 * returns 0 for success
 	 * 1 == no success (Checksum failure)

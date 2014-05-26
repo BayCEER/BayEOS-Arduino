@@ -57,9 +57,7 @@ void BaySerial::sendAck(uint8_t b){
 	sendByte(0xff-(b+0x2),true); //RICHTIG!
 }
 
-
-uint8_t BaySerial::sendPayload(void){
-	if(_break) return TX_BREAK;
+void BaySerial::sendFrame(void){
 	sendByte(START_BYTE,false);
 	sendByte(getPacketLength(),true);
 	sendByte(0x1,true);
@@ -69,6 +67,12 @@ uint8_t BaySerial::sendPayload(void){
 		_checksumTotal+=_payload[i];
 	}
 	sendByte((0xff-_checksumTotal),true);
+
+}
+
+uint8_t BaySerial::sendPayload(void){
+	if(_break) return TX_BREAK;
+	sendFrame();
 	uint8_t res=0;
 	if(res=readPacket(API_ACK)) return res;
 	else if(_ack==TX_OK) return 0;
