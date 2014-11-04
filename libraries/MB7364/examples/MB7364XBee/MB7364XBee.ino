@@ -19,6 +19,8 @@ MB7364 sonar(10,11);
 BayXBee xbee=BayXBee();
 BayEOSBufferRAM myBuffer; 
 
+unsigned long last_data;
+
 void setup(void){
   xbee.begin(38400);      
   sonar.begin();
@@ -31,15 +33,17 @@ int counter = 0;
   
 void loop(void){ 
   xbee.sendFromBuffer();
-  xbee.startDataFrame(BayEOS_ChannelInt32le); 
-  int value = sonar.range();  
-  xbee.addChannelValue(++counter,1);
-  if ((value <= 500) || (value > 4999)){
-	xbee.addChannelValue(value,3);
-  } else {
-       xbee.addChannelValue(value,2);
-  }  
-  
-  xbee.sendOrBuffer();      
-  delay(10000); 
+  if((millis()-last_data)>10000){
+    last_data=millis();
+    xbee.startDataFrame(BayEOS_ChannelInt32le); 
+    int value = sonar.range();  
+    xbee.addChannelValue(++counter,1);
+    if ((value <= 500) || (value > 4999)){
+  	xbee.addChannelValue(value,3);
+    } else {
+         xbee.addChannelValue(value,2);
+    } 
+    xbee.sendOrBuffer();      
+  }
+  delay(1000); 
 } 
