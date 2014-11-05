@@ -15,7 +15,7 @@
 #include <BayEOSBuffer.h>
 #include <BayEOSBufferRAM.h> 
 
-MB7364 sonar(10,11);
+MB7364 sonar(8,9);
 BayXBee xbee=BayXBee();
 BayEOSBufferRAM myBuffer; 
 

@@ -1,11 +1,11 @@
 /*
-  Read Distance of HRXL MaxSonar 7364
+  Read Distance of HRXL MaxSonar MB7364
 */
 
 #include <MB7364.h>
 #include <SoftwareSerial.h>
 
-MB7364 sonar(10,11);
+MB7364 sonar(8,9);
 
 void setup(void){
   Serial.begin(9600);      
