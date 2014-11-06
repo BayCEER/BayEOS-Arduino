@@ -19,7 +19,7 @@ https://github.com/BayCEER/BayEOS-Arduino/blob/master/libraries/SMTPShield/SetSt
 #include <BayEOS.h>
 #include <BayXBee.h>
 
-#define SAMPLING_INT 30
+#define SAMPLING_INT 60
 
 unsigned long last_data;
 DS3231 myRTC; //Seduino 2.2
@@ -34,8 +34,7 @@ void setup(){
   pwd11.begin();
   client.begin(38400);
   pinMode(10,OUTPUT);
-  pinMode(13,OUTPUT);
-  
+    
   while(!SD.begin(10)) {
     delay(10000);
     client.sendError("No SD!");
@@ -52,8 +51,7 @@ void loop() {
   if((myRTC.now().get()-last_data)>=SAMPLING_INT){
     client.startDataFrame(BayEOS_WithoutOffsetFloat32le); 	
 	float* value;
-	value = pwd11.readMessage2();  
-	flashLED(2);
+	value = pwd11.readMessage2();	
 	for(int i=0;i<10;i++){
 	  client.addToPayload(value[i]);
     }      
@@ -62,15 +60,5 @@ void loop() {
   }
   //Send data
   client.sendFromBuffer();
-
-
   delay(500);
 }
-
-void flashLED(int i){
- for(int n=0;n<i;n++)
-    digitalWrite(13,HIGH);
-    delay(1000);
-    digitalWrite(13,LOW);  
-    delay(1000);
-} 
