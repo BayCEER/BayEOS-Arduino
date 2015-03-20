@@ -99,6 +99,69 @@
 #define RX8025_CTRL2_VDSL_BIT    (1 << 7)
 
 
+// indices within the rtc_bcd[] buffer
+#define DS1337_SEC	0
+#define DS1337_MIN	1
+#define DS1337_HR	2
+#define DS1337_DOW	3
+#define DS1337_DATE     4
+#define DS1337_MTH	5
+#define DS1337_YR	6
+
+#define DS1337_BASE_YR		2000
+
+#define DS1337_CTRL_ID		B1101000
+
+ // Define register bit masks
+#define DS1337_CLOCKHALT	B10000000
+
+#define DS1337_LO_BCD		B00001111
+#define DS1337_HI_BCD		B11110000
+
+#define DS1337_HI_SEC		B01110000
+#define DS1337_HI_MIN		B01110000
+#define DS1337_HI_HR		B00110000
+#define DS1337_LO_DOW		B00000111
+#define DS1337_HI_DATE		B00110000
+#define DS1337_HI_MTH		B00110000
+#define DS1337_HI_YR		B11110000
+
+#define DS1337_ARLM1		0x07
+#define DS1337_ARLM1_LO_SEC	B00001111
+#define DS1337_ARLM1_HI_SEC	B01110000
+#define DS1337_ARLM1_LO_MIN	B01110000
+#define DS1337_ARLM1_HI_MIN	B00001111
+
+#define DS1337_SP			0x0E
+#define	DS1337_SP_EOSC		B10000000
+#define	DS1337_SP_RS2		B00010000
+#define	DS1337_SP_RS1		B00001000
+#define	DS1337_SP_INTCN		B00000100
+#define	DS1337_SP_A2IE		B00000010
+#define	DS1337_SP_A1IE		B00000001
+
+#define DS1337_STATUS		0x0F
+#define DS1337_STATUS_OSF	B10000000
+#define DS1337_STATUS_A2F	B00000010
+#define DS1337_STATUS_A1F	B00000001
+
+/* Definitions for alarm repeat */
+/* The private variable alarm_repeat holds the user's alarm repeat preference. However, the DS1337 encodes these in the topmost bit(s) of the 4 alarm registers. */
+/* Splattering these bits across the alarm regs is handled in the writeAlarm() function. */
+/* If DY/DT is set, the day field is interpreted as a DayOfWeek (1 ~ 7), else it is interpreted as a DayOfMonth.*/
+
+/* user alarm_repeat bit mask:
+       7   6   5    4       3      2       1     0
+      [x   x   x   A1M4   DY/DT   A1M3   A1M2   A1M1]
+*/
+
+#define DS1337_EVERY_SECOND       B00010111
+#define DS1337_EVERY_MINUTE       B00010110
+#define DS1337_EVERY_HOUR         B00010100
+#define DS1337_EVERY_DAY          B00010000
+#define DS1337_EVERY_WEEK         B00001000
+#define DS1337_EVERY_MONTH        B00000000
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -537,6 +600,282 @@ float DS3231::getTemperature()
 
 }
 
+
+/********************************************************
+ * DS1337
+ *********************************************************/
+
+// Aquire data from the RTC chip in BCD format
+// refresh the buffer
+void DS1337::readTime(void)
+{
+// use the Wire lib to connect to tho rtc
+// reset the register pointer to zero
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write((uint8_t)0x00); // Explicit cast is to hack around http://code.google.com/p/arduino/issues/detail?id=527
+	Wire.endTransmission();
+
+// request the 7 bytes of data    (secs, min, hr, dow, date. mth, yr)
+	Wire.requestFrom(DS1337_CTRL_ID, 7);
+	for(int i=0; i<7; i++)
+	{
+	// store data in raw bcd format
+		if (Wire.available())
+			rtc_bcd[i]=Wire.read();
+	}
+}
+
+// Read the current alarm value. Note that the repeat flags and DY/DT are removed from the result.
+void DS1337::readAlarm(void)
+{
+        //alarm_repeat = 0;
+        byte temp;
+// use the Wire lib to connect to tho rtc
+// point to start of Alarm1 registers
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write((uint8_t)DS1337_ARLM1);
+	Wire.endTransmission();
+
+// request the *4* bytes of data (secs, min, hr, dow/date). Note the format is nearly identical, except for the choice of dayOfWeek vs. date,
+// and that the topmost bit of each helps determine if/how the alarm repeats.
+	Wire.requestFrom(DS1337_CTRL_ID, 4);
+	for(int i=0; i<4; i++)
+	{
+                // store data in raw bcd format
+		if (Wire.available())
+		{
+			temp = Wire.read();
+			rtc_bcd[i] = temp & B01111111;
+		}
+	}
+
+	// 4th byte read may contain either a date or DayOfWeek, depending on the value of the DY/DT flag.
+	// For laziness sake we read it into the DayOfWeek field regardless (rtc_bcd[3]). Correct as needed...
+        if(rtc_bcd[3] & B01000000) // DY/DT set: DayOfWeek
+        {
+           rtc_bcd[3] &= B10111111; // clear DY/DT flag
+           rtc_bcd[4] = 0; // alarm *date* undefined
+        }
+        else
+        {
+            rtc_bcd[4] = rtc_bcd[3];
+            rtc_bcd[3] = 0; // alarm dayOfWeek undefined
+        }
+}
+
+// update the data on the IC from the bcd formatted data in the buffer
+
+void DS1337::writeTime(void)
+{
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write((uint8_t)0x00); // reset register pointer
+	for(int i=0; i<7; i++)
+	{
+		Wire.write(rtc_bcd[i]);
+	}
+	Wire.endTransmission();
+
+	// clear the Oscillator Stop Flag
+        setRegister(DS1337_STATUS, getRegister(DS1337_STATUS) & !DS1337_STATUS_OSF);
+}
+
+
+// FIXME: automatically set alarm interrupt after writing new alarm? Nah...
+
+// Write the BCD alarm value in the buffer to the alarm registers.
+// If an alarm repeat mode has been specified, poke those bytes into the buffer before sending.
+void DS1337::writeAlarm(void)
+{
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write((uint8_t)DS1337_ARLM1); // set register pointer
+
+        Wire.write(rtc_bcd[DS1337_SEC] | ((alarm_repeat & B00000001 ) << 7)); // A1M1
+        Wire.write(rtc_bcd[DS1337_MIN] | ((alarm_repeat & B00000010 ) << 6)); // A1M2
+        Wire.write(rtc_bcd[DS1337_HR] | ((alarm_repeat & B00000100 ) << 5)); // A1M3
+
+        // Check if we are using date or DayOfWeek and send the appropriate value
+        if(alarm_repeat & B00001000) // DayOfWeek
+        {
+            // send DOW as 4th alarm reg byte
+            Wire.write(rtc_bcd[DS1337_DOW] | ((alarm_repeat & B00011000 ) << 3)); // A1M4 and DY/DT
+        }
+        else // date
+        {
+            // send date as 4th alarm reg byte
+            Wire.write(rtc_bcd[DS1337_DATE] | ((alarm_repeat & B00011000 ) << 3)); // A1M4 and DY/DT
+        }
+
+	Wire.endTransmission();
+}
+
+
+
+void DS1337::setAlarmRepeat(byte repeat)
+{
+        alarm_repeat = repeat;
+}
+
+
+unsigned char DS1337::getRegister(unsigned char registerNumber)
+{
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write(registerNumber);
+	Wire.endTransmission();
+
+	Wire.requestFrom(DS1337_CTRL_ID, 1);
+
+	return Wire.read();
+}
+
+void DS1337::setRegister(unsigned char registerNumber, unsigned char value)
+{
+	Wire.beginTransmission(DS1337_CTRL_ID);
+	Wire.write(registerNumber); // set register pointer
+
+	Wire.write(value);
+
+	Wire.endTransmission();
+}
+
+unsigned char DS1337::time_is_set()
+{
+  // Return TRUE if Oscillator Stop Flag is clear (osc. not stopped since last time setting), FALSE otherwise
+  byte asdf = ((getRegister(DS1337_STATUS) & DS1337_STATUS_OSF) == 0);
+  return asdf;
+}
+unsigned char DS1337::alarm_is_set()
+{
+  // Return TRUE if the alarm interrupt flag is enabled.
+  byte asdf = (getRegister(DS1337_SP) & DS1337_SP_A1IE);
+  return asdf;
+}
+
+void DS1337::enable_interrupt()
+{
+   clear_interrupt();
+   setRegister(DS1337_SP, getRegister(DS1337_SP) | DS1337_SP_INTCN | DS1337_SP_A1IE); // map alarm interrupt to INT1 and enable interrupt
+}
+
+void DS1337::disable_interrupt()
+{
+   setRegister(DS1337_SP, getRegister(DS1337_SP) & !DS1337_SP_A1IE);
+}
+
+void DS1337::clear_interrupt()
+{
+   setRegister(DS1337_STATUS, getRegister(DS1337_STATUS) & !DS1337_STATUS_A1F);
+}
+
+unsigned char DS1337::getSeconds()
+{
+    return bcd2bin(rtc_bcd[DS1337_SEC]);
+}
+
+unsigned char DS1337::getMinutes()
+{
+    return bcd2bin(rtc_bcd[DS1337_MIN]);
+}
+unsigned char DS1337::getHours()
+{
+    return bcd2bin(rtc_bcd[DS1337_HR]);
+}
+unsigned char DS1337::getDays()
+{
+    return bcd2bin(rtc_bcd[DS1337_DATE]);
+}
+unsigned char DS1337::getDayOfWeek()
+{
+    return bcd2bin(rtc_bcd[DS1337_DOW]);
+}
+unsigned char DS1337::getMonths()
+{
+    return bcd2bin(rtc_bcd[DS1337_MTH]);
+}
+unsigned int DS1337::getYears()
+{
+    return 2000 + bcd2bin(rtc_bcd[DS1337_YR]);
+}
+
+
+
+void DS1337::setSeconds(unsigned char v)
+{
+    rtc_bcd[DS1337_SEC] = bin2bcd(v);
+
+}
+void DS1337::setMinutes(unsigned char v)
+{
+    rtc_bcd[DS1337_MIN] = bin2bcd(v);
+
+}
+void DS1337::setHours(unsigned char v)
+{
+    rtc_bcd[DS1337_HR] = bin2bcd(v);
+
+}
+void DS1337::setDays(unsigned char v)
+{
+    rtc_bcd[DS1337_DATE] = bin2bcd(v);
+
+}
+void DS1337::setDayOfWeek(unsigned char v)
+{
+    rtc_bcd[DS1337_DOW] = bin2bcd(v);
+
+}
+void DS1337::setMonths(unsigned char v)
+{
+    rtc_bcd[DS1337_MTH] = bin2bcd(v);
+
+}
+void DS1337::setYears(unsigned int v)
+{
+    if (v>1999)
+    {
+        v -= 2000;
+    }
+    rtc_bcd[DS1337_YR] = bin2bcd(v);
+
+}
+
+byte DS1337::bcd2bin(byte v)
+{
+   return (v&0x0F) + ((v>>4)*10);
+}
+
+byte DS1337::bin2bcd(byte v)
+{
+   return ((v / 10)<<4) + (v % 10);
+}
+
+void DS1337::stop(void)
+{
+	setRegister(DS1337_SP, getRegister(DS1337_SP) | DS1337_SP_EOSC);
+}
+
+void DS1337::start(void)
+{
+	setRegister(DS1337_SP, getRegister(DS1337_SP) & !DS1337_SP_EOSC);
+}
+
+void DS1337::begin(void){
+	start();
+}
+void DS1337::adjust(const DateTime& dt){
+	setSeconds(dt.second());
+	setMinutes(dt.minute());
+	setHours(dt.hour());
+	setDays(dt.day());
+	setMonths(dt.month());
+	setYears(dt.year());
+	writeTime();
+	; //Changes the date-time
+}
+DateTime DS1337::now(){
+	readTime();
+	return DateTime (getYears(), getMonths(), getDays(), getHours(), getMinutes(), getSeconds());
+	; //Gets the current date-time
+}
 
 
 

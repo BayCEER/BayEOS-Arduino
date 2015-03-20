@@ -85,6 +85,57 @@ protected:
     uint8_t intType, intPeriodicity, intHH24, intMM;
 };
 
+// DS1337 RTC
+class DS1337: public RTC {
+public:
+	void begin(void);
+	void adjust(const DateTime& dt); //Changes the date-time
+	DateTime now(); //Gets the current date-time
+	unsigned char time_is_set();
+	unsigned char alarm_is_set();
+	//unsigned char time_is_valid();
+
+	void enable_interrupt();
+	void disable_interrupt();
+	void clear_interrupt();
+
+	void readTime();
+	void readAlarm();
+	void writeTime();
+	void writeAlarm();
+	void setAlarmRepeat(byte repeat);
+	unsigned char getSeconds();
+	unsigned char getMinutes();
+	unsigned char getHours();
+	unsigned char getDays();
+	unsigned char getDayOfWeek();
+	unsigned char getMonths();
+	unsigned int getYears();
+
+	void setSeconds(unsigned char);
+	void setMinutes(unsigned char);
+	void setHours(unsigned char);
+	void setDays(unsigned char);
+	void setDayOfWeek(unsigned char);
+	void setMonths(unsigned char);
+	void setYears(unsigned int);
+
+	void start(void);
+	void stop(void);
+	unsigned char getRegister(unsigned char registerNumber);
+	void setRegister(unsigned char registerNumber, unsigned char registerValue);
+
+// library-accessible "private" interface
+private:
+	byte time_set;
+	byte alarm_repeat;
+	byte rtc_bcd[7]; // used prior to read/set DS1337 registers;
+	void read(void);
+	void save(void);
+	byte bcd2bin(byte);
+	byte bin2bcd(byte);
+
+};
 
 
 #endif

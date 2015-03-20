@@ -583,6 +583,48 @@ bool RF24::available(uint8_t* pipe_num)
   return result;
 }
 
+
+/****************************************************************************/
+
+uint8_t RF24::readPipe(void* buf, uint8_t* pipe){
+  uint8_t status = get_status();
+  bool result = ( status & _BV(RX_DR) );
+  *pipe =( status >> RX_P_NO ) & B111;
+  uint8_t len;
+  uint8_t total;
+  uint8_t* current = reinterpret_cast<uint8_t*>(buf);
+
+  total=0;
+  while(result &&
+    *pipe==((status >> RX_P_NO) & B111) )
+
+  {
+   len=getDynamicPayloadSize();
+   // Fetch the payload
+   read_payload( current, len );
+   current+=len;
+   total+=len;
+   // Clear the status bit
+   write_register(STATUS,_BV(RX_DR) );
+   // Handle ack payload receipt
+    if ( status & _BV(TX_DS) )
+    {
+      write_register(STATUS,_BV(TX_DS));
+    }
+
+    if(read_register(FIFO_STATUS) & _BV(RX_EMPTY))
+      return total;
+
+    status = get_status();
+    result = ( status & _BV(RX_DR) );
+
+  }
+
+  return total;
+
+}
+
+
 /****************************************************************************/
 
 bool RF24::read( void* buf, uint8_t len )

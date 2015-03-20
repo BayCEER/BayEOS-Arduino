@@ -300,6 +300,18 @@ public:
   bool available(void);
 
   /**
+    * Read the payload of one pipe
+    *
+    * copys the payload of one pipe into the buf
+    * the pipe number is stored in pipe
+    *
+    * @param buf Pointer to a buffer where the data should be written
+    * @param pipe Pointer to variable to store pipe nr
+    * @return number of bytes
+   */
+   uint8_t readPipe( void* buf, uint8_t* pipe );
+
+   /**
    * Read the payload
    *
    * Return the last payload received
