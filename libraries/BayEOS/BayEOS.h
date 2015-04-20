@@ -171,9 +171,21 @@ public:
 	void startFrame(uint8_t type);
 
 	/**
+	 * Set the start of the payload buffer to be a valid origin frame
+	 */
+	void startOriginFrame(const String &o);
+
+	/**
 	 * Set first two bytes of payload buffer and set _next to 2
 	 */
 	void startDataFrame(uint8_t subtype);
+
+	/**
+	 * Starts a Origin Frame and adds header for data frame
+	 *
+	 * just call addChannelValue() to add values
+	 */
+	void startDataFrameWithOrigin(uint8_t subtype,const String &o);
 
 	/**
 	 * Adds a channel value to the payload

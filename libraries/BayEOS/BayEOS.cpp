@@ -10,6 +10,18 @@ void BayEOS::startDataFrame(uint8_t subtype){
 	addToPayload(subtype);
 }
 
+void BayEOS::startOriginFrame(const String &o){
+	startFrame((uint8_t) BayEOS_OriginFrame);
+	addToPayload((uint8_t) o.length());
+	addToPayload(o);
+}
+
+void BayEOS::startDataFrameWithOrigin(uint8_t subtype,const String &o){
+	startOriginFrame(o);
+	addToPayload((uint8_t) BayEOS_DataFrame);
+	addToPayload(subtype);
+}
+
 uint8_t BayEOS::addChannelValue(double v,uint8_t channel_number){
 	return addChannelValue((float) v,channel_number);
 }
@@ -33,13 +45,17 @@ uint8_t BayEOS::addChannelValue(int8_t v,uint8_t channel_number){
 }
 uint8_t BayEOS::addChannelValue(float v,uint8_t channel_number){
 	uint8_t res=0;
-	if(_payload[0]!=BayEOS_DataFrame) return 2;
-	if( ( (_payload[1] & 0xf0)==0x40) )
-		addToPayload(channel_number);
-	else if( ( ( (_payload[1] & 0xf0)==0x0 ) & (_next==2) ) )
-		addToPayload(channel_number);
+	uint8_t offset=0;
+	if(_payload[0]==BayEOS_OriginFrame){
+		offset=_payload[1]+2;
+	}
+	if(_payload[offset]!=BayEOS_DataFrame) return 2;
+	if( ( (_payload[offset+1] & 0xf0)==0x40) )
+		addToPayload(channel_number); //channel number
+	else if( ( ( (_payload[offset+1] & 0xf0)==0x0 ) & (_next==(2+offset)) ) )
+		addToPayload(channel_number); //offset - only once
 
-	switch(_payload[1] & 0x0f){
+	switch(_payload[offset+1] & 0x0f){
 		case 1:
 			res=addToPayload((float) v);
 			break;

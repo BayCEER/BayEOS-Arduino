@@ -27,7 +27,8 @@ void SleepClass::sleep(void){
   power_timer1_disable();
   power_timer2_disable();
   power_twi_disable();
-//	   cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
+  power_usart0_disable();
+  //	   cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
   set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
   sleep_enable();
   sleep_mode();                        // System sleeps here

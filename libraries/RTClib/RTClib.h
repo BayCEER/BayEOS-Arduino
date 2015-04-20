@@ -103,6 +103,7 @@ public:
 	void readAlarm();
 	void writeTime();
 	void writeAlarm();
+	void writeAlarm(unsigned long sse);
 	void setAlarmRepeat(byte repeat);
 	unsigned char getSeconds();
 	unsigned char getMinutes();
@@ -119,6 +120,9 @@ public:
 	void setDayOfWeek(unsigned char);
 	void setMonths(unsigned char);
 	void setYears(unsigned int);
+	void epoch_seconds_to_date(unsigned long seconds_left);
+	unsigned long date_to_epoch_seconds(unsigned int year, byte month, byte day, byte hour, byte minute, byte second);
+	unsigned long date_to_epoch_seconds();
 
 	void start(void);
 	void stop(void);

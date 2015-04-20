@@ -604,6 +604,8 @@ float DS3231::getTemperature()
 /********************************************************
  * DS1337
  *********************************************************/
+// Cumulative number of days elapsed at the start of each month, assuming a normal (non-leap) year.
+const unsigned int monthdays[] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 // Aquire data from the RTC chip in BCD format
 // refresh the buffer
@@ -708,6 +710,12 @@ void DS1337::writeAlarm(void)
 	Wire.endTransmission();
 }
 
+
+void DS1337::writeAlarm(unsigned long sse)
+{
+        epoch_seconds_to_date(sse);
+        writeAlarm();
+}
 
 
 void DS1337::setAlarmRepeat(byte repeat)
@@ -875,6 +883,154 @@ DateTime DS1337::now(){
 	readTime();
 	return DateTime (getYears(), getMonths(), getDays(), getHours(), getMinutes(), getSeconds());
 	; //Gets the current date-time
+}
+
+void DS1337::epoch_seconds_to_date(unsigned long seconds_left)
+{
+   // This routine taken from Dallas/Maxim application note 517
+   // http://www.maxim-ic.com/app-notes/index.mvp/id/517
+   // Arn't the fastest thing, but it produces correct results.
+
+   // NOTE: The earliest date that can be represented by the DS1337 is 1/1/2000 (946684800 in Unix epoch seconds).
+   // Passing an earlier Unix time stamp will fail quietly here (produce a date of 0/0/00), 
+   // which will probably make your application angry.
+
+   // ALSO NOTE: This has been optimized some to minimize redundant variables, with the side-effect
+   // of making it much harder to understand. Please refer to the original appnote above
+   // if you are trying to learn from it :-)
+
+
+   //unsigned long hour;
+   //unsigned long day;
+   //unsigned long minute;
+   //unsigned long second;
+   unsigned long month;
+   //unsigned long year;
+
+	unsigned long seconds_left_2;
+   //unsigned long whole_minutes;
+   //unsigned long whole_hours;
+   //unsigned long whole_days;
+   //unsigned long whole_days_since_1968;
+   unsigned long leap_year_periods;
+   unsigned long days_since_current_lyear;
+   //unsigned long whole_years;
+   unsigned long days_since_first_of_year;
+   unsigned long days_to_month;
+   //unsigned long day_of_week;
+
+   if(seconds_left >= 946684800)
+   {
+	   seconds_left -= 946684800; // correct for difference between DS1337 and UNIX epochs.
+
+	   seconds_left_2 = seconds_left / 60; // seconds_left_2 = "whole_minutes"
+	   rtc_bcd[DS1337_SEC] = bin2bcd(seconds_left - (60 * seconds_left_2));                 // leftover seconds
+
+	   seconds_left = seconds_left_2 / 60; // seconds_left = "whole_hours"
+	   rtc_bcd[DS1337_MIN] = bin2bcd(seconds_left_2 - (60 * seconds_left));            // leftover minutes
+
+	   seconds_left_2 = seconds_left / 24; //seconds_left_2 = "whole_days"
+	   rtc_bcd[DS1337_HR] = bin2bcd(seconds_left - (24 * seconds_left_2));         // leftover hours
+
+	   //whole_days_since_1968 = whole_days;// + 365 + 366;	// seconds_left_2 = "whole_days" = "whole_days_since_1968"
+	   leap_year_periods = seconds_left_2 / ((4 * 365) + 1);
+
+	   days_since_current_lyear = seconds_left_2 % ((4 * 365) + 1);
+
+	   // if days are after a current leap year then add a leap year period
+	   if ((days_since_current_lyear >= (31 + 29))) {
+		  leap_year_periods++;
+	   }
+	   seconds_left = (seconds_left_2 - leap_year_periods) / 365; // seconds_left = "whole_years"
+	   days_since_first_of_year = seconds_left_2 - (seconds_left * 365) - leap_year_periods;
+
+	   if ((days_since_current_lyear <= 365) && (days_since_current_lyear >= 60)) {
+		  days_since_first_of_year++;
+	   }
+	   //year = seconds_left; // + 68;
+
+
+		// seconds_left = "year"
+		//seconds_left_2 = "month"
+	   // walk across monthdays[] to find what month it is based on how many days have passed
+	   //   within the current year
+	   month = 13;
+	   days_to_month = 366;
+	   while (days_since_first_of_year < days_to_month) {
+		   month--;
+		   days_to_month = monthdays[month-1];
+		   if ((month > 2) && ((seconds_left % 4) == 0)) {
+			   days_to_month++;
+			}
+	   }
+	   
+	   rtc_bcd[DS1337_DATE] = bin2bcd( days_since_first_of_year - days_to_month + 1);
+
+	   rtc_bcd[DS1337_DOW] = bin2bcd((seconds_left_2  + 4) % 7);
+
+
+	   //rtc_bcd[DS1337_SEC] = bin2bcd(second);
+	   //rtc_bcd[DS1337_MIN] = bin2bcd(minute);
+	   //rtc_bcd[DS1337_HR] = bin2bcd(hour);
+	   //rtc_bcd[DS1337_DATE] = bin2bcd(day);
+	   //rtc_bcd[DS1337_DOW] = bin2bcd(day_of_week);
+	   rtc_bcd[DS1337_MTH] = bin2bcd(month);
+	   rtc_bcd[DS1337_YR] = bin2bcd(seconds_left);
+   }
+	else
+	{
+	// else: "invalid" (< year 2000) epoch format.
+	// 'Best' way to handle this is to zero out the returned date. 
+	
+	   rtc_bcd[DS1337_SEC] = 0; //0x00 binary = 0x00 BCD
+	   rtc_bcd[DS1337_MIN] = 0;
+	   rtc_bcd[DS1337_HR] = 0;
+	   rtc_bcd[DS1337_DATE] = 0;
+	   rtc_bcd[DS1337_DOW] = 0;
+	   rtc_bcd[DS1337_MTH] = 0;
+	   rtc_bcd[DS1337_YR] = 0;
+	}
+
+}
+
+unsigned long DS1337::date_to_epoch_seconds(unsigned int year, byte month, byte day, byte hour, byte minute, byte second)
+{
+
+  //gracefully handle 2- and 4-digit year formats
+  if (year > 1999)
+  {
+     year -= 2000;
+  }
+
+
+// Between year 2000 and 2100, a leap year occurs in every year divisible by 4.
+
+//   sse_y = (((unsigned long)year)*365*24*60*60);
+//   sse_ly = ((((unsigned long)year+3)>>2) + ((unsigned long)year%4==0 && (unsigned long)month>2))*24*60*60;
+//   sse_d = ((unsigned long)monthdays[month-1] + (unsigned long)day-1) *24*60*60;
+//   sse_h = ((unsigned long)hour*60*60);
+//   sse_m = ((unsigned long)minute*60);
+//   sse_s = (unsigned long)second;
+//
+//   sse = sse_y + sse_ly + sse_d + sse_h + sse_m + sse_s;
+
+
+
+// NB: The multiplication-by-constants below is intentionally left expanded for readability; GCC is smart and will optimize them to single constants during compilation.
+
+
+  //         Whole year seconds                      Cumulative total of seconds contributed by elapsed leap year days
+  unsigned long sse = (((unsigned long)year)*365*24*60*60)   +   ((((unsigned long)year+3)>>2) + ((unsigned long)year%4==0 && (unsigned long)month>2))*24*60*60   +   \
+         ((unsigned long)monthdays[month-1] + (unsigned long)day-1) *24*60*60   +   ((unsigned long)hour*60*60)   +   ((unsigned long)minute*60)   + (unsigned long)second;
+         // Seconds in days since start of year                      hours                      minutes           sec
+  sse += 946684800; // correct for difference between DS1337 epoch and UNIX epoch
+  return sse;
+}
+
+unsigned long DS1337::date_to_epoch_seconds()
+{
+     unsigned long asdf = date_to_epoch_seconds(int(bcd2bin(rtc_bcd[DS1337_YR])), bcd2bin(rtc_bcd[DS1337_MTH]), bcd2bin(rtc_bcd[DS1337_DATE]), bcd2bin(rtc_bcd[DS1337_HR]), bcd2bin(rtc_bcd[DS1337_MIN]), bcd2bin(rtc_bcd[DS1337_SEC]));
+     return asdf;
 }
 
 
