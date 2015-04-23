@@ -10,23 +10,22 @@ public:
 		powerUp() ;
 		openWritingPipe(_pipe);
 		uint8_t res=RF24::write(getPayload(),getPacketLength());
-		//if(! res) init(_pipe);
 		stopListening();
 		powerDown();
 
 		return !res;
 	}
 
-	void init(uint64_t address){
+	void init(uint64_t address,uint8_t c=0x71){
 		_pipe=address;
 		RF24::begin();
 		setRetries(15,15);
-		setChannel(0x71);
+		setChannel(c);
 		enableDynamicPayloads();
 		setCRCLength( RF24_CRC_16 ) ;
 		setDataRate(RF24_250KBPS);
 		setPALevel(RF24_PA_HIGH);
-//		powerDown() ;
+		powerDown() ;
 	}
 	uint64_t _pipe;
 };

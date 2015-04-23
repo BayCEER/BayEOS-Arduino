@@ -41,7 +41,7 @@ void setup(void){
    radio.openReadingPipe(5,pipes[4]);
    radio.startListening();
    
-   client.begin(57600,1);  
+   client.begin(9600,1);  
   client.sendMessage("XBee-Router started");
    
  
@@ -50,18 +50,7 @@ void setup(void){
 uint8_t payload[32];
 void loop(void){
     uint8_t pipe_num, len;
-    if ( radio.available(&pipe_num) ){
-      bool done = false;
-      len = radio.getDynamicPayloadSize();
-      while (!done)
-      {
-        // Fetch the payload, and see if this was the last one.
-	len = radio.getDynamicPayloadSize();
-	done = radio.read( payload, len );
-
-        
-
-      }
+    if ( radio.readPipe(payload,&pipe_num) ){
       client.startRoutedFrame(pipe_num,0);
       for(uint8_t i=0; i<len;i++){
 	  client.addToPayload(payload[i]);

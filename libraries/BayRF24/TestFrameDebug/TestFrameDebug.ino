@@ -2,17 +2,19 @@
 #include <SPI.h>
 #include <RF24.h>
 #include <BayRF24.h>
+#include "printf.h"
 
 
 
-
-
-BayRF24 client=BayRF24(8,9);
+/* ce,csn pins - adjust to your layout*/
+BayRF24 client=BayRF24(9,10); 
 
 
 void setup(void){
   Serial.begin(9600);
   client.init(0x45c431ae12LL);
+  printf_begin(); 
+  client.printDetails();
 }
 
 void loop(void){
@@ -23,9 +25,6 @@ void loop(void){
      Serial.println("failed");
    else
      Serial.println("ok");
-   
-   
-    
   delay(5000);
    
 }
