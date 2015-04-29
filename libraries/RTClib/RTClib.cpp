@@ -247,6 +247,17 @@ DateTime RTC_PCF8563::now() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// RTC_Timer2 implementation
+
+void RTC_Timer2::adjust(const DateTime& dt) {
+    _seconds = dt.get();
+}
+
+DateTime RTC_Timer2::now() {
+    return _seconds;
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // RTC_Millis implementation
 
 long RTC_Millis::offset = 0;

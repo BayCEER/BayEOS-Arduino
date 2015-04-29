@@ -33,6 +33,16 @@ public:
 
 };
 
+// RTC using the time2 clock, has to be initialized before use
+// NOTE: You have to add a appropriate ISR to your code to update _seconds
+class RTC_Timer2 : public RTC {
+public:
+    void begin() {}
+    void adjust(const DateTime& dt);
+    DateTime now();
+    volatile long _seconds;
+};
+
 // RTC using the internal millis() clock, has to be initialized before use
 // NOTE: this clock won't be correct once the millis() timer rolls over (>49d?)
 class RTC_Millis : public RTC {
@@ -44,6 +54,7 @@ public:
 protected:
     static long offset;
 };
+
 // RTC based on the DS3231
 //based on DS3231 Class is by Seeed Technology Inc(http://www.seeedstudio.com)
 class DS3231 : public RTC {

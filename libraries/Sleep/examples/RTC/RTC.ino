@@ -16,7 +16,7 @@ void setup(void)
   Serial.begin(9600);
   Serial.println("Starting ...");
   delay(2);
-  Sleep.setupTmer1(); //init watchdog timer to 1 sec
+  Sleep.setupTimer2(); //init timer2 to 1 sec
 }
 
 void loop(void)
@@ -24,7 +24,10 @@ void loop(void)
   Serial.println("Awake ...");
   Serial.print("Runtime:");
   Serial.println(seconds);
+  Serial.print("CPU-Time:");
+  Serial.println(millis());
   Serial.println("Entering Sleep mode");
+  
   delay(2);
   Sleep.sleep(TIMER2_ON);     // sleep function called here
 }
