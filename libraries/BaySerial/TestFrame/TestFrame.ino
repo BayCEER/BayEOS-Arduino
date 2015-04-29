@@ -7,20 +7,18 @@ BaySerial client=BaySerial();
 
 
 void setup(void){
-   client.begin(38400);
+   client.begin(9600);
 }
 
 void loop(void){
-  client.startDataFrame(0x1);
-  for(uint8_t i=0;i<5;i++){
-    client.addChannelValue((float) 1.0000);
-   }
-   
+   client.startDataFrame();
+   client.addChannelValue(millis()/1000);     
+   client.addChannelValue(analogRead(A0));     
    client.sendPayload();
-   
-   client.sendMessage("Just a message ;-)");
+  
+  // client.sendMessage("Just a message ;-)");
 
-   client.sendError("Just a test error message ;-)");
+  // client.sendError("Just a test error message ;-)");
    
   delay(5000);
 }

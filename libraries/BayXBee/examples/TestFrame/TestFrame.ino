@@ -12,9 +12,9 @@ void setup(void){
 
 void loop(void){
   //Construct DataFrame
-   client.startDataFrame(BayEOS_Float32le);
+   client.startDataFrame();
    client.addChannelValue(millis()/1000);     
-   client.addChannelValue(analogRead(A1));     
+   client.addChannelValue(analogRead(A0));     
    client.sendPayload();
    
 //   client.sendMessage("Just a message ;-)");

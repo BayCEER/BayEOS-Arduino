@@ -5,7 +5,9 @@
 #include <BayTCP.h>
 #include <BayTCPSim900.h>
 
-BayGPRS client=BayGPRS(Serial2,46);
+//Define Serial and powerPin - Depends on the Board
+//BayGPRS client=BayGPRS(Serial2,46);
+BayGPRS client=BayGPRS();
 
 void setup(void){
 //  Serial.begin(9600);
@@ -18,13 +20,9 @@ void setup(void){
 
 void loop(void){
   //Construct DataFrame
-   client.startDataFrame(BayEOS_Float32le);
+   client.startDataFrame();
    client.addChannelValue(millis()/1000);     
    client.sendPayload();
-   
-   
-    
-  delay(5000);
-   
+   delay(5000);  
 }
 

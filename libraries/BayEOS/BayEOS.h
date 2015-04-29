@@ -178,7 +178,7 @@ public:
 	/**
 	 * Set first two bytes of payload buffer and set _next to 2
 	 */
-	void startDataFrame(uint8_t subtype);
+	void startDataFrame(uint8_t subtype=BayEOS_Float32le);
 
 	/**
 	 * Starts a Origin Frame and adds header for data frame

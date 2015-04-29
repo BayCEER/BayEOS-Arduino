@@ -20,8 +20,9 @@ void setup(void){
   Ethernet.begin(mac,ip);
   //Ethernet.begin(mac);
 
+  //Gateway Configuration
   client.readConfigFromStringPGM(
-    PSTR("192.168.0.1|80|gateway/frame/saveFlat|admin|xbee|TestEth$&+,/:;=?@ <>#%{}|~[]`|||||")
+    PSTR("192.168.0.1|80|gateway/frame/saveFlat|admin|xbee|TestEth|||||")
   );
   //client._urlencode=1;
   Serial.println("Starting");
@@ -29,7 +30,7 @@ void setup(void){
 
 void loop(void){
   //Construct DataFrame
-   client.startDataFrame(BayEOS_Float32le);
+   client.startDataFrame();
    client.addChannelValue(73.43); 
    client.addChannelValue(3.18); 
    client.addChannelValue(millis()/1000); 

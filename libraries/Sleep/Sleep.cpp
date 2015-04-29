@@ -20,12 +20,13 @@
 #endif
 #include "Sleep.h"
 
-void SleepClass::sleep(void){
+
+void SleepClass::sleep(uint8_t modules){
   power_adc_disable();
   power_spi_disable();
-  power_timer0_disable();
-  power_timer1_disable();
-  power_timer2_disable();
+  if(!(modules & TIMER0_ON)) power_timer0_disable();
+  if(!(modules & TIMER1_ON)) power_timer1_disable();
+  if(!(modules & TIMER2_ON)) power_timer2_disable();
   power_twi_disable();
   power_usart0_disable();
   //	   cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
@@ -37,6 +38,14 @@ void SleepClass::sleep(void){
 //  sbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter ON
 }
 
+
+void SleepClass::setupTimer2(int ii) {
+	TCCR2A = 0x00;
+	if(ii>7) ii=7;
+	TCCR2B = ii;
+	ASSR = (1<<AS2); //Enable asynchronous operation
+	TIMSK2 = (1<<TOIE2); //Enable the timer 2 interrupt
+}
 
 void SleepClass::setupWatchdog(int ii) {
   cbi( SMCR,SE );      // sleep enable, power down mode
