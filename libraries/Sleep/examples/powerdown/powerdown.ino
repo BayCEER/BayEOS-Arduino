@@ -1,3 +1,9 @@
+/***********************************************************
+Power down the ATMEGA to SLEEP_MODE_PWR_DOWN
+
+ATMEGA will consume about 4µA
+
+***********************************************************/
 #include <Sleep.h>
 
 volatile boolean flag_watchdog=1;
@@ -7,8 +13,8 @@ void setup(void)
 //  pinMode(10, OUTPUT);
   Serial.begin(9600);
   Serial.println("Starting ...");
-  delay(2);
-  Sleep.setupWatchdog(6); //init watchdog timer to 1 sec
+  delay(20);
+  Sleep.setupWatchdog(8); //init watchdog timer to 4 sec
 }
 
 void loop(void)
@@ -18,7 +24,7 @@ void loop(void)
   if (flag_watchdog) {
     flag_watchdog=0;
     Serial.println("Entering Sleep mode");
-    delay(2);
+    delay(200);
     Sleep.sleep();     // sleep function called here
   }
   

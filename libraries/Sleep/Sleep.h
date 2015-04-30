@@ -13,6 +13,11 @@
 #ifndef Sleep_h
 #define Sleep_h
 
+#include <avr/sleep.h>
+#include <avr/power.h>
+#include <avr/interrupt.h>
+
+
 #ifndef cbi
 #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
 #endif
@@ -61,7 +66,7 @@ public:
 	static void setupTimer2(int ii=5);
 
 
-	static void sleep(uint8_t modules=0);
+	static void sleep(uint8_t modules=0,uint8_t sm=SLEEP_MODE_PWR_DOWN);
 };
 
 extern SleepClass Sleep;

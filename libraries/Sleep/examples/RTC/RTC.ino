@@ -1,3 +1,12 @@
+/***********************************************************
+Power down the ATMEGA to SLEEP_MODE_PWR_SAVE
+
+ATMEGA will consume about 1µA
+
+IMPORTANT!!
+You will need a 32.686kHz Quarz connected!!
+
+***********************************************************/
 
 #include <Sleep.h>
 
@@ -24,11 +33,12 @@ void loop(void)
   Serial.println("Awake ...");
   Serial.print("Runtime:");
   Serial.println(seconds);
+
   Serial.print("CPU-Time:");
   Serial.println(millis());
   Serial.println("Entering Sleep mode");
   
-  delay(2);
-  Sleep.sleep(TIMER2_ON);     // sleep function called here
+  delay(200);
+  Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE);     // sleep function called here
 }
 

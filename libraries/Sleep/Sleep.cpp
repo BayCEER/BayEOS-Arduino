@@ -10,9 +10,6 @@
 
 */
 
-#include <avr/sleep.h>
-#include <avr/power.h>
-#include <avr/interrupt.h>
 #if ARDUINO >= 100
 #include "Arduino.h"       // for delayMicroseconds, digitalPinToBitMask, etc
 #else
@@ -20,22 +17,32 @@
 #endif
 #include "Sleep.h"
 
+#include <avr/wdt.h>
 
-void SleepClass::sleep(uint8_t modules){
-  power_adc_disable();
+void SleepClass::sleep(uint8_t modules,uint8_t sm){
+//  power_adc_disable();
+  cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
+ // ACSR = (1<<ACD); //Disable the analog comparator
   power_spi_disable();
+  power_twi_disable();
+  power_usart0_disable();
   if(!(modules & TIMER0_ON)) power_timer0_disable();
   if(!(modules & TIMER1_ON)) power_timer1_disable();
   if(!(modules & TIMER2_ON)) power_timer2_disable();
-  power_twi_disable();
-  power_usart0_disable();
-  //	   cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
-  set_sleep_mode(SLEEP_MODE_PWR_DOWN); // sleep mode is set here
-  sleep_enable();
-  sleep_mode();                        // System sleeps here
-  sleep_disable();                     // System continues execution here when watchdog timed out
+
+  set_sleep_mode(sm);
+  cli();
+  do{
+	  sleep_enable();
+	  sleep_bod_disable();
+	  sei();
+	  sleep_cpu();     // System sleeps here
+	  sleep_disable(); // System continues execution here when an interrupt woke up the divice
+  } while(0);
+  sei();
   power_all_enable();
-//  sbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter ON
+  sbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter ON
+
 }
 
 
@@ -48,6 +55,10 @@ void SleepClass::setupTimer2(int ii) {
 }
 
 void SleepClass::setupWatchdog(int ii) {
+/*	wdt_enable(ii);
+	WDTCSR |= (1 << WDIE);
+
+*/
   cbi( SMCR,SE );      // sleep enable, power down mode
   cbi( SMCR,SM0 );     // power down mode
   sbi( SMCR,SM1 );     // power down mode
