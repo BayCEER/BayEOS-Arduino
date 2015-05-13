@@ -10,7 +10,7 @@ You need to have a 32kHz quarz connected!!!!!
 RTC_Timer2 RTC;
 
 
-SIGNAL(TIMER2_OVF_vect){
+ISR(TIMER2_OVF_vect){
   RTC._seconds += 1; 
 }
 

@@ -21,7 +21,8 @@ void BayEOSBuffer::setReadPointer(uint8_t type){
 
 
 unsigned long BayEOSBuffer::available(void){
-	return (_end-_read_pos);
+	if(_read_pos>_write_pos) return (_end-_read_pos+_write_pos);
+	else return (_end-_read_pos);
 }
 
 uint8_t BayEOSBuffer::freeSpace(uint8_t length){

@@ -4,6 +4,13 @@
  * holzheu@bayceer.uni-bayreuth.de
  *
  *
+ * Data-Format of BayEOS-Buffer
+ * [4 byte Time][length][length byte data]...
+ * time is either in milliseconds or in seconds - depending on whether a RTC is set!
+ *
+ *
+ *
+ *
  */
 
 
@@ -172,10 +179,29 @@ protected:
 private:
 
 	virtual void resetStorage(void)=0;
+	/*
+	 * write one byte to the buffer at the current _write_pos
+	 */
 	virtual uint8_t write(const uint8_t b)=0;
+
+	/*
+	 * write length bytes to the buffer at the current _write_pos
+	 */
 	virtual uint8_t write(const uint8_t *b,uint8_t length)=0;
+
+	/*
+	 * seek the write/read pointer of the buffer
+	 */
 	virtual uint8_t seek(unsigned long pos)=0;
+
+	/*
+	 * read one byte from the buffer - retruns -1 on failure
+	 */
 	virtual int read(void)=0;
+
+	/*
+	 * read length bytes from the buffer - retruns -1 on failure
+	 */
 	virtual int read(uint8_t *dest,int length)=0;
 	virtual void flush(void)=0;
 
