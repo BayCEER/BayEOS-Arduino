@@ -166,7 +166,6 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload,uint8_t length){
 //	Serial.println(count);
 	count+=write(payload,length);
 //	Serial.println(count);
-	flush();
 
 	_write_pos+=count;
 	if(_end<_write_pos) _end=_write_pos;
@@ -180,7 +179,7 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload,uint8_t length){
 	   Serial.println(_read_pos);
 	   Serial.println();
 #endif
-
+	flush();
 	return count;
 }
 

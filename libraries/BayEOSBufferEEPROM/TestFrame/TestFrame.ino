@@ -7,14 +7,16 @@
 
 
 BayDebug client=BayDebug(); 
-BayEOSBufferEEPROM myBuffer=BayEOSBufferEEPROM(0x50,64*1024);
-unsigned long last_data;
+BayEOSBufferEEPROM myBuffer;
+unsigned long last_data=10000;
 unsigned long last_buffered_data;
 
 
 void setup(void){
-  client.begin(9600);
-  myBuffer=BayEOSBufferEEPROM(0x50,64*1024);
+  client.begin(9600,1);
+  Serial.println("Starting...");
+  delay(10);
+  myBuffer.init(0x50,65536L);
   client.setBuffer(myBuffer);
 }
 
@@ -26,6 +28,14 @@ void loop(void){
   if((millis()-last_buffered_data)>1000){
   	  client.sendFromBuffer();
  	  last_buffered_data=millis();
+ 
+  //Uncomment to get information about the buffer pointer positions
+  /*     
+         Serial.print("Read-Pos: ");
+         Serial.print(myBuffer.readPos());
+         Serial.print(" - Write-Pos: ");
+         Serial.println(myBuffer.writePos());
+   */      
   }
 
   if((millis()-last_data)>5000){

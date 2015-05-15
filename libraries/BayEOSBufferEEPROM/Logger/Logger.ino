@@ -1,3 +1,9 @@
+/*
+This is a example for a simple and cheap logger based on
+I2C EEPROM and TIMER2 RTC
+*/
+
+
 #include <EEPROM.h> 
 #include <Wire.h>
 #include <RTClib.h>
@@ -21,7 +27,8 @@ ISR(TIMER2_OVF_vect){
 }
 
 BaySerial client; 
-BayEOSBufferEEPROM myBuffer(0x50,64*1024);
+uint8_t i2c_addresses[]={0x50,0x51};
+BayEOSBufferMultiEEPROM myBuffer;
 BayEOSLogger myLogger;
 
 
@@ -36,47 +43,43 @@ void measure(){
 void setup() {
   Sleep.setupTimer2(); //init to 1 sec!!
   pinMode(CONNECTED_PIN, INPUT);
-  Serial.end();
+  digitalWrite(CONNECTED_PIN,HIGH);
+  myBuffer.init(2,i2c_addresses,65536L);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
-  client.setBuffer(myBuffer); //max skip=100!!
-    //register all in BayEOSLogger
-  myLogger.init(client,myBuffer,myRTC);
+  client.setBuffer(myBuffer); 
+  //register all in BayEOSLogger
+  myLogger.init(client,myBuffer,myRTC,60); //min_sampling_int = 60
+  //disable logging as RTC has to be set first!!
+  myLogger._logging_disabled=1; 
 }
 
 void loop() {
-  if (myLogger._mode==LOGGER_MODE_LIVE || (myRTC.now().get() - myLogger._last_measurement) 
-     >= myLogger._sampling_int){
-      measure();
-      myLogger.liveData(1000);
-	//This will only write Data, when _sampling_interval is reached...
-      myLogger.logData();
-  }
-
-  
-  myLogger.handleCommand();
-  myLogger.sendData();
-  myLogger.sendBinaryDump();
+  //Enable logging if RTC give a time later than 2010-01-01
+  if(myLogger._logging_disabled && myRTC.now().get()>315360000L)
+      myLogger._logging_disabled = 0;
+   
+   measure();
+   myLogger.run();
+   
 
   //sleep until timer2 will wake us up...
   if(! connected){
     myLogger._mode=0;
-    Sleep.sleep();
+    Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE);
   }
   
   //check if still connected
   if(connected) 
     connected++;
  
-  if(connected>100){
-    Serial.flush();
-    Serial.end();
-    pinMode(1,INPUT);
-    pinMode(2,INPUT);
-    delay(10);
+  if(connected>100 && digitalRead(CONNECTED_PIN)){
+    client.flush();
+    client.end();
     connected=0;
   } 
 
-  if(!connected && digitalRead(CONNECTED_PIN)){
+  //Connected pin is pulled to GND
+  if(!connected && ! digitalRead(CONNECTED_PIN)){
     connected=1;
     client.begin(38400);
   }

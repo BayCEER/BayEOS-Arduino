@@ -53,12 +53,14 @@ void BayEOSLogger::sendData(void) {
 }
 
 void BayEOSLogger::logData(void) {
-	if ((_rtc->now().get() - _last_measurement) < _sampling_int)
-		return;
-	_last_measurement = _rtc->now().get();
-	//Store frame on SD
-	//will use RTC-time as timestamp
-	_client->writeToBuffer();
+	if(_logging_disabled) return;
+	//Log data on even timestamps or on delay...
+	if((_rtc->now().get() % _sampling_int)==0 || (_rtc->now().get() - _last_measurement) > _sampling_int){
+		_last_measurement = _rtc->now().get();
+		//Store frame to buffer
+		//will use RTC-time as timestamp
+		_client->writeToBuffer();
+	}
 }
 
 void BayEOSLogger::liveData(uint16_t wait) {
@@ -70,14 +72,15 @@ void BayEOSLogger::liveData(uint16_t wait) {
 	delay(wait);
 }
 
-void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc) {
+void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t min_sampling_int) {
 	_rtc = &rtc;
 	_buffer = &buffer;
 	_client = &client;
+	_min_sampling_int=min_sampling_int;
 
 	readFromEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	if (_sampling_int == 0xffff) {
-		_sampling_int = 10;
+		_sampling_int = _min_sampling_int;
 		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	}
 	readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
@@ -86,6 +89,7 @@ void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc) {
 
 	_buffer->seekReadPointer(_long1);
 	writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+	_logging_disabled=0;
 }
 
 void BayEOSLogger::handleCommand(void) {
@@ -134,6 +138,7 @@ void BayEOSLogger::handleCommand(void) {
 		for (i = 0; i < 2; i++) {
 			*(((uint8_t*) &_sampling_int) + i) = _client->getPayload(i + 2);
 		}
+		if(_sampling_int<_min_sampling_int) _sampling_int=10;
 		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 		cmd_response_api = BayEOS_GetSamplingInt;
 		break;

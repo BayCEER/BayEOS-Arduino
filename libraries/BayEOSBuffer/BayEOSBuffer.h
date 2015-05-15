@@ -67,6 +67,7 @@ public:
 	BayEOSBuffer(void);
 
 
+
 	/**
 	 * Check if there are any bytes available for reading from the buffer.
 	 * returns number of bytes available for reed
@@ -174,11 +175,19 @@ public:
 protected:
 	unsigned long _max_length;
 	RTC* _rtc;
+	unsigned long _read_pos;
+	unsigned long _write_pos;
+	unsigned long _end;
 
 
 private:
 
+
+	/*
+	 * reset storage to inital state
+	 */
 	virtual void resetStorage(void)=0;
+
 	/*
 	 * write one byte to the buffer at the current _write_pos
 	 */
@@ -203,11 +212,13 @@ private:
 	 * read length bytes from the buffer - retruns -1 on failure
 	 */
 	virtual int read(uint8_t *dest,int length)=0;
+
+
+	/*
+	 * Flush the buffer
+	 */
 	virtual void flush(void)=0;
 
-	unsigned long _read_pos;
-	unsigned long _write_pos;
-	unsigned long _end;
 	unsigned long _millis;
 	uint8_t _packet_length;
 
