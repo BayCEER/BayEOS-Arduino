@@ -168,6 +168,12 @@ uint8_t BayEOS::readBinaryFromBuffer(unsigned long pos){
 	_next+=_buffer->readBinary(pos,getPayloadLength()-5,&_payload[_next]);
 	return _next-5;
 }
+uint8_t BayEOS::readBinaryFromBuffer(unsigned long pos,unsigned long stop,unsigned long vpos){
+	startFrame(BayEOS_BinaryFrame);
+	addToPayload(vpos);
+	_next+=_buffer->readBinary(pos,stop,getPayloadLength()-5,&_payload[_next]);
+	return _next-5;
+}
 
 uint8_t BayEOS::readFromBuffer(void){
 	if(! _buffer->available()) return 0;

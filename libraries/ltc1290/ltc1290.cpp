@@ -112,6 +112,7 @@ int LTC1290::read(uint8_t ch,uint8_t rep) {
 	int messwert, bitwert, kanal;
 	long sum=0;
 	//Kanal in Steuerbit wandeln
+	// xXE: E = 1110 : SingleEnded - MSBF - 10==12-bits Word length
 	switch (ch) {
 	case 0:
 		kanal = 0x8EF;

@@ -92,6 +92,11 @@ public:
 	uint8_t readBinary(unsigned long pos,uint8_t length, uint8_t *dest);
 
 	/**
+	 * Read packet to dest but stop at end
+	 */
+	uint8_t readBinary(unsigned long pos,unsigned long end,uint8_t length, uint8_t *dest);
+
+	/**
 	 * Set read pointer to next packet
 	 */
 	void next(void);
@@ -168,9 +173,11 @@ public:
 
 	unsigned long writePos(void){ return _write_pos; }
 	unsigned long readPos(void){ return _read_pos; }
+	unsigned long endPos(void){ return _end; }
 
 
 	boolean _absoluteTime;
+	boolean _framesDiscarded;
 
 protected:
 	unsigned long _max_length;

@@ -35,7 +35,7 @@ public:
   void run();
 
   unsigned long _last_measurement;
-  unsigned long _long1, _long2; //used to store time and pos information
+  unsigned long _long1, _long2, _long3; //used to store time and pos information
 
   uint16_t _min_sampling_int;
   uint16_t _sampling_int;
@@ -44,6 +44,9 @@ public:
   RTC* _rtc;
   BayEOSBuffer* _buffer;
   uint8_t _logging_disabled;
+  uint8_t _logged_flag; //this is set when data is written to buffer
+  //could be used to reset average calculations
+  uint8_t _bufferwrap; //used to indicate that there is a bufferwrap in binary dump
 };
 
 

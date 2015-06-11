@@ -101,6 +101,12 @@ public:
 	 * Flush the transfer depending on MTU of Network
 	 */
 	void flushMTU(void);
+
+	/*
+	 * Finish the transmission mode of the modem
+	 */
+    void finishTransmissionMode(void);
+
 	long _baud;
 public:
 	uint8_t _powerPin;

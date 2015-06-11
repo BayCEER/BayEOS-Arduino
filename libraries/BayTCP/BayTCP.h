@@ -93,7 +93,7 @@ public:
 	 * 3 == network timeout
 	 * 4 == gprs modem timeout
 	 */
-	uint8_t sendMultiFromBuffer(int maxsize=5000);
+	uint8_t sendMultiFromBuffer(uint16_t maxsize=5000);
 
 	/**
 	 * set as config value in config buffer
@@ -143,6 +143,7 @@ public:
 	boolean _urlencode;
 protected:
 	virtual void flushMTU(void);
+	virtual void finishTransmissionMode(void);
 	void printPostHeader(uint16_t size);
 	void setConfigPointers(void);
 	uint8_t addToConfigBuffer(uint8_t offset,const char* str);

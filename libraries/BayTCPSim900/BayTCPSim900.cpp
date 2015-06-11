@@ -156,6 +156,10 @@ void BayGPRSInterface::flushMTU(void){
 	wait_for("> ",20000);
 }
 
+void BayGPRSInterface::finishTransmissionMode(void){
+    write((uint8_t) 0x1a);
+}
+
 
 uint8_t BayGPRSInterface::connect(void){
 	if(_tx_error_count>20) softSwitch();

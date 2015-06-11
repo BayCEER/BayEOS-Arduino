@@ -41,6 +41,7 @@ private:
     int peek(void){return EthernetClient::peek();};
     void flush(void){EthernetClient::flush();};
     void flushMTU(void){};
+    void finishTransmissionMode(void){};
 };
 
 #endif

@@ -339,6 +339,11 @@ public:
 	uint8_t readBinaryFromBuffer(unsigned long pos);
 
 	/**
+	 * read binary packet from buffer to payload - but not overrun end
+	 */
+	uint8_t readBinaryFromBuffer(unsigned long pos,unsigned long end, unsigned long vpos);
+
+	/**
 	 * set buffer pointer to a BayEOSBuffer instance
 	 * max_skip defines the maximum number of packets written directly to
 	 * buffer without trying to sent...

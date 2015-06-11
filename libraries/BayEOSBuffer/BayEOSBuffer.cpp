@@ -6,6 +6,7 @@ BayEOSBuffer::BayEOSBuffer(void){
 //	Serial.println("BayEOSBuffer");
 #endif
 	_rtc=NULL;
+	_framesDiscarded=0;
 }
 
 void BayEOSBuffer::setReadPointer(uint8_t type){
@@ -21,17 +22,18 @@ void BayEOSBuffer::setReadPointer(uint8_t type){
 
 
 unsigned long BayEOSBuffer::available(void){
-	if(_read_pos>_write_pos) return (_end-_read_pos+_write_pos);
-	else return (_end-_read_pos);
+	if((_read_pos==_end) && (_write_pos==_end)) return 0;
+	if(_read_pos>=_write_pos) return (_end-_read_pos+_write_pos);
+	else return (_write_pos-_read_pos);
 }
 
 uint8_t BayEOSBuffer::freeSpace(uint8_t length){
-	unsigned long expected_write_pos=_write_pos;
-	if((_write_pos+length)>_max_length) expected_write_pos=0;
-	return !(expected_write_pos<=_read_pos &&
-    _end>_read_pos &&
-    (expected_write_pos+length)>_read_pos &&
-    length<=_max_length);
+	if((_end+length)<_max_length) return 1;
+	if((_write_pos+length)>_max_length){ // Wraparound!
+		return (_read_pos>=length);
+	} else
+		return !(_write_pos<=_read_pos && (_write_pos+length)>_read_pos);
+
 }
 
 int BayEOSBuffer::readPacket(uint8_t *dest){
@@ -40,9 +42,16 @@ int BayEOSBuffer::readPacket(uint8_t *dest){
 
 uint8_t BayEOSBuffer::readBinary(unsigned long pos, uint8_t length, uint8_t *dest){
 	seek(pos);
+	if((pos+length)>_end) length=_end-pos;
 	return read(dest,length);
 }
 
+uint8_t BayEOSBuffer::readBinary(unsigned long pos, unsigned long stop,uint8_t length, uint8_t *dest){
+	seek(pos);
+	if(pos<stop && (pos+length)>stop) length=stop-pos;
+	if((pos+length)>_end) length=_end-pos;
+	return read(dest,length);
+}
 
 void BayEOSBuffer::set(unsigned long pos){
 #if SERIAL_DEBUG
@@ -73,6 +82,10 @@ void BayEOSBuffer::reset(void){
 }
 
 uint8_t BayEOSBuffer::initNextPacket(void){
+	if((_read_pos==_end) && (_write_pos<_read_pos)){
+		_end=_write_pos;
+		_read_pos=0;
+	}
 	uint8_t* p=(uint8_t*) &_millis;
 	seek(_read_pos);
 	read(p,4);
@@ -126,32 +139,18 @@ void BayEOSBuffer::next(void){
 }
 
 uint8_t BayEOSBuffer::addPacket(const uint8_t *payload,uint8_t length){
-	unsigned long write_new=_write_pos+5+length;
-	if(write_new>_max_length){
-		//Ende erricht
-#if SERIAL_DEBUG
-		Serial.println("Ende ereicht");
-#endif
-		if(_read_pos>=_write_pos ){
-			_read_pos=0;
-			_end=0;
-#if SERIAL_DEBUG
-		Serial.println("Reset Lese- + Endzeiger...");
-#endif
-
-		}
-		_write_pos=0;
-		write_new=5+length;
-	}
-
-
 	while(! freeSpace(length)){
 		//Write Pointer überholt Read Pointer
 		initNextPacket();
 		next();
+		_framesDiscarded=1;
 #if SERIAL_DEBUG
 		Serial.println("Verwerfe Paket");
 #endif
+	}
+
+	if((_write_pos+length+5)>_max_length){
+		_write_pos=0;
 	}
 
 	seek(_write_pos);

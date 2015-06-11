@@ -34,9 +34,9 @@ const uint8_t* BayTCPInterface::parseMAC(const char* str){
 }
 
 uint8_t BayTCPInterface::hex2int(const char c){
-	if(c>='0' & c<='9') return c-'0';
-	if(c>='A' & c<='F') return c-'A'+10;
-	if(c>='a' & c<='f') return c-'a'+10;
+	if((c>='0') & (c<='9')) return c-'0';
+	if((c>='A') & (c<='F')) return c-'A'+10;
+	if((c>='a') & (c<='f')) return c-'a'+10;
 	return 0;
 }
 
@@ -150,7 +150,7 @@ void BayTCPInterface::printPostHeader(uint16_t size){
 }
 
 
-uint8_t BayTCPInterface::sendMultiFromBuffer(int maxsize){
+uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize){
 	if(! _buffer->available()) return 0;
 	uint8_t res;
 	res=connect();
@@ -220,7 +220,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(int maxsize){
 
     println();
     println();
-    write((uint8_t) 0x1a);
+    finishTransmissionMode();
 	res=wait_for("200 OK",30000);
 	if(res){
 		_buffer->seekReadPointer(readpos);
@@ -270,7 +270,7 @@ uint8_t BayTCPInterface::sendPayload(void){
     printURLencoded(_base64buffer); //BASE64
     println();
 //    println();
-    write(0x1A);
+    finishTransmissionMode();
 	res=wait_for("200 OK",30000);
 	if(res) _tx_error_count++;
 	else _tx_error_count=0;
