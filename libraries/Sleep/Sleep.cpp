@@ -23,9 +23,9 @@ void SleepClass::sleep(uint8_t modules,uint8_t sm){
 //  power_adc_disable();
   cbi(ADCSRA,ADEN);                    // switch Analog to Digitalconverter OFF
  // ACSR = (1<<ACD); //Disable the analog comparator
-  power_spi_disable();
-  power_twi_disable();
-  power_usart0_disable();
+  if(!(modules & SPI_ON)) power_spi_disable();
+  if(!(modules & TWI_ON)) power_twi_disable();
+  if(!(modules & USART0_ON)) power_usart0_disable();
   if(!(modules & TIMER0_ON)) power_timer0_disable();
   if(!(modules & TIMER1_ON)) power_timer1_disable();
   if(!(modules & TIMER2_ON)) power_timer2_disable();

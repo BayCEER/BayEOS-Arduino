@@ -24,21 +24,23 @@ void setup(void)
 //  pinMode(10, OUTPUT);
   Serial.begin(9600);
   Serial.println("Starting ...");
-  delay(2);
+  delay(100);
   Sleep.setupTimer2(); //init timer2 to 1 sec
 }
 
 void loop(void)
 {
-  Serial.println("Awake ...");
-  Serial.print("Runtime:");
-  Serial.println(seconds);
-
-  Serial.print("CPU-Time:");
-  Serial.println(millis());
-  Serial.println("Entering Sleep mode");
+  if((seconds%16)==0){
+    Serial.println("Awake ...");
+    Serial.print("Runtime:");
+    Serial.println(seconds);
   
-  delay(200);
+    Serial.print("CPU-Time:");
+    Serial.println(millis());
+    Serial.println("Entering Sleep mode");
+    
+    delay(200);
+  }
   Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE);     // sleep function called here
 }
 

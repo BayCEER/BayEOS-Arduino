@@ -17,9 +17,9 @@ void loop(void){
    client.addChannelValue(analogRead(A0));     
    client.sendPayload();
    
-//   client.sendMessage("Just a message ;-)");
+// client.sendMessage("Just a message ;-)");
                                                                                                                                               
-//  client.sendError("Just a test error message ;-)");                                                                                           
+// client.sendError("Just a test error message ;-)");                                                                                           
                                                                                                                                               
   delay(5000);                                                                                                                                
                                                                                                                                               

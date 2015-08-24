@@ -3,7 +3,7 @@
 #include "printf.h"
 
 // Set up nRF24L01 radio on SPI bus plus pins 8 & 9
-RF24 radio(8,9);
+RF24 radio(9,10);
 
 // Topology
 
@@ -12,8 +12,11 @@ uint8_t len=0;
 void setup(void){
    Serial.begin(9600);
    printf_begin();
+   pinMode(8,OUTPUT);
+   digitalWrite(8,HIGH);
    
    radio.begin();
+   radio.setChannel(0x71);
    radio.enableDynamicPayloads();
    radio.setCRCLength( RF24_CRC_16 ) ;
    radio.setDataRate(RF24_250KBPS);
@@ -35,6 +38,7 @@ void loop(void){
    len=7;
    radio.write( payload, len);
   // delay(2);
+   //Serial.println("sending");
    radio.powerDown() ;
    delay(2000);
 }

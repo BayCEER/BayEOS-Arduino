@@ -42,8 +42,8 @@ void setup(void){
    radio.startListening();
    
    client.begin(9600,1);  
+   radio.printDetails();
   client.sendMessage("XBee-Router started");
-   
  
 }
 

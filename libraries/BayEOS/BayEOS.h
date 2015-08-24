@@ -68,7 +68,11 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_BinaryFrame 0xa /* [0xa][(unsigned long) pos][binary data] */
 #define BayEOS_OriginFrame 0xb /* [0xb][origin_length][ORIGIN][Original Frame] */
 #define BayEOS_MillisecondTimestampFrame 0xc /* [0xc][(long long) timestamp (millisec since 1970-01-01 00:00 GMT)][Original Frame] */]
-
+#define BayEOS_ConfigFrame 0xd /* [0xd][type][subtype][TEXT....]
+  type 0x1: BoardName -> 0xd,0x1,0x0,MeinGerät
+  type 0x2: SamplingInt -> 0xd, 0x2, 0x0, int16
+  	  	    CheckDelay -> 0xd, 0x2, 0x1, int16
+*/
 
 /* BayEOS Data Frames */
 #define BayEOS_Float32le 0x1

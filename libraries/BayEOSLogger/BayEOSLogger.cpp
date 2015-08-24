@@ -12,10 +12,11 @@ void readFromEEPROM(uint8_t* p, uint8_t length, int offset) {
 }
 
 void BayEOSLogger::run(void) {
-	//live data when in Live
-	liveData(1000);
 	//This will only write Data, when _sampling_interval is reached...
 	logData();
+
+	//live data when in Live
+	liveData(1000);
 
 	handleCommand();
 

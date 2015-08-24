@@ -31,6 +31,9 @@
 #define TIMER0_ON 1
 #define TIMER1_ON 2
 #define TIMER2_ON 4
+#define TWI_ON 8
+#define SPI_ON 16
+#define USART0_ON 32
 
 class SleepClass
 {
