@@ -1,11 +1,5 @@
 /****************************************************************
- * ReadSHT2x
- *  An example sketch that reads the sensor and prints the
- *  relative humidity to the PC's serial port
  *
- *  Tested with:
- *    - SHT21-Breakout Humidity sensor from Modern Device
- *    - SHT2x-Breakout Humidity sensor from MisensO Electronics
  ***************************************************************/
 
 #include <Wire.h>
@@ -17,7 +11,7 @@
 #include <BayRF24.h>
 
 volatile uint8_t ticks;
-SIGNAL(TIMER2_OVF_vect){
+ISR(TIMER2_OVF_vect){
   ticks++;
 }
 BayRF24 client=BayRF24(9,10);

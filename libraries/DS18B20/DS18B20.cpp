@@ -3,7 +3,7 @@
 
 DS18B20::DS18B20(uint8_t pin,uint8_t channel_offset,uint8_t ds18b20_channels) : OneWire(pin){
 	_channel_offset=channel_offset;
-	_current_channel=0;
+	_current_channel=_channel_offset;
 	_addr=(uint8_t*) malloc(8*ds18b20_channels);
 	_ds18b20_channels=ds18b20_channels;
   for (byte ii=0; ii<_ds18b20_channels; ++ii)
@@ -12,16 +12,16 @@ DS18B20::DS18B20(uint8_t pin,uint8_t channel_offset,uint8_t ds18b20_channels) : 
 
 
 uint8_t DS18B20::getNextChannel(void){
-	while(_current_channel<_ds18b20_channels){
+	while(_current_channel<(_ds18b20_channels+_channel_offset)){
 		_current_channel++;
 		if(_addr[(_current_channel-1-_channel_offset)*8]) return _current_channel;
 	}
-	_current_channel=0;
-	return _current_channel;
+	_current_channel=_channel_offset;
+	return 0;
 }
 
 void DS18B20::t_conversion(void){
-	_current_channel=0;
+	_current_channel=_channel_offset;
 	reset();
 	write(0xCC,1); // skip rom
 	write(0x44,1); // start conversion
