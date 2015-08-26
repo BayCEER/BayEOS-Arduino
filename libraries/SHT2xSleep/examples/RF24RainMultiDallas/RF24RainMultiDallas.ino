@@ -22,7 +22,8 @@
 #define SAMPLING_INTTICKS 512
 #define WITHDALLAS 1
 #define WITHRAINGAUGE 1
-#define RF24ADDRESS 0x45c431aeabLL
+#define RF24ADDRESS 0x45c431ae24LL
+//#define RF24ADDRESS 0x45c431ae48LL
 #define RF24CHANNEL 0x71
 #define SERIALDEBUG 0
 
@@ -51,7 +52,6 @@ volatile uint16_t rain_event_ticks;
 void rain_isr(void){
   rain_event=1;
   rain_event_ticks=ticks;
-  detachInterrupt(0);
 }
 #endif
 
@@ -93,7 +93,9 @@ void setup()
   
   #if WITHRAINGAUGE
   digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
-  attachInterrupt(0,rain_isr,LOW);
+  attachInterrupt(0,rain_isr,FALLING);
+  rain_count=0;
+  rain_event=0;
   #endif
   
   #if WITHDALLAS
@@ -156,10 +158,13 @@ void loop()
   #endif
   
   #if WITHRAINGAUGE
+  if(rain_event){
+      detachInterrupt(0);
+  }
   if(rain_event && ((ticks-rain_event_ticks)>RAINGAUGE_LAGTICKS)){
+    attachInterrupt(0,rain_isr,FALLING);
     rain_count++;
     rain_event=0;
-    attachInterrupt(0,rain_isr,LOW);
     #if SERIALDEBUG
    Serial.println("rain");
   delay(20);

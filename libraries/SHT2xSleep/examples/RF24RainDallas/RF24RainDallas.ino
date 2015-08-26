@@ -45,7 +45,6 @@ volatile uint16_t rain_event_ticks;
 void rain_isr(void){
   rain_event=1;
   rain_event_ticks=ticks;
-  detachInterrupt(0);
 }
 #endif
 
@@ -63,7 +62,7 @@ void setup()
   
   #if WITHRAINGAUGE
   digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
-  attachInterrupt(0,rain_isr,LOW);
+  attachInterrupt(0,rain_isr,FALLING);
   #endif
   
   #if WITHDALLAS
@@ -83,10 +82,13 @@ void loop()
   #endif
   
   #if WITHRAINGAUGE
+  if(rain_event){
+    detachInterrupt(0);
+  }
   if(rain_event && ((ticks-rain_event_ticks)>RAINGAUGE_LAGTICKS)){
+    attachInterrupt(0,rain_isr,FALLING);
     rain_count++;
     rain_event=0;
-    attachInterrupt(0,rain_isr,LOW);
   }
   #endif
   if((ticks%SAMPLING_INTTICKS)==0){ //
