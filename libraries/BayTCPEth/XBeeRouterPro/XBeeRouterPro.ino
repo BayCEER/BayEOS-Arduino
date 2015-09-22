@@ -145,30 +145,38 @@ void tftSwitchOff(void){
 
 
 void handle_RX_data(void){
-    while(RX_SERIAL.available()){        
-	xbee_rx.readPacket();
+  uint8_t count;
+  while(RX_SERIAL.available()){        
+    xbee_rx.readPacket();
 
-	if (xbee_rx.getResponse().isAvailable()) {
-          switch(parseRX16(client,xbee_rx,rx_panid)){
-            case 0:
-             //ok
-             rx_ok++;
-             client.writeToBuffer();
-             if(TFT.isOn()){
-               parseRX16(TFT,xbee_rx,rx_panid);
-               TFT.sendPayload();
-               TFT.flush(); 
-             }
+    if (xbee_rx.getResponse().isAvailable()) {
+        switch(parseRX16(client,xbee_rx,rx_panid)){
+          case 0:
+           //ok
+           rx_ok++;
+           client.writeToBuffer();
+           if(TFT.isOn()){
+             parseRX16(TFT,xbee_rx,rx_panid);
+             TFT.sendPayload();
+             TFT.flush(); 
+           }
 
-            break;
-           case 1:
-             rx_error++;
-            break;
-           case 2: 
-            break; 
-          };
-      }
+          break;
+         case 1:
+           rx_error++;
+          break;
+         case 2: 
+          break; 
+        };
     }
+    count++;
+    if(count>20){
+      client.startFrame(BayEOS_ErrorMessage);
+      client.addToPayload("Warning - Too much RX-Data");
+      client.writeToBuffer();
+      return;
+    }
+  }
   
 }
 
@@ -275,7 +283,7 @@ void setup(void) {
   TFT.flush();
   
   client.startFrame(BayEOS_Message);
-  client.addToPayload("Router started - FW");
+  client.addToPayload("Router started - FW ");
   client.addToPayload(__DATE__);
   client.writeToBuffer();
 

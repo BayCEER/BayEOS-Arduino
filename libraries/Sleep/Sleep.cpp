@@ -34,7 +34,9 @@ void SleepClass::sleep(uint8_t modules,uint8_t sm){
   cli();
   do{
 	  sleep_enable();
+#if defined __AVR_ATmega328P__
 	  sleep_bod_disable();
+#endif
 	  sei();
 	  sleep_cpu();     // System sleeps here
 	  sleep_disable(); // System continues execution here when an interrupt woke up the divice
