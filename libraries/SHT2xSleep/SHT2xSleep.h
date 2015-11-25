@@ -40,6 +40,7 @@ typedef enum {
     eRHumidityHoldCmd	= 0xE5,
     eTempNoHoldCmd      = 0xF3,
     eRHumidityNoHoldCmd = 0xF5,
+    softResetCmd        = 0xFE,
 } HUM_MEASUREMENT_CMD_T;
 
 class SHT2xClass
@@ -50,6 +51,7 @@ class SHT2xClass
   public:
     float GetHumidity(void);
     float GetTemperature(void);
+    void reset(void);
 };
 
 extern SHT2xClass SHT2x;

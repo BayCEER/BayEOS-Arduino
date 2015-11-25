@@ -5,15 +5,18 @@ BayEOSBufferEEPROM::BayEOSBufferEEPROM():BayEOSBuffer(){}
 void BayEOSBufferEEPROM::init(uint8_t i2c_address, unsigned long max_length, uint16_t pointer_offset){
 	_max_length=max_length-pointer_offset;
 	_eeprom=I2C_eeprom(i2c_address);
+	_flush=(pointer_offset>0);
+	if(_flush){
 	//Restore pointers
-	uint8_t *p;
-	p=(uint8_t*)&_pos;
-	_eeprom.readBlock(_max_length,p,4);
-	if(_pos<_max_length) _read_pos=_pos;
-	_eeprom.readBlock(_max_length+4,p,4);
-	if(_pos<_max_length) _write_pos=_pos;
-	_eeprom.readBlock(_max_length+8,p,4);
-	if(_pos<_max_length) _end=_pos;
+		uint8_t *p;
+		p=(uint8_t*)&_pos;
+		_eeprom.readBlock(_max_length,p,4);
+		if(_pos<_max_length) _read_pos=_pos;
+		_eeprom.readBlock(_max_length+4,p,4);
+		if(_pos<_max_length) _write_pos=_pos;
+		_eeprom.readBlock(_max_length+8,p,4);
+		if(_pos<_max_length) _end=_pos;
+	}
 }
 
 
@@ -51,6 +54,7 @@ int BayEOSBufferEEPROM::read(uint8_t *dest,int length){
 }
 
 void BayEOSBufferEEPROM::flush(void){
+	if(! _flush) return;
 	//save the poiters to the last address region of the eeprom
 	uint8_t *p;
 	p=(uint8_t*)&_read_pos;
@@ -72,15 +76,21 @@ void BayEOSBufferMultiEEPROM::init(uint8_t number,uint8_t* i2c_addresses, unsign
 	_ee_size=ee_size;
 	_ee_mask=_ee_size-1;
 	memcpy(_i2c_addresses,i2c_addresses,number);
-	uint8_t *p;
-	p=(uint8_t*)&_pos;
-	_eeprom=I2C_eeprom(getDevice(_max_length));
-	_eeprom.readBlock(_max_length & _ee_mask,p,4);
-	if(_pos<_max_length) _read_pos=_pos;
-	_eeprom.readBlock((_max_length+4) & _ee_mask,p,4);
-	if(_pos<_max_length) _write_pos=_pos;
-	_eeprom.readBlock((_max_length+8) & _ee_mask,p,4);
-	if(_pos<_max_length) _end=_pos;
+	_flush=(pointer_offset>0);
+	if (_flush) {
+		uint8_t *p;
+		p = (uint8_t*) &_pos;
+		_eeprom = I2C_eeprom(getDevice(_max_length));
+		_eeprom.readBlock(_max_length & _ee_mask, p, 4);
+		if (_pos < _max_length)
+			_read_pos = _pos;
+		_eeprom.readBlock((_max_length + 4) & _ee_mask, p, 4);
+		if (_pos < _max_length)
+			_write_pos = _pos;
+		_eeprom.readBlock((_max_length + 8) & _ee_mask, p, 4);
+		if (_pos < _max_length)
+			_end = _pos;
+	}
 }
 
 uint8_t BayEOSBufferMultiEEPROM::getDevice(unsigned long pos){
@@ -152,6 +162,7 @@ int BayEOSBufferMultiEEPROM::read(uint8_t *dest,int length){
 }
 
 void BayEOSBufferMultiEEPROM::flush(void){
+	if(! _flush) return;
 	_eeprom.setDeviceAddress(getDevice(_max_length));
 	uint8_t *p;
 	p=(uint8_t*)&_read_pos;

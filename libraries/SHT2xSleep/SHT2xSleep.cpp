@@ -61,6 +61,16 @@ float SHT2xClass::GetTemperature(void)
 	return (-46.85 + 175.72 / 65536.0 * (float)(readSensor(eTempNoHoldCmd)));
 }
 
+/**********************************************************
+ * reset
+ *  performs a Soft reset
+ **********************************************************/
+void SHT2xClass::reset(void){
+    Wire.beginTransmission(eSHT2xAddress);	//begin
+    Wire.write(softResetCmd);
+    Wire.endTransmission();               	//end
+
+}
 
 /******************************************************************************
  * Private Functions

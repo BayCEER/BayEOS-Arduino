@@ -589,6 +589,9 @@ bool RF24::available(uint8_t* pipe_num)
 uint8_t RF24::readPipe(void* buf, uint8_t* pipe){
   uint8_t status = get_status();
   bool result = ( status & _BV(RX_DR) );
+  if(! result) return 0;
+  //Read the status once again - see note on page 53
+  status = get_status();
   *pipe =( status >> RX_P_NO ) & B111;
   uint8_t len;
   uint8_t total;

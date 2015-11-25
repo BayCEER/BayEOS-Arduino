@@ -70,8 +70,8 @@ void BayEOSLogger::logData(void) {
 		//will use RTC-time as timestamp
 		_client->writeToBuffer();
 		if(_buffer->_framesDiscarded){ //Save new read pos to eeprom - Old might not be valid any more!!
-			_long1 = _buffer->readPos();
-			writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+			unsigned long rpos = _buffer->readPos();
+			writeToEEPROM((uint8_t*) &rpos, 4, EEPROM_READ_POS_OFFSET);
 			_buffer->_framesDiscarded=0;
 		}
 		_logged_flag=1;
