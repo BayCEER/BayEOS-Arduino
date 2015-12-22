@@ -71,6 +71,8 @@ uint16_t SHT2xClass::readSensor(uint8_t command)
 
     Wire.beginTransmission(eSHT2xAddress);	//begin
     Wire.write(command);					//send the pointer location
+    delayMicroseconds(500); //no hold master mode it is recommended to include a wait period of 20 μs
+    //Transmitting will take about 200µs. So wait of 500µs should be sufficient
     //delay(100); Not necessary
     Wire.endTransmission();               	//end
 

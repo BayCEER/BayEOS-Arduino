@@ -1,14 +1,25 @@
+#include <BayEOSBuffer.h>
 #include <Wire.h>
 #include <BME280.h>
-
-
+#include <RTClib.h>
+#include <Sleep.h>
 #define SEALEVELPRESSURE_HPA (1013.25)
+
+volatile uint16_t ticks; //16 ticks per second
+RTC_Timer2 myRTC;
+ISR(TIMER2_OVF_vect){
+  ticks++;
+  if((ticks % 16)==0){
+    myRTC._seconds += 1; 
+  }
+}
+
 
 BME280 bme; // I2C
 
 void setup() {
-   delay(1000);
- Serial.begin(9600);
+  Sleep.setupTimer2(2); //init timer2 to 0,0625sec
+  Serial.begin(9600);
   Serial.println(F("BME280 test"));
 
   if (!bme.begin(0x76)) {
@@ -18,6 +29,7 @@ void setup() {
 }
 
 void loop() {
+  if((ticks%64)==0){
     Serial.print("Temperature = ");
     Serial.print(bme.readTemperature());
     Serial.println(" *C");
@@ -37,5 +49,7 @@ void loop() {
     bme.triggerMeasurement();
 
     Serial.println();
-    delay(2000);
+    delay(200);
+  }
+  Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE); 
 }

@@ -24,8 +24,9 @@
 #define WITHRAINGAUGE 1
 #define RF24ADDRESS 0x45c431ae24LL
 //#define RF24ADDRESS 0x45c431ae48LL
-#define RF24CHANNEL 0x71
+#define RF24CHANNEL 0x61
 #define SERIALDEBUG 0
+#define BUFFERDEBUG 0
 
 #include <OneWire.h>
 #include <EEPROM.h>
@@ -117,7 +118,7 @@ void setup()
   client.init(RF24ADDRESS,RF24CHANNEL);
   myBuffer.init(0x50,65536L,0); //NO flush!!
   myBuffer.setRTC(myRTC,0); //Nutze RTC relativ!
-  client.setBuffer(myBuffer);
+  client.setBuffer(myBuffer,100); //use skip!
   
   #if WITHRAINGAUGE
   digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
@@ -164,7 +165,9 @@ void loop()
     action&= ~TSEND_MASK;
     
     client.startDataFrame(BayEOS_ChannelFloat32le);
-
+    #if BUFFERDEBUG
+    client.addChannelValue(myBuffer.writePos(),10);
+    #endif
     while(channel=ds.getNextChannel()){
      #if SERIALDEBUG
    Serial.println(channel);
@@ -212,6 +215,7 @@ void loop()
     client.addChannelValue(bat,2);
     hum=SHT2x.GetHumidity();
     temp=SHT2x.GetTemperature();
+    SHT2x.reset();
     client.addChannelValue(temp,3);
     client.addChannelValue(hum,4);
     #if WITHRAINGAUGE

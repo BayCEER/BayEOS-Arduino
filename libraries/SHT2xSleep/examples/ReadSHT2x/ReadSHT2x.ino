@@ -26,6 +26,7 @@ void loop()
   unsigned long t=millis();
   float hum=SHT2x.GetHumidity();
   float temp=SHT2x.GetTemperature();
+  SHT2x.reset();
   t=millis()-t;
   
   Serial.print("Humidity(%RH): ");
