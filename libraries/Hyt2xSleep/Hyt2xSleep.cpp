@@ -5,14 +5,30 @@
 #include "Hyt2xSleep.h"
 
 void HYT2xClass::triggerMeasurement(){
+	if(! isPresent()) return;
 	Wire.beginTransmission(HYT221_ADDR);
 	Wire.write(0);
 	Wire.available();
 	int Ack = Wire.read(); // receive a byte
 
 }
+/**********************************************************
+ * isPresent
+ *  looks whether the sht-Sensor is present on the OneWire-Bus.
+ *
+ * @return uint8_t - 1 if ok
+ **********************************************************/
+uint8_t HYT2xClass::isPresent(void)
+{
+    Wire.beginTransmission(HYT221_ADDR);
+    uint8_t error = Wire.endTransmission();
+    if(error == 0) return 1;
+    else return 0;
+
+}
 
 uint8_t HYT2xClass::readMeasurement(){
+	if(! isPresent()) return 1;
     while(! Wire.requestFrom(HYT221_ADDR, 4)) {
     	Sleep.sleep(TIMER2_ON | TWI_ON,SLEEP_MODE_PWR_SAVE);; //Sleep here
     }

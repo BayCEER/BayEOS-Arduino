@@ -12,28 +12,34 @@
 #define RF24CHANNEL 0x71
 
 
-
+#define LED_PIN 8
 
 BayRF24 client=BayRF24(9,10);
 
 
+void blink(uint8_t times){
+  for(uint8_t i=0;i<times;i++){
+    digitalWrite(LED_PIN,HIGH);
+    delay(200);
+    digitalWrite(LED_PIN,LOW);
+    delay(300);
+  }
+}
+
 void setup(void){
-  Serial.begin(9600);
+  pinMode(LED_PIN,OUTPUT);
   client.init(RF24ADDRESS,RF24CHANNEL);
 }
 
 void loop(void){
   //Construct DataFrame
    client.startDataFrame(BayEOS_Float32le);
-   client.addChannelValue(millis()/1000);     
+   client.addChannelValue(millis());     
    if(client.sendPayload())
-     Serial.println("failed");
+     blink(2);
    else
-     Serial.println("ok");
-   
-   
-    
-  delay(5000);
+     blink(1);
+  delay(1500);
    
 }
 

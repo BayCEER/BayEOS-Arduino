@@ -22,6 +22,8 @@
  *
  ***************************************************************/
 
+
+
 // 128= ticks per second!
 #define TICKS_PER_SECOND 128
 #define RAINGAUGE_LAGTICKS 64
@@ -51,134 +53,26 @@
 #include <RF24.h>
 #include <BayRF24.h>
 
-volatile uint16_t ticks; //128 ticks per second
-volatile uint8_t action;
-#define TCONV_MASK 0x1
-#define TSEND_MASK 0x2
-#define SEND_MASK 0x4
-#define RESEND_MASK 0x8
-#define WINDSEND_MASK 0x10
-
-RTC_Timer2 myRTC;
-ISR(TIMER2_OVF_vect){
-  ticks++;
-  if((ticks % TICKS_PER_SECOND)==0){
-    myRTC._seconds += 1; 
-    uint8_t tick_mod = myRTC._seconds % SAMPLING_INT; 
-    switch(tick_mod){
-      case (1):
-        action|=WINDSEND_MASK;
-        break;
-      case (SAMPLING_INT-2):
-        action|=TCONV_MASK;
-        break;
-      case (SAMPLING_INT-1):
-        action|=TSEND_MASK;
-        break;
-      case 0:
-        action|=SEND_MASK;
-        break;
-      default:
-        action|=RESEND_MASK;
-    }
-  }
-}
 BayRF24 client=BayRF24(9,10);
 BayEOSBufferEEPROM myBuffer;
-
-float temp, hum, bat;
-
-
-#if WITHRAINGAUGE
-volatile float rain_count=0;
-volatile uint16_t rain_event_ticks;
-void rain_isr(void){
-  if(! digitalRead(2)){
-    if((ticks-rain_event_ticks)>RAINGAUGE_LAGTICKS){
-      rain_count++;
-      rain_event_ticks=ticks;
-    }
-  }
-}
-#endif
-
-#if WITHWIND
-volatile uint16_t wind_count=0;
-volatile uint8_t wind_event=0;
-volatile uint16_t wind_event_ticks;
-volatile uint16_t min_wind_ticks=65535;
-long windn=0;
-long windo=0;
-uint16_t wind_direction_count=0;
-void wind_isr(void){
-  if((ticks-wind_event_ticks)>4){
-    if((ticks-wind_event_ticks)<min_wind_ticks)
-      min_wind_ticks=ticks-wind_event_ticks;
-    wind_count++;
-    wind_event=1;
-    wind_event_ticks=ticks;
-  }
-}
-#endif
+//include some functions for low current board
+//expects BayEOS-Client to be called "client"
+#include <LowCurrentBoard.h>
 
 
-
-#if WITHDALLAS
-uint8_t channel;
-const byte* new_addr;
-
-DS18B20 ds=DS18B20(A1,10,4); //Allow four sensors on the bus - channel 11-14
-#endif
-
+float temp, hum;
 
 void setup()
 {
-  #if SERIALDEBUG
-  Serial.begin(9600);
-  Serial.println("Starting");
-  delay(20);
-  #endif
-  
-  Sleep.setupTimer2(1); //init timer2 to 128 ticks/s
   Wire.begin();
   client.init(RF24ADDRESS,RF24CHANNEL);
   myBuffer.init(0x50,65536L,0); //NO flush!!
   myBuffer.setRTC(myRTC,0); //Nutze RTC relativ!
   client.setBuffer(myBuffer,100); //use skip!
   
-  #if WITHRAINGAUGE
-  digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
-  attachInterrupt(0,rain_isr,FALLING);
-  rain_count=0;
-  #endif
-  
-  #if WITHWIND
-  pinMode(7,OUTPUT);
-  digitalWrite(7,HIGH); //Enable Pullup on Pin 3 == INT1
-  attachInterrupt(1,wind_isr,RISING);
-  wind_count=0;
-  wind_event=0;
-  windn=0;
-  windo=0;
-  #endif
-  
-  #if WITHDALLAS
-  ds.setAllAddrFromEEPROM();
-  // Search and Delete
-  while(channel=ds.checkSensors()){
-    new_addr=ds.getChannelAddress(channel);
-    client.sendMessage(String("DS:")+channel+"-"+ds.addr2String(new_addr));
-    ds.deleteChannel(new_addr);
-  }
-  while(new_addr=ds.search()){
-    if(channel=ds.getNextFreeChannel()){
-      ds.addSensor(new_addr,channel);
-      client.sendMessage(String("DS:")+channel+"+"+ds.addr2String(new_addr));
-    }
-  }
-  myRTC._seconds = SAMPLING_INT-4; //set RTC to a value to make sure that conversion is bevore sampling!
-  #endif
-  readVoltage();
+  initLCB(); //init time2   
+  readBatLCB(); 
+  startLCB();
 }
 
 void loop()
@@ -187,43 +81,40 @@ void loop()
  #if WITHWIND
  if(wind_event){
     wind_event=0;
-    windDirection();
+    readWindDirectionLCB();
  }
  #endif
+  
+  #if WITHRAINGAUGE
+  handleRainEventLCB();
+  #endif
+
 
   //ACTIONS 
   if(action){
-  #if WITHDALLAS
   //Do conversion (2sec) bevor sampling!
-  if(action & TCONV_MASK){
-    action&= ~TCONV_MASK;
+  if(ISSET_ACTION(0)){
+    UNSET_ACTION(0);
+    SHT2x.reset();
+  #if WITHDALLAS
     ds.t_conversion();
+  #endif
   }
   
-  
+  #if WITHDALLAS 
   //Send dallas (1sec) bevor sampling!
-  if(action & TSEND_MASK){
-    action&= ~TSEND_MASK;
-    
-    client.startDataFrame(BayEOS_ChannelFloat32le);
-    #if BUFFERDEBUG
-    client.addChannelValue(myBuffer.writePos(),10);
-    #endif
-    while(channel=ds.getNextChannel()){
-      if(! ds.readChannel(channel,&temp)){
-         client.addChannelValue(temp,channel);
-      }
-    }
-   client.sendOrBuffer();
-   readVoltage();
+  if(ISSET_ACTION(1)){
+    UNSET_ACTION(1);
+    readAndSendDallasLCB();
+    readBatLCB();
   }
   
   #endif
   
  
  #if WITHWIND
- if(action & WINDSEND_MASK){
-    action&= ~WINDSEND_MASK;
+  if(ISSET_ACTION(4)){
+    UNSET_ACTION(4);
   #if SERIALDEBUG
     Serial.println('w');
     Serial.println(((float)wind_count)/SAMPLING_INT);
@@ -249,11 +140,11 @@ void loop()
   
  
   // Measure and send 
-  if(action & SEND_MASK){
-    action&= ~SEND_MASK;
+  if(ISSET_ACTION(2)){
+    UNSET_ACTION(2);
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis());
-    client.addChannelValue(bat);
+    client.addChannelValue(batLCB);
     hum=SHT2x.GetHumidity();
     temp=SHT2x.GetTemperature();
 //    SHT2x.reset();
@@ -262,19 +153,15 @@ void loop()
     #if WITHRAINGAUGE
     client.addChannelValue(rain_count);
     #endif
-    client.sendOrBuffer();
+    sendOrBufferLCB();
     //Read battery voltage _after_ long uptime!!!
-    readVoltage();
-    #if SERIALDEBUG
-    Serial.println("send");
-    delay(20);
-    #endif
+    readBatLCB();
    
   } 
   
   // Resend from Buffer
-  if(action & RESEND_MASK){
-    action&= ~RESEND_MASK;
+  if(ISSET_ACTION(7)){
+    UNSET_ACTION(7);
     
     #if SERIALDEBUG
     Serial.println(myBuffer.available());
@@ -284,64 +171,6 @@ void loop()
     client.sendFromBuffer();
   }
   }
-  Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE); 
-}
-
-
-
-void windDirection(){
-  wind_direction_count++;
-  pinMode(POWER_PIN,OUTPUT);
-  digitalWrite(POWER_PIN,HIGH);
-  int adc=analogRead(A2);
-  digitalWrite(POWER_PIN,LOW);
-  pinMode(POWER_PIN,INPUT);
-  
-  if(adc<552){
-    windn+=7071;
-    windo+=7071;
-    return;
-  }
-  if(adc<602){
-    windo+=7071;
-    windn+=-7071;
-    return;
-  }
-  if(adc<683){
-    windo+=10000;
-    return;
-  }
-  if(adc<761){
-    windn+=7071;
-    windo+=-7071;
-    return;
-  }
-  if(adc<806){
-    windn+=10000;
-    return;
-  }
-  if(adc<857){
-    windn+=-7071;
-    windo+=-7071;
-    return;
-  }
-  if(adc<916){
-    windn+=-10000;
-    return;
-  }
-  windo+=-10000;
-  return; 
-}
-
-
-/* Read battery voltage */
-void readVoltage(){
-    analogReference(INTERNAL);
-    pinMode(POWER_PIN,OUTPUT);
-    digitalWrite(POWER_PIN,HIGH);
-    bat=1.1*320/100/1023*analogRead(A0);
-    digitalWrite(POWER_PIN,LOW);
-    pinMode(POWER_PIN,INPUT);
-    analogReference(DEFAULT);
+  sleepLCB();
 }
 

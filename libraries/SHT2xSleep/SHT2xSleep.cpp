@@ -40,6 +40,20 @@
  ******************************************************************************/
 
 /**********************************************************
+ * isPresent
+ *  looks whether the sht-Sensor is present on the OneWire-Bus.
+ *
+ * @return uint8_t - 1 if ok
+ **********************************************************/
+uint8_t SHT2xClass::isPresent(void)
+{
+    Wire.beginTransmission(eSHT2xAddress);
+    uint8_t error = Wire.endTransmission();
+    if(error == 0) return 1;
+    else return 0;
+
+}
+/**********************************************************
  * GetHumidity
  *  Gets the current humidity from the sensor.
  *
@@ -47,6 +61,7 @@
  **********************************************************/
 float SHT2xClass::GetHumidity(void)
 {
+	if(! isPresent()) return -999;
 	return (-6.0 + 125.0 / 65536.0 * (float)(readSensor(eRHumidityNoHoldCmd)));
 }
 
@@ -58,6 +73,7 @@ float SHT2xClass::GetHumidity(void)
  **********************************************************/
 float SHT2xClass::GetTemperature(void)
 {
+	if(! isPresent()) return -999;
 	return (-46.85 + 175.72 / 65536.0 * (float)(readSensor(eTempNoHoldCmd)));
 }
 

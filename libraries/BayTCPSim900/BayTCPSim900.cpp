@@ -84,6 +84,9 @@ uint8_t BayGPRSInterface::init(){
 }
 
 void BayGPRSInterface::softSwitch(void){
+#if SIM900_DEBUG
+	Serial.println("softSwitch");
+#endif
 	pinMode(_powerPin, OUTPUT);
 	digitalWrite(_powerPin,LOW);
 	delay(1000);

@@ -15,6 +15,7 @@ class HYT2xClass
 	unsigned int valuecap;
 
   public:
+    uint8_t isPresent(void);
     float GetHumidity(void);
     float GetTemperature(void);
     void triggerMeasurement(void);

@@ -52,6 +52,7 @@ class SHT2xClass
     float GetHumidity(void);
     float GetTemperature(void);
     void reset(void);
+    uint8_t isPresent(void);
 };
 
 extern SHT2xClass SHT2x;

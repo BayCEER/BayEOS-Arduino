@@ -4,6 +4,14 @@
 #include <RF24.h>
 #include <BayRF24.h>
 
+#define RF24ADDRESS 0x45c431ae12LL
+//#define RF24ADDRESS 0x45c431ae24LL
+//#define RF24ADDRESS 0x45c431ae48LL
+//#define RF24ADDRESS 0x45c431ae96LL
+//#define RF24ADDRESS 0x45c431aeabLL
+//#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x71
+
 volatile uint8_t ticks;
 SIGNAL(TIMER2_OVF_vect){
   ticks++;
@@ -14,7 +22,7 @@ float voltage;
 void setup()
 {
   Sleep.setupTimer2(2); //init timer2 to 0,0625sec
-  client.init(0x45c431aebfLL);
+  client.init(RF24ADDRESS,RF24CHANNEL);
   readVoltage();
 }
 

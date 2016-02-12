@@ -4,6 +4,13 @@
 #include <BayRF24.h>
 #include "printf.h"
 
+#define RF24ADDRESS 0x45c431ae12LL
+//#define RF24ADDRESS 0x45c431ae24LL
+//#define RF24ADDRESS 0x45c431ae48LL
+//#define RF24ADDRESS 0x45c431ae96LL
+//#define RF24ADDRESS 0x45c431aeabLL
+//#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x71
 
 
 /* ce,csn pins - adjust to your layout*/
@@ -12,7 +19,8 @@ BayRF24 client=BayRF24(9,10);
 
 void setup(void){
   Serial.begin(9600);
-  client.init(0x45c431ae12LL);
+  delay(300);
+  client.init(RF24ADDRESS,RF24CHANNEL);
   printf_begin(); 
   client.printDetails();
 }

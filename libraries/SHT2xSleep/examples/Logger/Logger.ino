@@ -41,40 +41,22 @@
 
 #define CONNECTED_PIN 4
 #define SAMPLING_INT 10
+#define POWER_PIN A3
 uint8_t connected=0;
 
-//TIME2 RTC - need to have a 32kHz quarz connected!!!!!
-volatile uint16_t ticks; //one tick depends on Sleep.setupTimer2
-// with 2-> tick is 0,0625sec
-// 16 ticks per second!
-RTC_Timer2 myRTC;
-ISR(TIMER2_OVF_vect){
-  ticks++;
-  if((ticks % 16)==0) 
-    myRTC._seconds += 1; 
-}
 
-#if WITHRAINGAUGE
-float rain_count=0;
-volatile uint8_t rain_event=0;
-volatile uint16_t rain_event_ticks;
-void rain_isr(void){
-  rain_event=1;
-  rain_event_ticks=ticks;
-}
-#endif
-
-#if WITHDALLAS
-uint8_t channel;
-const byte* new_addr;
-
-DS18B20 ds=DS18B20(A1,10,4); //Allow four sensors on the bus - channel 11-14
-#endif
 
 BaySerial client; 
 uint8_t i2c_addresses[]={0x50,0x51,0x52,0x53};
 BayEOSBufferMultiEEPROM myBuffer;
 BayEOSLogger myLogger;
+
+
+//include some functions for low current board
+//expects BayEOS-Client to be called "client"
+#include <LowCurrentBoard.h>
+
+
 
 float values[3];
 uint16_t count;
@@ -92,11 +74,11 @@ void measure(){
   values[1]+=SHT2x.GetHumidity();
   values[2]+=SHT2x.GetTemperature();
   SHT2x.reset();
-  digitalWrite(A3,HIGH);
+  digitalWrite(POWER_PIN,HIGH);
   analogReference(INTERNAL);
   values[0]+=1.1*320/100/1023*analogRead(A0);
   analogReference(DEFAULT);
-  digitalWrite(A3,LOW);
+  digitalWrite(POWER_PIN,LOW);
   count++; 
 
   client.startDataFrame(0x41);
@@ -123,10 +105,9 @@ void measure(){
 
 void setup()
 {
-  Sleep.setupTimer2(2); //init timer2 to 0,0625sec
   pinMode(CONNECTED_PIN, INPUT);
   digitalWrite(CONNECTED_PIN,HIGH);
-  pinMode(A3,OUTPUT);
+  pinMode(POWER_PIN,OUTPUT);
   myBuffer.init(4,i2c_addresses,65536L);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.setBuffer(myBuffer); 
@@ -136,29 +117,8 @@ void setup()
   myLogger._logging_disabled=1; 
   Wire.begin();
 
-  #if WITHRAINGAUGE
-  digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
-  attachInterrupt(0,rain_isr,FALLING);
-  rain_count=0;
-  rain_event=0;
-  #endif
+  initLCB(); //init time2   
 
-  #if WITHDALLAS
-  ds.setAllAddrFromEEPROM();
-  ticks-=33; //set ticks to a value to make sure that conversion is bevore sampling!
-  ds.t_conversion();
-  // Search and Delete
-  while(channel=ds.checkSensors()){
-    new_addr=ds.getChannelAddress(channel);
-    ds.deleteChannel(new_addr);
-  }
-  while(new_addr=ds.search()){
-    if(channel=ds.getNextFreeChannel()){
-      ds.addSensor(new_addr,channel);
-    }
-  }
-  #endif
-  
   
 }
 
@@ -169,14 +129,7 @@ void loop()
       myLogger._logging_disabled = 0;
 
   #if WITHRAINGAUGE
-  if(rain_event){
-      detachInterrupt(0);
-  }
-  if(rain_event && ((ticks-rain_event_ticks)>RAINGAUGE_LAGTICKS)){
-    attachInterrupt(0,rain_isr,FALLING);
-    rain_count++;
-    rain_event=0;
- }
+  handleRainEventLCB();  
   #endif
 
    
