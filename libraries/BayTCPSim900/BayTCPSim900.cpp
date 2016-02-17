@@ -20,8 +20,9 @@ uint8_t BayGPRSInterface::init(){
 	i_begin(_baud);
 	uint8_t count=0;
 	init_start:
-	printlnP("AT");
+	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
 	delay(100);
+	println();
 	printP("AT+IPR=");
 	println(_baud);
 	wait_forOK(200);
