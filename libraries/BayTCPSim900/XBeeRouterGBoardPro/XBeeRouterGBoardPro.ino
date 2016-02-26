@@ -16,7 +16,7 @@ SD:CS: 4
 
 #include <HardwareSerialNew.h>
  
-#define WITH_RF24_RX 0
+#define WITH_RF24_RX 1
 #define WITH_BAYEOS_LOGGER 0
  
 #include <EEPROM.h>
@@ -223,7 +223,6 @@ void setup(void) {
   UTFTprintP("FW ");
   UTFTprintlnP(__DATE__);
   TFT.flush();
-
 #if WITH_BAYEOS_LOGGER
   loggerclient.begin(LOGGER_BAUD_RATE);
 #endif
