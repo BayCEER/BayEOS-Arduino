@@ -11,18 +11,26 @@ SD:CS: 4
 
  Router - XBee-GPRS with SD-Card Buffer and Watchdog 
 
+
+This sketch uses a modified HardwareSerial implementation
+It will only complile as long as no access to the default 
+serial objects (Serial, Serial1 etc) is made.
+
+Please use SerialPlus, SerialPlus1 ... instead
+
+
  
  */
 
-#include <HardwareSerialNew.h>
+#include <HardwareSerialPlus.h>
  
 #define WITH_RF24_RX 1
 #define WITH_BAYEOS_LOGGER 0
- 
 #include <EEPROM.h>
 #include <XBee.h>
 #include <BayXBee.h>
 #include <BayEOS.h>
+#include <BaySerial.h>
 #include <SPI.h>
 #include <Base64.h>
 #include <BayTCP.h>
@@ -34,6 +42,7 @@ SD:CS: 4
 #include <Sleep.h>
 #include <SoftwareSerial.h>
 #include <Arduino.h>
+#include <BayHardwareSerialPlus.h>
 
 //UTFT-Output
 #include <UTFT.h>
@@ -66,22 +75,21 @@ BayTFTDebug TFT=BayTFTDebug(&myGLCD,utftbuffer,utftrows,utftcols);
 #define UTFTprintlnP(x) utftprintlnPGM(PSTR(x))
 
 #define SENDING_INTERVAL 120000
-#define RX_SERIAL Serial3
-#define TX_SERIAL Serial2
+#define RX_SERIAL SerialPlus3
+#define TX_SERIAL SerialPlus2
 
-BayGPRS client = BayGPRS(TX_SERIAL,46);
+BayGPRSPlus client = BayGPRSPlus(TX_SERIAL,46);
 
 #if WITH_BAYEOS_LOGGER
 #include <BayEOSLogger.h>
-#include <BaySerial.h>
 #define LOGGER_BAUD_RATE 38400
-BaySerial loggerclient=BaySerial();
+BaySerial loggerclient=BaySerialPlus();
 BayEOSLogger myLogger; 
 #endif
 
 
 //BayDebug client;
-BayXBee xbee_rx = BayXBee(RX_SERIAL);
+BayXBeePlus xbee_rx = BayXBeePlus();
 BayEOSBufferSDFat myBuffer;
 RTC_SIM900 myRTC;
 
@@ -254,7 +262,6 @@ void setup(void) {
 
   UTFTprintlnP("READ config");
   TFT.flush();
-
   client.readConfigFromFile("GPRS.TXT");
   for(uint8_t i=1;i<=10;i++){
     TFT.print(i);

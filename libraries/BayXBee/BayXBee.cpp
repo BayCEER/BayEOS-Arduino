@@ -1,6 +1,6 @@
 #include "BayXBee.h"
 
-BayXBee::BayXBee(uint8_t sleep_pin, uint8_t wakeup_time, int wait_time_for_response, uint16_t destination) : XBee(){
+BayXBeeInterface::BayXBeeInterface(uint8_t sleep_pin, uint8_t wakeup_time, int wait_time_for_response, uint16_t destination) : XBeeInterface(){
 	_tx=Tx16Request(BAYXBEE_GATEWAY, _payload, 100);
 	_txStatus = TxStatusResponse();
 	_sleepPin=sleep_pin;
@@ -10,12 +10,12 @@ BayXBee::BayXBee(uint8_t sleep_pin, uint8_t wakeup_time, int wait_time_for_respo
 }
 
 
-void BayXBee::begin(long baud){
+void BayXBeeInterface::begin(long baud){
 	if(_sleepPin){
 		pinMode(_sleepPin,OUTPUT);
 		digitalWrite(_sleepPin,LOW);
 	}
-	XBee::begin(baud);
+	i_begin(baud);
 }
 /*
 uint8_t hex2int(uint8_t c){
@@ -23,15 +23,15 @@ uint8_t hex2int(uint8_t c){
 	else return 10+c-'A';
 }
 */
-uint16_t getPANID(XBee &xbee){
+uint16_t BayXBeeInterface::getPANID(void){
 	uint8_t cmd[]={'I','D'};
 	AtCommandRequest atRequest = AtCommandRequest(cmd);
 	AtCommandResponse atResponse = AtCommandResponse();
-	xbee.send(atRequest);
-	if (xbee.readPacket(5000)) {
+	send(atRequest);
+	if (readPacket(5000)) {
 	    // got a response!
-	    if (xbee.getResponse().getApiId() == AT_COMMAND_RESPONSE) {
-	      xbee.getResponse().getAtCommandResponse(atResponse);
+	    if (getResponse().getApiId() == AT_COMMAND_RESPONSE) {
+	      getResponse().getAtCommandResponse(atResponse);
 
 	      if (atResponse.isOk()) {
 	    	  return ((uint16_t) atResponse.getValue()[0]<<8)+atResponse.getValue()[1];
@@ -41,13 +41,13 @@ uint16_t getPANID(XBee &xbee){
 	return 0;
 }
 
-uint8_t parseRX16(BayEOS &client,XBee &xbee,int rx_panid){
+uint8_t BayXBeeInterface::parseRX16(BayEOS& client,int rx_panid){
 	Rx16Response rx16 = Rx16Response();
 	Rx16IoSampleResponse rx16io = Rx16IoSampleResponse();
-	if (xbee.getResponse().isError())
+	if (getResponse().isError())
 		return 1; //Error
-	if (xbee.getResponse().getApiId() == RX_16_IO_RESPONSE) {
-		xbee.getResponse().getRx16IoSampleResponse(rx16io);
+	if (getResponse().getApiId() == RX_16_IO_RESPONSE) {
+		getResponse().getRx16IoSampleResponse(rx16io);
 		client.startRoutedFrame((int) rx16io.getRemoteAddress16(), rx_panid,
 				(uint8_t) rx16io.getRssi());
 		client.addToPayload((uint8_t) 0x1); //DataFrame
@@ -67,9 +67,9 @@ uint8_t parseRX16(BayEOS &client,XBee &xbee,int rx_panid){
 		return 0;
 	}
 
-	if (xbee.getResponse().getApiId() == RX_16_RESPONSE) {
+	if (getResponse().getApiId() == RX_16_RESPONSE) {
 		// got a rx16 packet
-		xbee.getResponse().getRx16Response(rx16);
+		getResponse().getRx16Response(rx16);
 		client.startRoutedFrame((int) rx16.getRemoteAddress16(), rx_panid,
 				(uint8_t) rx16.getRssi());
 		for (uint8_t i = 0; i < rx16.getDataLength(); i++) {
@@ -82,7 +82,7 @@ uint8_t parseRX16(BayEOS &client,XBee &xbee,int rx_panid){
 
 }
 
-uint8_t BayXBee::sendPayload(void){
+uint8_t BayXBeeInterface::sendPayload(void){
 	if(_sleepPin){
 		digitalWrite(_sleepPin,LOW);
 		delay(_wakeupTime);
@@ -110,7 +110,7 @@ uint8_t BayXBee::sendPayload(void){
 }
 
 #if ENABLE_RX
-uint8_t BayXBee::readIntoPayload(int timeout){
+uint8_t BayXBeeInterface::readIntoPayload(int timeout){
 	if (! readPacket(timeout))  return 2;
 	// got something
     if (getResponse().getApiId() != RX_16_RESPONSE ) return 3;

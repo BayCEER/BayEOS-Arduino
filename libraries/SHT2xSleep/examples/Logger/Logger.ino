@@ -46,7 +46,7 @@ uint8_t connected=0;
 
 
 
-BaySerial client; 
+BaySerial client(Serial); 
 uint8_t i2c_addresses[]={0x50,0x51,0x52,0x53};
 BayEOSBufferMultiEEPROM myBuffer;
 BayEOSLogger myLogger;

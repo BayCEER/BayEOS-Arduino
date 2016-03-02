@@ -2,14 +2,20 @@
 This is a example for a simple and cheap logger based on
 I2C EEPROM and TIMER2 RTC
 */
-
+/******************************************************
+ * 
+ * Sample Logger Sketch for Seeduino 2.2 with SD-Card
+ * 
+ * Uses Watchdog
+ * 
+ *****************************************************/
 
 #include <EEPROM.h> 
 #include <Wire.h>
 #include <RTClib.h>
 #include <BayEOSBuffer.h>
-#include <I2C_eeprom.h>
-#include <BayEOSBufferEEPROM.h>
+#include <SdFat.h>
+#include <BayEOSBufferSDFat.h>
 #include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
@@ -20,16 +26,10 @@ I2C EEPROM and TIMER2 RTC
 
 uint8_t connected=0;
 
-//TIME2 RTC - need to have a 32kHz quarz connected!!!!!
-RTC_Timer2 myRTC;
-ISR(TIMER2_OVF_vect){
-  myRTC._seconds += 1; 
-}
+DS3231 myRTC; //Seduino 2.2
 
-BaySerial client(Serial); 
-//uint8_t i2c_addresses[]={0x50};
-uint8_t i2c_addresses[]={0x50,0x51};
-BayEOSBufferMultiEEPROM myBuffer;
+BaySerial client(Serial); //Note giving the Serial Object is mandatory!!
+BayEOSBufferSDFat myBuffer;
 BayEOSLogger myLogger;
 
 
@@ -42,16 +42,16 @@ void measure(){
 
 
 void setup() {
-  Sleep.setupTimer2(); //init to 1 sec!!
+  Sleep.setupWatchdog(5); //init watchdog timer to 0.5 sec
   pinMode(CONNECTED_PIN, INPUT);
   digitalWrite(CONNECTED_PIN,HIGH);
-  myBuffer.init(2,i2c_addresses,65536L);
+  myBuffer=BayEOSBufferSDFat(200000000,1);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.setBuffer(myBuffer); 
   //register all in BayEOSLogger
   myLogger.init(client,myBuffer,myRTC,60); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
-  myLogger._logging_disabled=1; 
+  myBuffer=BayEOSBufferSDFat(200000000,1);
 }
 
 void loop() {
@@ -66,7 +66,7 @@ void loop() {
   //sleep until timer2 will wake us up...
   if(! connected){
     myLogger._mode=0;
-    Sleep.sleep(TIMER2_ON,SLEEP_MODE_PWR_SAVE);
+    Sleep.sleep();
   }
   
   //check if still connected

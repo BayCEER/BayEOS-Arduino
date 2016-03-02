@@ -1,39 +1,40 @@
 /*
-GBoardPro XBeeRouter
-
-
+IBoardPro XBeeRouter
 
 SPEC:
 XBee: Serial3
-GPRS: Serial2 RST: 47 PWR: 46
-Logger: Serial 
 SD:CS: 4
 
- Router - XBee-GPRS with SD-Card Buffer and Watchdog 
+ Router - XBee-Ethernet with SD-Card Buffer and Watchdog 
+
+This sketch uses a modified HardwareSerial implementation
+It will only complile as long as no access to the default 
+serial objects (Serial, Serial1 etc) is made.
+
+Please use SerialPlus, SerialPlus1 ... instead
 
  
- */
+*/
 
-#include <HardwareSerialNew.h>
+#include <HardwareSerialPlus.h>
  
 #define WITH_RF24_RX 1
-#define WITH_BAYEOS_LOGGER 0
- 
 #include <EEPROM.h>
 #include <XBee.h>
 #include <BayXBee.h>
 #include <BayEOS.h>
+#include <BaySerial.h>
 #include <SPI.h>
 #include <Base64.h>
 #include <BayTCP.h>
-#include <BayTCPSim900.h>
+#include <Ethernet.h>
+#include <BayTCPEth.h>
 #include <BayDebug.h>
 #include <BayEOSBuffer.h>
 #include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
 #include <Sleep.h>
-#include <SoftwareSerial.h>
-#include <Arduino.h>
+#include <BayHardwareSerialPlus.h>
 
 //UTFT-Output
 #include <UTFT.h>
@@ -66,22 +67,18 @@ BayTFTDebug TFT=BayTFTDebug(&myGLCD,utftbuffer,utftrows,utftcols);
 #define UTFTprintlnP(x) utftprintlnPGM(PSTR(x))
 
 #define SENDING_INTERVAL 120000
-#define RX_SERIAL Serial3
-#define TX_SERIAL Serial2
+#define RX_SERIAL SerialPlus3
 
-BayGPRS client = BayGPRS(TX_SERIAL,46);
+BayEth client;
+byte mac[6];
+byte ip[4];
+byte mask[4];
+byte default_gw[4];
 
-#if WITH_BAYEOS_LOGGER
-#include <BayEOSLogger.h>
-#include <BaySerial.h>
-#define LOGGER_BAUD_RATE 38400
-BaySerial loggerclient=BaySerial();
-BayEOSLogger myLogger; 
-#endif
 
 
 //BayDebug client;
-BayXBee xbee_rx = BayXBee(RX_SERIAL);
+BayXBeePlus xbee_rx = BayXBeePlus(RX_SERIAL);
 BayEOSBufferSDFat myBuffer;
 RTC_SIM900 myRTC;
 
@@ -223,9 +220,6 @@ void setup(void) {
   UTFTprintP("FW ");
   UTFTprintlnP(__DATE__);
   TFT.flush();
-#if WITH_BAYEOS_LOGGER
-  loggerclient.begin(LOGGER_BAUD_RATE);
-#endif
  
   UTFTprintlnP("Starting XBee... ");
   TFT.flush();
@@ -234,7 +228,7 @@ void setup(void) {
   xbee_rx.setSerial(RX_SERIAL);
   xbee_rx.begin(38400);
   while (!rx_panid) {
-  rx_panid = xbee_rx.getPANID();
+    rx_panid = xbee_rx.getPANID();
   }
   UTFTprintP("PANID: ");
   TFT.println(rx_panid);
@@ -254,62 +248,28 @@ void setup(void) {
 
   UTFTprintlnP("READ config");
   TFT.flush();
-
-  client.readConfigFromFile("GPRS.TXT");
+  client.readConfigFromFile("ETH.TXT");
   for(uint8_t i=1;i<=10;i++){
     TFT.print(i);
     UTFTprintP(": ");
     TFT.println(*client.getConfigPointer((i-1)));
   }
   TFT.flush();
-//  client.softSwitch();
+  memcpy(mac,client.parseMAC(*client.getConfigPointer(BayTCP_CONFIG_MAC)),6);
+  memcpy(ip,client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_IP)),4);
+  memcpy(mask,client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_MASK)),4);
+  memcpy(default_gw,client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_DEFAULT_GW)),4);
   if(*(*client.getConfigPointer(1)+2)=='9'){
      client._urlencode=0;
      UTFTprintlnP("Using old port 8090 without urlencode");
      TFT.flush();
   }
+  if(ip[0])
+    Ethernet.begin(mac, ip, default_gw, default_gw, mask);
+  else
+    Ethernet.begin(mac);
 
 
-#if WITH_BAYEOS_LOGGER
-  //Write Name to EEPROM (for BayLogger!)
-  EEPROM.write(EEPROM_NAME_OFFSET, EEPROM_NAME_STARTBYTE);
-  uint8_t i=0;
-  char c;
-  while(c=*(*client.getConfigPointer(2)+i)){
-     EEPROM.write(EEPROM_NAME_OFFSET + i + 1, c);
-     i++;
-  }
-  EEPROM.write(EEPROM_NAME_OFFSET + i + 1, 0);
-#endif
-
-  UTFTprintP("Starting GPRS...");
-  TFT.flush();
-  switch(client.begin(38400)){
-    case 0:
-      UTFTprintlnP("OK");
-      break;
-    case 1:
-      UTFTprintlnP("Communication Error");
-      break;
-    case 2:
-      UTFTprintlnP("PIN Error");
-      break;
-    case 3:
-      UTFTprintlnP("PIN Locked");
-      break;
-    case 4:
-      UTFTprintlnP("No Network");
-      break;
-    case 5:
-      UTFTprintlnP("No GPRS");
-      break;
-    case 6:
-      UTFTprintlnP("No SIM Card");
-      break;
-  }
-  TFT.flush();
- 
-  myRTC.adjust(client.now());
 
   myBuffer = BayEOSBufferSDFat(2000000000, 1); //Append mode!
   UTFTprintlnP("Buffer Ok");
@@ -319,8 +279,7 @@ void setup(void) {
   TFT.flush();
   
  
-  myBuffer.setRTC(myRTC, 0); //Relative Mode...
-  client.setBuffer(myBuffer, 0);
+   client.setBuffer(myBuffer, 0);
 #if WITH_BAYEOS_LOGGER
   loggerclient.setBuffer(myBuffer);
   myLogger.init(loggerclient,myBuffer,myRTC);
@@ -328,9 +287,6 @@ void setup(void) {
   myBuffer.seekReadPointer(pos); //Logger.init moves Read pointer!
   
   
-  UTFTprintP("RSSI:");
-  TFT.println(client.getRSSI());
-
   UTFTprintlnP("Setup ok :-)");
   TFT.flush();
   
@@ -360,27 +316,16 @@ void setup(void) {
 void loop(void) {
   wdcount = 0; //clear watchdog count!
 
-        if((tft_autooff-millis())>UTFT_AUTOOFF){
-          tftSwitchOff();
-        }
+  if((tft_autooff-millis())>UTFT_AUTOOFF){
+       tftSwitchOff();
+  }
         
-        if(tft_switch){
-          tft_switch=0;
-          if(! TFT.isOn())  tftSwitchOn();
-          tft_autooff=millis()+UTFT_AUTOOFF;
-            
-        }
+  if(tft_switch){
+      tft_switch=0;
+      if(! TFT.isOn())  tftSwitchOn();
+      tft_autooff=millis()+UTFT_AUTOOFF;
+  }
         
-        #if WITH_BAYEOS_LOGGER
-        //Save read pos every hour
-        if( ((millis() - last_eeprom)> 3600000 )  || startupframe){
-           pos = myBuffer.readPos(); 
-     for (uint8_t i = 0; i < 4; i++) {
-    EEPROM.write(EEPROM_READ_POS_OFFSET + i, *(&pos + i));
-           }
-           last_eeprom= millis();        
-        } 
-        #endif
             
   if ((millis() - last_alive) > SENDING_INTERVAL || startupframe) {
                 startupframe=0;
@@ -392,20 +337,12 @@ void loop(void) {
     client.addChannelValue(tx_error);
     client.addChannelValue(rx_ok);
     client.addChannelValue(rx_error);
-                client.addChannelValue(myRTC.now().get());
-                client.addChannelValue(client.now().get());
-                client.addChannelValue(client.getRSSI());
-                client.addChannelValue((float)analogRead(A4)/1023*3.3*10);
-            client.writeToBuffer();
-        }
+    client.addChannelValue((float)analogRead(A4)/1023*3.3*10);
+    client.writeToBuffer();
+ 
         
-  if (
-#if WITH_BAYEOS_LOGGER
-! myLogger._mode && 
-# endif
-  ((millis() - last_send) > SENDING_INTERVAL || myBuffer.available()>2000 || startupsend)) {
-    last_send = millis();
-        
+  if (((millis() - last_send) > SENDING_INTERVAL || myBuffer.available()>2000 || startupsend)) {
+    last_send = millis();    
     UTFTprintP("Sending ");
     if ( (tx_res=client.sendMultiFromBuffer()) ){
       UTFTprintP("failed - ");
@@ -416,25 +353,12 @@ void loop(void) {
                 } else {
                         rep_tx_error=0;
                         startupsend=0;
-      UTFTprintlnP("OK");
-                        unsigned long simTime=client.now().get();
-                        unsigned long rtcTime=myRTC.now().get();
-                        if((simTime>rtcTime && (simTime-rtcTime)<120)
-                         || (simTime>rtcTime && (rtcTime-simTime)<120) ){
-                           UTFTprintlnP("setting RTC");
-               myRTC.adjust(DateTime(simTime));
-                         } 
+                        UTFTprintlnP("OK");
+                } 
 
-                }
+          }
                 TFT.flush();
  
-                if(rep_tx_error%5==4){
-                  client.softSwitch();
-                  client.startFrame(BayEOS_Message);
-                  client.addToPayload("TX-ERROR SoftSwitch");
-                  client.writeToBuffer();
-
-                }
   }
         
    handle_RX_data();

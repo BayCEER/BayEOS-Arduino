@@ -1,7 +1,7 @@
 #include <BayEOS.h>
+#include <BaySerial.h>
 #include <SoftwareSerial.h>
 #include <BaySoftwareSerial.h>
-
 
 
 BaySoftwareSerial client=BaySoftwareSerial(8,9);

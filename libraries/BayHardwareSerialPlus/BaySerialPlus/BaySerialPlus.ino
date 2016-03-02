@@ -1,9 +1,11 @@
+#include <HardwareSerialPlus.h>
 #include <BayEOS.h>
 #include <BaySerial.h>
+#include <BayHardwareSerialPlus.h>
 
 
 
-BaySerial client=BaySerial(Serial);
+BaySerialPlus client=BaySerialPlus();
 
 
 void setup(void){

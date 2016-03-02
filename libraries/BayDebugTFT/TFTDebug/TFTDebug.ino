@@ -5,13 +5,19 @@
 #include <TFTStream.h>
 #include <BayDebugTFT.h>
 
+/*
 UTFT myGLCD(ITDB18SP,33,32,31,35,34);
-//36+37 for VCC + GND
 //UTFT myGLCD(ITDB18SP,35,34,33,37,36);   //IBoard pro 
-
-#define UTFT_AUTOOFF 30
 #define utftcols 16
 #define utftrows 13
+*/
+UTFT myGLCD(ITDB24E_8,38,39,40,41); //240x320 Parallel
+#define utftcols 30
+#define utftrows 26
+
+//36+37 for VCC + GND
+
+#define UTFT_AUTOOFF 30
 
 char utftbuffer[utftrows*(utftcols+1)];
 

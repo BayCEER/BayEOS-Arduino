@@ -649,6 +649,8 @@ private:
 	uint8_t _frameId;
 };
 
+
+
 // TODO add reset/clear method since responses are often reused
 /**
  * Primary interface for communicating with an XBee Radio.
@@ -671,21 +673,11 @@ private:
  *
  * \author Andrew Rapp
  */
-class XBee {
+class XBeeInterface {
 public:
-	XBee();
-	/**
-	 * Reads all available serial bytes until a packet is parsed, an error occurs, or the buffer is empty.
-	 * You may call <i>xbee</i>.getResponse().isAvailable() after calling this method to determine if
-	 * a packet is ready, or <i>xbee</i>.getResponse().isError() to determine if
-	 * a error occurred.
-	 * <p/>
-	 * This method should always return quickly since it does not wait for serial data to arrive.
-	 * You will want to use this method if you are doing other timely stuff in your loop, where
-	 * a delay would cause problems.
-	 * NOTE: calling this method resets the current response, so make sure you first consume the
-	 * current response
-	 */
+	XBeeInterface();
+
+
 	void readPacket();
 	/**
 	 * Waits a maximum of <i>timeout</i> milliseconds for a response packet before timing out; returns true if packet is read.
@@ -701,7 +693,6 @@ public:
 	/**
 	 * Starts the serial connection at the supplied baud rate
 	 */
-	void begin(long baud);
 	void getResponse(XBeeResponse &response);
 	/**
 	 * Returns a reference to the current response
@@ -716,16 +707,15 @@ public:
 	/**
 	 * Returns a sequential frame id between 1 and 255
 	 */
+
+
 	uint8_t getNextFrameId();
-	/**
-	 * Specify the serial port.  Only relevant for Arduinos that support multiple serial ports (e.g. Mega)
-	 */
-	void setSerial(HardwareSerial &serial);
-private:
-	bool available();
-	uint8_t read();
-	void flush();
-	void write(uint8_t val);
+	virtual void i_begin(long baud) = 0;
+	virtual int i_available() = 0;
+	virtual int read() = 0;
+	virtual void flush() = 0;
+	virtual size_t write(uint8_t val) = 0;
+protected:
 	void sendByte(uint8_t b, bool escape);
 	void resetResponse();
 	XBeeResponse _response;
@@ -738,9 +728,39 @@ private:
 	uint8_t _nextFrameId;
 	// buffer for incoming RX packets.  holds only the api specific frame data, starting after the api id byte and prior to checksum
 	uint8_t _responseFrameData[MAX_FRAME_DATA_SIZE];
-	HardwareSerial* _serial;
 };
 
+class XBee : public XBeeInterface {
+private:
+	HardwareSerial* _serial;
+
+public:
+	XBee():XBeeInterface()
+	{
+		_serial = &Serial;
+	}
+
+	void setSerial(HardwareSerial &serial){
+		_serial = &serial;
+	}
+
+	int i_available(void){
+		return _serial->available();
+	}
+	void i_begin(long baud){
+		_serial->begin(baud);
+	}
+	void flush(void){
+		_serial->flush();
+	}
+	int read(void){
+		return _serial->read();
+	}
+	size_t write(uint8_t c){
+		return _serial->write(c);
+	}
+
+};
 /**
  * All TX packets that support payloads extend this class
  */

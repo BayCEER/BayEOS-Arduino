@@ -3,8 +3,9 @@
 
 #include <inttypes.h>
 
-#include <UTFT.h>
 #include "Stream.h"
+
+#include <UTFT.h>
 
 extern uint8_t SmallFont[];
 
@@ -29,7 +30,11 @@ class TFTStream : virtual public Stream
     void lcdOn(void){_utft->lcdOn();};
 
 
-    virtual size_t write(uint8_t);
+    size_t write(uint8_t);
+    inline size_t write(unsigned long n) { return write((uint8_t)n); }
+    inline size_t write(long n) { return write((uint8_t)n); }
+    inline size_t write(unsigned int n) { return write((uint8_t)n); }
+    inline size_t write(int n) { return write((uint8_t)n); }
     using Print::write; // pull in write(str) and write(buf, size) from Print
     void flush(void);
     bool isOn(void){return _on;};
@@ -41,8 +46,8 @@ class TFTStreamDev : public TFTStream
 	TFTStreamDev(UTFT *utft, char *tx_buffer, uint8_t rows, uint8_t cols):
 		TFTStream(utft, tx_buffer, rows, cols){};
 	int available(void){return 0;};
-    int peek(void){return 0;};
-    int read(void){return 0;};
+    int peek(void){return -1;};
+    int read(void){return -1;};
 
 };
 #endif

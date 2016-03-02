@@ -1,16 +1,17 @@
+#include <HardwareSerialPlus.h>
 #include <BayEOS.h>
 #include <SoftwareSerial.h>
 #include <SdFat.h>
 #include <Base64.h>
 #include <BayTCP.h>
 #include <BayTCPSim900.h>
+#include <BayHardwareSerialPlus.h>
 
 //Define Serial and powerPin - Depends on the Board
-//BayGPRS client=BayGPRS(Serial3,46);
-BayGPRS client=BayGPRS();
+//BayGPRSPlus client=BayGPRSPlus(SerialPlus3,46);
+BayGPRSPlus client=BayGPRSPlus();
 
 void setup(void){
-  Serial.begin(9600);
 //  client.softSwitch();
   client.readConfigFromStringPGM(
   PSTR("132.180.112.128|80|gateway/frame/saveFlat|import|import|TestGPRS|pinternet.interkom.de|||1802|"));

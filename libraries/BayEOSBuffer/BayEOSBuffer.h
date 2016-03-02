@@ -20,9 +20,7 @@
 #include <Arduino.h>
 
 
-#ifndef SERIAL_DEBUG
 #define SERIAL_DEBUG 0
-#endif
 //RTC-Stuff...
 #define SECONDS_PER_DAY 86400L
 

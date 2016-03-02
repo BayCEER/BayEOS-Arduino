@@ -1,17 +1,12 @@
 #include "BaySerial.h"
-BaySerial::BaySerial(HardwareSerial &serial,int timeout):HardwareSerial(serial){
-	_timeout=timeout;
-}
-
-
-uint8_t BaySerial::readByte(int timeout,bool escape){
+uint8_t BaySerialInterface::readByte(int timeout,bool escape){
 	_read_timeout=false;
 	uint8_t b=0;
 	while(timeout>0){
-        if(available()){
+        if(i_available()){
         	b = read();
         	if (escape && b == ESCAPE) {
-        		if (available()) {
+        		if (i_available()) {
         			b = read();
         			b= 0x20 ^ b;
         		} else {
@@ -34,11 +29,8 @@ uint8_t BaySerial::readByte(int timeout,bool escape){
 
 }
 
-void BaySerial::begin(long baud){
-	HardwareSerial::begin(baud);
-}
 
-void BaySerial::sendByte(uint8_t b, bool escape) {
+void BaySerialInterface::sendByte(uint8_t b, bool escape) {
 
 	if (escape && (b == START_BYTE || b == ESCAPE || b == XON || b == XOFF || b=='\n' || b=='\r')) {
 		write(ESCAPE);
@@ -48,7 +40,7 @@ void BaySerial::sendByte(uint8_t b, bool escape) {
 	}
 }
 
-void BaySerial::sendAck(uint8_t b){
+void BaySerialInterface::sendAck(uint8_t b){
 	sendByte(START_BYTE,false);
 	sendByte(0x1,true);
 	sendByte(0x2,true);
@@ -57,7 +49,7 @@ void BaySerial::sendAck(uint8_t b){
 	sendByte(0xff-(b+0x2),true); //RICHTIG!
 }
 
-void BaySerial::sendFrame(void){
+void BaySerialInterface::sendFrame(void){
 	sendByte(START_BYTE,false);
 	sendByte(getPacketLength(),true);
 	sendByte(0x1,true);
@@ -70,7 +62,7 @@ void BaySerial::sendFrame(void){
 
 }
 
-uint8_t BaySerial::sendPayload(void){
+uint8_t BaySerialInterface::sendPayload(void){
 	if(_break) return TX_BREAK;
 	sendFrame();
 	uint8_t res=0;
@@ -79,12 +71,12 @@ uint8_t BaySerial::sendPayload(void){
 	else return 1;
 
 }
-uint8_t BaySerial::readIntoPayload(int timeout) {
+uint8_t BaySerialInterface::readIntoPayload(int timeout) {
 	_read_timeout=timeout;
 	return readPacket(API_DATA);
 }
 
-uint8_t BaySerial::readPacket(uint8_t type) {
+uint8_t BaySerialInterface::readPacket(uint8_t type) {
 	_pos=0;
 	uint8_t b=0;
 	while(true){
@@ -136,3 +128,9 @@ uint8_t BaySerial::readPacket(uint8_t type) {
 		return 1;
 	}
 }
+
+BaySerial::BaySerial(HardwareSerial &serial,int timeout){
+   BaySerialInterface::_timeout=timeout;
+   _serial=&serial;
+}
+

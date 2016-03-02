@@ -7,7 +7,7 @@
 
 
 
-BaySerial client=BaySerial();
+BaySerial client=BaySerial(Serial);
 
 
 void setup(void){

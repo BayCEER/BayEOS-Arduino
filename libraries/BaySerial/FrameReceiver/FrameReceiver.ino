@@ -5,7 +5,7 @@
 BaySerial rx_client=BaySerial(Serial1);
 
 void setup(void){
-   rx_client.begin(19200);
+   rx_client.begin(38400);
    Serial.begin(9600);
    Serial.println("Receiver started...");
 }

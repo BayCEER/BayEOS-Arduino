@@ -104,7 +104,7 @@ uint8_t BayESP8266Interface::sendATE0(void){
 }
 
 
-BayESP8266::BayESP8266(HardwareSerial &serial,int8_t resetPin):HardwareSerial(serial){
+BayESP8266::BayESP8266(HardwareSerial &serial,int8_t resetPin):_serial(serial){
 	_urlencode=1;
 	_resetPin=resetPin;
 }

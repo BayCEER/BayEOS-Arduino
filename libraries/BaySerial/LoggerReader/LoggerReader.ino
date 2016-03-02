@@ -1,10 +1,3 @@
-/*
- ATTENTION!
- This file will only complile replacing the original 
- arduino-1.0/hardware/arduino/cores/arduino/HardwareSerial.cpp
- arduino-1.0/hardware/arduino/cores/arduino/HardwareSerial.h 
- by the version distributed with the BayEOS arduino libraries
-*/
 
 #include <BayEOS.h>
 #include <BayEOSBuffer.h>
@@ -13,12 +6,6 @@
 
 BaySerial rx_client=BaySerial(Serial2);
 BayDebug client;
-/*
- * Create a huge ring buffer to store incoming RX Packages while
- * arduino is busy with GPRS...
- */
-#define RX_BUFFER_SIZE 1024
-unsigned char buffer[RX_BUFFER_SIZE];
 
 uint8_t rp;
 unsigned long read_pos;
@@ -26,7 +13,6 @@ DateTime now;
 
 
 void setup(void){
-   rx_client.setRxBuffer(buffer, RX_BUFFER_SIZE);
    rx_client.begin(38400);
    client.begin(9600);
    Serial.println("Receiver started...");

@@ -14,7 +14,7 @@
 
 //R8025 myRTC; //Seduino 2.0
 DS3231 myRTC; //Seduino 2.2
-BaySerial client=BaySerial();
+BaySerial client=BaySerial(Serial);
 BayEOSBufferSDFat  myBuffer;
 BayEOSLogger myLogger; 
 

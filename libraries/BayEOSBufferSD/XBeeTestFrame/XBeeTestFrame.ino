@@ -6,7 +6,7 @@
 #include <BayXBee.h>
 
 
-BayXBee client=BayXBee(); 
+BayXBee client=BayXBee(Serial); 
 BayEOSBufferSD myBuffer;
 unsigned long last_data;
 unsigned long last_buffered_data;

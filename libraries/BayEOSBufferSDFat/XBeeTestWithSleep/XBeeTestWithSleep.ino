@@ -11,7 +11,7 @@
 #define XBEE_SLEEP_PIN 5
 
 
-BayXBee client=BayXBee(XBEE_SLEEP_PIN,15,1000); 
+BayXBee client=BayXBee(Serial,XBEE_SLEEP_PIN,15,1000); 
 BayEOSBufferSDFat myBuffer;
 unsigned long last_data;
 DS3231 myRTC; //Seduino 2.2

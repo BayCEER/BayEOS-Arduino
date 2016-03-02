@@ -114,37 +114,37 @@ public:
 
 };
 
-class BayGPRS : private HardwareSerial, public BayGPRSInterface {
+class BayGPRS : public BayGPRSInterface {
 public:
 	/**
 	 * Constructor
 	 */
-	BayGPRS(HardwareSerial &serial=Serial, uint8_t powerPin=9);
+	BayGPRS(HardwareSerial &serial, uint8_t powerPin=9);
 	uint8_t begin(long baud);
 private:
-	int available(void){return HardwareSerial::available();}
+	HardwareSerial* _serial; //Pointer to existing serial object!!
+	int available(void){return _serial->available();}
 	int read(void){
 #if SIM900_DEBUG
-		int c=HardwareSerial::read();
+		int c=_serial->read();
 		if(c!=-1) Serial.write(c);
 		return c;
 #else
-		return HardwareSerial::read();
+		return _serial->read();
 #endif
 
 	}
-	void i_begin(long b){ HardwareSerial::begin(b);}
-	int i_available(void){return HardwareSerial::available();}
+	void i_begin(long b){ _serial->begin(b);}
+	int i_available(void){return _serial->available();}
 	size_t write(uint8_t b){
 #if SIM900_DEBUG
 		Serial.write(b);
 #endif
-		return HardwareSerial::write(b);
+		return _serial->write(b);
 	}
-    int peek(void){return HardwareSerial::peek();};
-    void flush(void){HardwareSerial::flush();};
+    int peek(void){return _serial->peek();};
+    void flush(void){_serial->flush();};
 };
-
 
 class BayGPRSsoftserial : private SoftwareSerial, public BayGPRSInterface {
 public:

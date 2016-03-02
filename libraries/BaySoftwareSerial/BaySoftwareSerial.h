@@ -18,73 +18,37 @@
 #ifndef BaySoftwareSerial_h
 #define BaySoftwareSerial_h
 
-#define START_BYTE 0x7e
-#define ESCAPE 0x7d
-#define XON 0x11
-#define XOFF 0x13
-
-#define API_DATA 0x1
-#define API_ACK 0x2
-
-#define TX_OK 0x1
-#define TX_CHECKSUM_FAILED 0x2
-#define TX_BREAK 0x3
-
-#include <inttypes.h>
-#include <BayEOS.h>
 #include <SoftwareSerial.h>
-#include <Arduino.h>
+#include <BaySerial.h>
 
-
-class BaySoftwareSerial : public SoftwareSerial, public BayEOS {
+class BaySoftwareSerial : public SoftwareSerial, public BaySerialInterface {
 public:
 	/**
 	 * Constructor
 	 */
 	BaySoftwareSerial(uint8_t rxPin, uint8_t txPin ,int timeout=10000);
 
-	/**
-	 * Send the BayEOS payload
-	 * returns 0 for success
-	 * 1 == no success
-	 * 2 == timeout
-	 * 3 == break
-	 */
-	uint8_t sendPayload(void);
-
-	/**
-	 * Read a frame from rx
-	 * returns 0 for success
-	 * 1 == no success (Checksum failure)
-	 * 2 == timeout
-	 */
-	uint8_t readIntoPayload(int timeout=5000);
-
-
-	void sendTXBreak(void){
-		sendAck(TX_BREAK);
-	}
-
 	int available(void){
 		return SoftwareSerial::available();
 	}
-
-	void begin(long baud);
-protected:
-	uint8_t readPacket(uint8_t type=API_DATA);
-	void sendByte(uint8_t b, bool escape);
-	uint8_t readByte(int timeout, bool escape);
-	void sendAck(uint8_t b);
-
-	bool _escape;
-	bool _read_timeout;
-	int  _timeout;
-	uint8_t _length;
-	uint8_t _checksumTotal;
-	uint8_t _api;
-	uint8_t _ack;
-	uint8_t _pos;
-	uint8_t _break;
+	int i_available(void){
+		return SoftwareSerial::available();
+	}
+	void begin(long baud){
+		SoftwareSerial::begin(baud);
+	}
+	void flush(void){
+		SoftwareSerial::flush();
+	}
+	void end(void){
+		SoftwareSerial::end();
+	}
+	int read(void){
+		return SoftwareSerial::read();
+	}
+	size_t write(uint8_t c){
+		return SoftwareSerial::write(c);
+	}
 
 };
 

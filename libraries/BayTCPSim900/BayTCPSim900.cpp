@@ -45,28 +45,28 @@ uint8_t BayGPRSInterface::init(){
 				printP("AT+CPIN=\"");
 				print(_pin);
 				println("\"");
-				wait_forOK(2000);
+				if(! wait_forOK(20000)) {
+				  _pinWrong=1;
+				  return 2; //Wrong PIN
+				}
 		#if BayTCP_DEBUG_INPUT
 				Serial.print(_pin);
 				Serial.println("\"");
 		#endif
 				printlnP("AT+CPIN?");
-				if(wait_for("READY",2000)){
-					_pinWrong=1;
-					return 2; //Wrong PIN
-				}
+				wait_for("READY",20000);
 			}
 
 			// Waiting for Modem to Connect
 			for(i=0;i<100;i++){
 				printlnP("AT+CREG?");
-				if(! wait_for(",1",200)) break;
+				if(! wait_for(",1",2000)) break;
 				delay(100);
 			}
 			if(i==100) return 4;
 			for(i=0;i<100;i++){
 				printlnP("AT+CGATT?");
-				if(! wait_for("1",200)) break;
+				if(! wait_for("1",2000)) break;
 				delay(100);
 			}
 			if(i==100) return 5;
@@ -104,11 +104,11 @@ uint8_t BayGPRSInterface::setClock(const char* time){
 	printP("AT+CCLK=\"");
 	print(time);
 	printlnP("\"");
-	SerialprintP("setting Clock to:");
-	Serial.print(time);
-	if(wait_forOK(1000)) SerialprintlnP("failed");
-	else SerialprintlnP("ok");
-	return 1;
+//	SerialprintP("setting Clock to:");
+//	Serial.print(time);
+//	if(wait_forOK(1000)) SerialprintlnP("failed");
+//	else SerialprintlnP("ok");
+//	return 1;
 	return wait_forOK(1000);
 }
 
@@ -137,7 +137,7 @@ DateTime BayGPRSInterface::now(void){
 	dt=DateTime(dt.get()-(3600L*atoi(_base64buffer+17))); //Adjust for Timezone!
 	return dt;
 }
-
+/*
 void BayTCPInterface::serialprintPGM(const char *str){
 	char c;
 	while (true) {
@@ -152,7 +152,7 @@ void BayTCPInterface::serialprintlnPGM(const char *str){
 	serialprintPGM(str);
 	Serial.println();
 }
-
+*/
 void BayGPRSInterface::flushMTU(void){
     write((uint8_t) 0x1a);
     wait_forOK(2000);
@@ -252,7 +252,8 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 }
 
 
-BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin):HardwareSerial(serial){
+BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin){
+	_serial=&serial;
 	_powerPin=powerPin;
 	_urlencode=1;
 }
@@ -271,3 +272,4 @@ uint8_t BayGPRSsoftserial::begin(long baud){
 	_baud=baud;
 	return init();
 }
+

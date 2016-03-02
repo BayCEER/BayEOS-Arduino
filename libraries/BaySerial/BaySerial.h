@@ -35,14 +35,8 @@
 #include <HardwareSerial.h>
 #include <Arduino.h>
 
-
-class BaySerial : public HardwareSerial, public BayEOS {
+class BaySerialInterface : public BayEOS {
 public:
-	/**
-	 * Constructor
-	 */
-	BaySerial(HardwareSerial &serial=Serial,int timeout=1000);
-
 	/**
 	 * Send the BayEOS payload
 	 * returns 0 for success
@@ -70,10 +64,13 @@ public:
 		sendAck(TX_BREAK);
 	}
 
-	int available(void){
-		return HardwareSerial::available();
-	}
-	void begin(long baud);
+	virtual int i_available(void);
+	virtual void begin(long baud);
+ 	virtual int read(void);
+	virtual size_t write(uint8_t c);
+	virtual void flush(void);
+	virtual void end(void);
+
 protected:
 	uint8_t readPacket(uint8_t type=API_DATA);
 	void sendByte(uint8_t b, bool escape);
@@ -89,6 +86,42 @@ protected:
 	uint8_t _ack;
 	uint8_t _pos;
 	uint8_t _break;
+
+
+};
+
+class BaySerial : public BaySerialInterface {
+private:
+	HardwareSerial* _serial; //Pointer to existing serial object!!
+public:
+	/**
+	 * Constructor
+	 */
+	BaySerial(HardwareSerial& serial,int timeout=1000);
+	//BaySerial(void);
+
+	int available(void){
+		return _serial->available();
+	}
+	int i_available(void){
+		return _serial->available();
+	}
+	void begin(long baud){
+		_serial->begin(baud);
+	}
+	void flush(void){
+		_serial->flush();
+	}
+	void end(void){
+		_serial->end();
+	}
+	int read(void){
+		return _serial->read();
+	}
+
+	size_t write(uint8_t c){
+		return _serial->write(c);
+	}
 
 };
 

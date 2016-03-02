@@ -69,7 +69,7 @@ public:
 
 };
 
-class BayESP8266 : private HardwareSerial, public BayESP8266Interface {
+class BayESP8266 : public BayESP8266Interface {
 public:
 	/**
 	 * Constructor
@@ -77,27 +77,28 @@ public:
 	BayESP8266(HardwareSerial &serial=Serial,int8_t resetPin=-1);
 	uint8_t begin(long baud);
 private:
-	int available(void){return HardwareSerial::available();}
+	HardwareSerial& _serial; //Reference to existing serial object!!
+	int available(void){return _serial.available();}
 	int read(void){
 #if ESP8266_DEBUG
-		int c=HardwareSerial::read();
+		int c=_serial.read();
 		if(c!=-1) Serial.write(c);
 		return c;
 #else
-		return HardwareSerial::read();
+		return _serial.read();
 #endif
 
 	}
-	void i_begin(long b){ HardwareSerial::begin(b);}
-	int i_available(void){return HardwareSerial::available();}
+	void i_begin(long b){ _serial.begin(b);}
+	int i_available(void){return _serial.available();}
 	size_t write(uint8_t b){
 #if ESP8266_DEBUG
 		Serial.write(b);
 #endif
-		return HardwareSerial::write(b);
+		return _serial.write(b);
 	}
-    int peek(void){return HardwareSerial::peek();};
-    void flush(void){HardwareSerial::flush();};
+    int peek(void){return _serial.peek();};
+    void flush(void){_serial.flush();};
 };
 
 

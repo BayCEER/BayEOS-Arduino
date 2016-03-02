@@ -751,211 +751,7 @@ void XBeeResponse::reset() {
 	}
 }
 
-void XBee::resetResponse() {
-	_pos = 0;
-	_escape = false;
-	_response.reset();
-}
 
-XBee::XBee(): _response(XBeeResponse()) {
-	_pos = 0;
-	_escape = false;
-	_checksumTotal = 0;
-	_nextFrameId = 0;
-	
-	_response.init();
-	_response.setFrameData(_responseFrameData);
-	// default
-	_serial = &Serial;
-}
-
-uint8_t XBee::getNextFrameId() {
-
-	_nextFrameId++;
-
-	if (_nextFrameId == 0) {
-		// can't send 0 because that disables status response
-		_nextFrameId = 1;
-	}
-
-	return _nextFrameId;
-}
-
-void XBee::begin(long baud) {
-	_serial->begin(baud);
-}
-
-void XBee::setSerial(HardwareSerial &serial) {
-	_serial = &serial;
-}
-
-bool XBee::available() {
-	return _serial->available();
-}
-
-uint8_t XBee::read() {
-	return _serial->read();
-} 
-
-void XBee::flush() {
-	_serial->flush();
-} 
-
-void XBee::write(uint8_t val) {
-	_serial->write(val);
-}
-
-XBeeResponse& XBee::getResponse() {
-	return _response;
-}
-
-// TODO how to convert response to proper subclass?
-void XBee::getResponse(XBeeResponse &response) {
-
-	response.setMsbLength(_response.getMsbLength());
-	response.setLsbLength(_response.getLsbLength());
-	response.setApiId(_response.getApiId());
-	response.setFrameLength(_response.getFrameDataLength());
-
-	response.setFrameData(_response.getFrameData());
-}
-
-void XBee::readPacketUntilAvailable() {
-	while (!(getResponse().isAvailable() || getResponse().isError())) {
-		// read some more
-		readPacket();
-	}
-}
-
-bool XBee::readPacket(int timeout) {
-
-	if (timeout < 0) {
-		return false;
-	}
-
-	unsigned long start = millis();
-
-    while (int((millis() - start)) < timeout) {
-
-     	readPacket();
-
-     	if (getResponse().isAvailable()) {
-     		return true;
-     	} else if (getResponse().isError()) {
-     		return false;
-     	}
-    }
-
-    // timed out
-    return false;
-}
-
-void XBee::readPacket() {
-	// reset previous response
-	if (_response.isAvailable() || _response.isError()) {
-		// discard previous packet and start over
-		resetResponse();
-	}
-
-    while (available()) {
-
-        b = read();
-
-        if (_pos > 0 && b == START_BYTE && ATAP == 2) {
-        	// new packet start before previous packeted completed -- discard previous packet and start over
-        	_response.setErrorCode(UNEXPECTED_START_BYTE);
-        	return;
-        }
-
-		if (_pos > 0 && b == ESCAPE) {
-			if (available()) {
-				b = read();
-				b = 0x20 ^ b;
-			} else {
-				// escape byte.  next byte will be
-				_escape = true;
-				continue;
-			}
-		}
-
-		if (_escape == true) {
-			b = 0x20 ^ b;
-			_escape = false;
-		}
-
-		// checksum includes all bytes starting with api id
-		if (_pos >= API_ID_INDEX) {
-			_checksumTotal+= b;
-		}
-
-        switch(_pos) {
-			case 0:
-		        if (b == START_BYTE) {
-		        	_pos++;
-		        }
-
-		        break;
-			case 1:
-				// length msb
-				_response.setMsbLength(b);
-				_pos++;
-
-				break;
-			case 2:
-				// length lsb
-				_response.setLsbLength(b);
-				_pos++;
-
-				break;
-			case 3:
-				_response.setApiId(b);
-				_pos++;
-
-				break;
-			default:
-				// starts at fifth byte
-
-				if (_pos > MAX_FRAME_DATA_SIZE) {
-					// exceed max size.  should never occur
-					_response.setErrorCode(PACKET_EXCEEDS_BYTE_ARRAY_LENGTH);
-					return;
-				}
-
-				// check if we're at the end of the packet
-				// packet length does not include start, length, or checksum bytes, so add 3
-				if (_pos == (_response.getPacketLength() + 3)) {
-					// verify checksum
-
-					//std::cout << "read checksum " << static_cast<unsigned int>(b) << " at pos " << static_cast<unsigned int>(_pos) << std::endl;
-
-					if ((_checksumTotal & 0xff) == 0xff) {
-						_response.setChecksum(b);
-						_response.setAvailable(true);
-
-						_response.setErrorCode(NO_ERROR);
-					} else {
-						// checksum failed
-						_response.setErrorCode(CHECKSUM_FAILURE);
-					}
-
-					// minus 4 because we start after start,msb,lsb,api and up to but not including checksum
-					// e.g. if frame was one byte, _pos=4 would be the byte, pos=5 is the checksum, where end stop reading
-					_response.setFrameLength(_pos - 4);
-
-					// reset state vars
-					_pos = 0;
-
-					_checksumTotal = 0;
-
-					return;
-				} else {
-					// add to packet array, starting with the fourth byte of the apiFrame
-					_response.getFrameData()[_pos - 4] = b;
-					_pos++;
-				}
-        }
-    }
-}
 
 // it's peanut butter jelly time!!
 
@@ -1412,7 +1208,192 @@ uint8_t RemoteAtCommandRequest::getFrameDataLength() {
 //	_frame = frame;
 //}
 
-void XBee::send(XBeeRequest &request) {
+XBeeInterface::XBeeInterface():_response(XBeeResponse())
+ {
+	 _pos = 0;
+	_escape = false;
+	_checksumTotal = 0;
+	_nextFrameId = 0;
+
+	_response.init();
+	_response.setFrameData(_responseFrameData);
+
+}
+
+void XBeeInterface::resetResponse() {
+	_pos = 0;
+	_escape = false;
+	_response.reset();
+}
+
+
+uint8_t XBeeInterface::getNextFrameId() {
+
+	_nextFrameId++;
+
+	if (_nextFrameId == 0) {
+		// can't send 0 because that disables status response
+		_nextFrameId = 1;
+	}
+
+	return _nextFrameId;
+}
+
+
+XBeeResponse& XBeeInterface::getResponse() {
+	return _response;
+}
+
+// TODO how to convert response to proper subclass?
+void XBeeInterface::getResponse(XBeeResponse &response) {
+
+	response.setMsbLength(_response.getMsbLength());
+	response.setLsbLength(_response.getLsbLength());
+	response.setApiId(_response.getApiId());
+	response.setFrameLength(_response.getFrameDataLength());
+
+	response.setFrameData(_response.getFrameData());
+}
+
+void XBeeInterface::readPacketUntilAvailable() {
+	while (!(getResponse().isAvailable() || getResponse().isError())) {
+		// read some more
+		readPacket();
+	}
+}
+
+bool XBeeInterface::readPacket(int timeout) {
+
+	if (timeout < 0) {
+		return false;
+	}
+
+	unsigned long start = millis();
+
+    while (int((millis() - start)) < timeout) {
+
+     	readPacket();
+
+     	if (getResponse().isAvailable()) {
+     		return true;
+     	} else if (getResponse().isError()) {
+     		return false;
+     	}
+    }
+
+    // timed out
+    return false;
+}
+
+void XBeeInterface::readPacket() {
+	// reset previous response
+	if (_response.isAvailable() || _response.isError()) {
+		// discard previous packet and start over
+		resetResponse();
+	}
+
+    while (i_available()) {
+        b = read();
+
+        if (_pos > 0 && b == START_BYTE && ATAP == 2) {
+        	// new packet start before previous packeted completed -- discard previous packet and start over
+        	_response.setErrorCode(UNEXPECTED_START_BYTE);
+        	return;
+        }
+
+		if (_pos > 0 && b == ESCAPE) {
+			if (i_available()) {
+				b = read();
+				b = 0x20 ^ b;
+			} else {
+				// escape byte.  next byte will be
+				_escape = true;
+				continue;
+			}
+		}
+
+		if (_escape == true) {
+			b = 0x20 ^ b;
+			_escape = false;
+		}
+
+		// checksum includes all bytes starting with api id
+		if (_pos >= API_ID_INDEX) {
+			_checksumTotal+= b;
+		}
+
+        switch(_pos) {
+			case 0:
+		        if (b == START_BYTE) {
+		        	_pos++;
+		        }
+
+		        break;
+			case 1:
+				// length msb
+				_response.setMsbLength(b);
+				_pos++;
+
+				break;
+			case 2:
+				// length lsb
+				_response.setLsbLength(b);
+				_pos++;
+
+				break;
+			case 3:
+				_response.setApiId(b);
+				_pos++;
+
+				break;
+			default:
+				// starts at fifth byte
+
+				if (_pos > MAX_FRAME_DATA_SIZE) {
+					// exceed max size.  should never occur
+					_response.setErrorCode(PACKET_EXCEEDS_BYTE_ARRAY_LENGTH);
+					return;
+				}
+
+				// check if we're at the end of the packet
+				// packet length does not include start, length, or checksum bytes, so add 3
+				if (_pos == (_response.getPacketLength() + 3)) {
+					// verify checksum
+
+					//std::cout << "read checksum " << static_cast<unsigned int>(b) << " at pos " << static_cast<unsigned int>(_pos) << std::endl;
+
+					if ((_checksumTotal & 0xff) == 0xff) {
+						_response.setChecksum(b);
+						_response.setAvailable(true);
+
+						_response.setErrorCode(NO_ERROR);
+					} else {
+						// checksum failed
+						_response.setErrorCode(CHECKSUM_FAILURE);
+					}
+
+					// minus 4 because we start after start,msb,lsb,api and up to but not including checksum
+					// e.g. if frame was one byte, _pos=4 would be the byte, pos=5 is the checksum, where end stop reading
+					_response.setFrameLength(_pos - 4);
+
+					// reset state vars
+					_pos = 0;
+
+					_checksumTotal = 0;
+
+					return;
+				} else {
+					// add to packet array, starting with the fourth byte of the apiFrame
+					_response.getFrameData()[_pos - 4] = b;
+					_pos++;
+				}
+        }
+    }
+}
+
+
+
+void XBeeInterface::send(XBeeRequest &request) {
 	// the new new deal
 
 	sendByte(START_BYTE, false);
@@ -1454,7 +1435,7 @@ void XBee::send(XBeeRequest &request) {
 	flush();
 }
 
-void XBee::sendByte(uint8_t b, bool escape) {
+void XBeeInterface::sendByte(uint8_t b, bool escape) {
 
 	if (escape && (b == START_BYTE || b == ESCAPE || b == XON || b == XOFF)) {
 //		std::cout << "escaping byte [" << toHexString(b) << "] " << std::endl;

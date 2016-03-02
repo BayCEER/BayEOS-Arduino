@@ -3,11 +3,12 @@
 
 
 
-BaySerial client=BaySerial();
+BaySerial client=BaySerial(Serial);
 
 
 void setup(void){
    client.begin(38400);
+   client.sendMessage("Started");
 }
 
 void loop(void){
@@ -18,6 +19,5 @@ void loop(void){
    
    client.sendPayload();
    
-   
-  delay(5000);
+  delay(1000);
 }

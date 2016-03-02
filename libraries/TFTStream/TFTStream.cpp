@@ -47,6 +47,7 @@ size_t TFTStream::write(uint8_t c){
 		  _tx_buffer[(int) i+(_crow*(1+_cols))]=' ';
 		}
 	}
+	return 1;
 }
 
 

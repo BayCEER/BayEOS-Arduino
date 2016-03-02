@@ -22,10 +22,11 @@ public:
 	 */
 	BayTFTDebug(UTFT *utft, char *tx_buffer, uint8_t rows, uint8_t cols);
 	void flush(void){TFTStream::flush();};
-	using Print::println;
-	using Print::print;
-	using Print::write;
+	using TFTStream::println;
+	using TFTStream::print;
+	using TFTStream::write;
 	size_t write(uint8_t b){return TFTStream::write(b);}
+
 private:
     int available(void){return 0;};
     int peek(void){return 0;};
