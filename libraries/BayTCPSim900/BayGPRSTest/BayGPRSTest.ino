@@ -7,22 +7,22 @@
 
 //Define Serial and powerPin - Depends on the Board
 //BayGPRS client=BayGPRS(Serial3,46);
-BayGPRS client=BayGPRS();
+BayGPRS client = BayGPRS(Serial);
 
-void setup(void){
+void setup(void) {
   Serial.begin(9600);
-//  client.softSwitch();
+  //  client.softSwitch();
   client.readConfigFromStringPGM(
-  PSTR("132.180.112.128|80|gateway/frame/saveFlat|import|import|TestGPRS|pinternet.interkom.de|||1802|"));
+    PSTR("132.180.112.128|80|gateway/frame/saveFlat|import|import|TestGPRS|pinternet.interkom.de|||1802|"));
   client.begin(38400);
-  
+
 }
 
-void loop(void){
+void loop(void) {
   //Construct DataFrame
-   client.startDataFrame();
-   client.addChannelValue(millis()/1000);     
-   client.sendPayload();
-   delay(5000);  
+  client.startDataFrame();
+  client.addChannelValue(millis() / 1000);
+  client.sendPayload();
+  delay(5000);
 }
 

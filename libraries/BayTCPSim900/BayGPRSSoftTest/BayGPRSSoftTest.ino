@@ -6,24 +6,21 @@
 #include <BayTCPSim900.h>
 
 
-BayGPRSsoftserial client=BayGPRSsoftserial(3,4);
+BayGPRSsoftserial client = BayGPRSsoftserial(3, 4);
 
-void setup(void){
+void setup(void) {
   client.readConfigFromStringPGM(
-  PSTR("GATEWAY_IP|80|path|user|password|sender|apn|||pin"));
+    PSTR("GATEWAY_IP|80|path|user|password|sender|apn|||pin"));
   client.begin(38400);
-  
+
 }
 
-void loop(void){
+void loop(void) {
   //Construct DataFrame
-   client.startDataFrame(BayEOS_Float32le);
-   client.addChannelValue(millis()/1000);     
-   client.sendPayload();
-   
-   
-    
+  client.startDataFrame(BayEOS_Float32le);
+  client.addChannelValue(millis() / 1000);
+  client.sendPayload();
   delay(5000);
-   
+
 }
 

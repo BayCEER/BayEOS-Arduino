@@ -51,9 +51,6 @@ public:
 		return 0; //Note this is a dummy to make BayXBee to compile!
 	}
 
-	uint16_t getPANID(void);
-
-	uint8_t parseRX16(BayEOS &client, int rx_panid);
 
 
 #if ENABLE_RX

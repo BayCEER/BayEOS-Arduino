@@ -17,7 +17,8 @@ Blank Stalker Sketch...
 #include <BayEOSBufferSDFat.h>
 #include <BayEOS.h>
 #include <Base64.h>
-#include <BayGPRS.h>
+#include <BayTCP.h>
+#include <BayTCPSim900.h>
 #include <BayDebug.h>
 #include <Sleep.h>
 
@@ -31,7 +32,7 @@ Blank Stalker Sketch...
 DS3231 myRTC; //Seduino 2.2
 
 
-BayGPRS client; //Sleep-Pin - Wakeuptime, timeout
+BayGPRS client(Serial); //Sleep-Pin - Wakeuptime, timeout
 
 //BayDebug client=BayDebug(); 
 BayEOSBufferSDFat myBuffer;

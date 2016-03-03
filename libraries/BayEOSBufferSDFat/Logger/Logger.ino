@@ -1,16 +1,16 @@
 /*
-This is a example for a simple and cheap logger based on
-I2C EEPROM and TIMER2 RTC
+  This is a example for a simple and cheap logger based on
+  I2C EEPROM and TIMER2 RTC
 */
 /******************************************************
- * 
- * Sample Logger Sketch for Seeduino 2.2 with SD-Card
- * 
- * Uses Watchdog
- * 
+
+   Sample Logger Sketch for Seeduino 2.2 with SD-Card
+
+   Uses Watchdog
+
  *****************************************************/
 
-#include <EEPROM.h> 
+#include <EEPROM.h>
 #include <Wire.h>
 #include <RTClib.h>
 #include <BayEOSBuffer.h>
@@ -24,7 +24,7 @@ I2C EEPROM and TIMER2 RTC
 #define CONNECTED_PIN 5
 #define SAMPLING_INT 30
 
-uint8_t connected=0;
+uint8_t connected = 0;
 
 DS3231 myRTC; //Seduino 2.2
 
@@ -34,9 +34,9 @@ BayEOSLogger myLogger;
 
 
 //Add your sensor measurements here!
-void measure(){
-   client.startDataFrame(BayEOS_Int16le);
-   client.addChannelValue(millis());
+void measure() {
+  client.startDataFrame(BayEOS_Int16le);
+  client.addChannelValue(millis());
 }
 
 
@@ -44,46 +44,46 @@ void measure(){
 void setup() {
   Sleep.setupWatchdog(5); //init watchdog timer to 0.5 sec
   pinMode(CONNECTED_PIN, INPUT);
-  digitalWrite(CONNECTED_PIN,HIGH);
-  myBuffer=BayEOSBufferSDFat(200000000,1);
+  digitalWrite(CONNECTED_PIN, HIGH);
+  myBuffer = BayEOSBufferSDFat(200000000, 1);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
-  client.setBuffer(myBuffer); 
+  client.setBuffer(myBuffer);
   //register all in BayEOSLogger
-  myLogger.init(client,myBuffer,myRTC,60); //min_sampling_int = 60
+  myLogger.init(client, myBuffer, myRTC, 60); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
-  myBuffer=BayEOSBufferSDFat(200000000,1);
+  myBuffer = BayEOSBufferSDFat(200000000, 1);
 }
 
 void loop() {
   //Enable logging if RTC give a time later than 2010-01-01
-  if(myLogger._logging_disabled && myRTC.now().get()>315360000L)
-      myLogger._logging_disabled = 0;
-   
-   measure();
-   myLogger.run();
-   
+  if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
+    myLogger._logging_disabled = 0;
+
+  measure();
+  myLogger.run();
+
 
   //sleep until timer2 will wake us up...
-  if(! connected){
-    myLogger._mode=0;
+  if (! connected) {
+    myLogger._mode = 0;
     Sleep.sleep();
   }
-  
+
   //check if still connected
-  if(connected) 
+  if (connected)
     connected++;
- 
-  if(connected>100 && digitalRead(CONNECTED_PIN)){
+
+  if (connected > 100 && digitalRead(CONNECTED_PIN)) {
     client.flush();
     client.end();
-    connected=0;
-  } 
+    connected = 0;
+  }
 
   //Connected pin is pulled to GND
-  if(!connected && ! digitalRead(CONNECTED_PIN)){
-    connected=1;
+  if (!connected && ! digitalRead(CONNECTED_PIN)) {
+    connected = 1;
     client.begin(38400);
   }
-  
+
 }
 

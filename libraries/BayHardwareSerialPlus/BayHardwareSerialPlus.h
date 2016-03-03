@@ -84,6 +84,41 @@ public:
 
 };
 
+class XBeePlus : public XBeeInterface {
+private:
+	HardwareSerialPlus* _serial;
+
+public:
+	XBeePlus(HardwareSerialPlus &serial=SerialPlus):XBeeInterface()
+	{
+		_serial = &serial;
+	}
+
+	void setSerial(HardwareSerialPlus &serial){
+		_serial = &serial;
+	}
+
+	int i_available(void){
+		return _serial->available();
+	}
+	void begin(long baud){
+		_serial->begin(baud);
+	}
+	void i_begin(long baud){
+		_serial->begin(baud);
+	}
+	void flush(void){
+		_serial->flush();
+	}
+	int read(void){
+		return _serial->read();
+	}
+	size_t write(uint8_t c){
+		return _serial->write(c);
+	}
+
+
+};
 
 class BaySerialPlus : public BaySerialInterface {
 private:

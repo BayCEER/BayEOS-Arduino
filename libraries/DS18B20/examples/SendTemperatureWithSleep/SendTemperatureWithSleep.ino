@@ -23,7 +23,7 @@ DS18B20 ds=DS18B20(OW_PIN,0,4);
 //XBee-WakeUp-Time 15ms
 //WaitTimeForResponse 500ms 
 //Setting to zero does not work 
-BayXBee xbee=BayXBee(XBEE_SLEEP_PIN,15,500);
+BayXBee xbee=BayXBee(Serial,XBEE_SLEEP_PIN,15,500);
 
 
 const byte* new_addr;

@@ -20,7 +20,7 @@
 DS3231 myRTC; //Seduino 2.2
 
 
-BayXBee client=BayXBee(XBEE_SLEEP_PIN,15,1000); //Sleep-Pin - Wakeuptime, timeout
+BayXBee client=BayXBee(Serial,XBEE_SLEEP_PIN,15,1000); //Sleep-Pin - Wakeuptime, timeout
 //BayDebug client=BayDebug(); 
 BayEOSBufferSDFat myBuffer;
 

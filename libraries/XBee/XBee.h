@@ -1,6 +1,8 @@
 /**
  * Copyright (c) 2009 Andrew Rapp. All rights reserved.
  *
+ * Modified (c) 2016 Stefan Holzheu
+ *
  * This file is part of XBee-Arduino.
  *
  * XBee-Arduino is free software: you can redistribute it and/or modify
@@ -27,6 +29,7 @@
 #endif
 
 #include <inttypes.h>
+#include <BayEOS.h>
 
 #define SERIES_1
 #define SERIES_2
@@ -708,6 +711,10 @@ public:
 	 * Returns a sequential frame id between 1 and 255
 	 */
 
+	uint16_t getPANID(void);
+
+	uint8_t parseRX16(BayEOS &client, int rx_panid);
+
 
 	uint8_t getNextFrameId();
 	virtual void i_begin(long baud) = 0;
@@ -759,6 +766,7 @@ public:
 	size_t write(uint8_t c){
 		return _serial->write(c);
 	}
+
 
 };
 /**

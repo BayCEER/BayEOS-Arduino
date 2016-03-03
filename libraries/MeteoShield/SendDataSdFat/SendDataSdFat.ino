@@ -1,9 +1,9 @@
-/* 
-   
+/*
+
 */
 
 #include <OneWire.h>
-#include <EEPROM.h> 
+#include <EEPROM.h>
 #include <DS18B20.h>
 #include <MCP342x.h>
 #include <Wire.h>
@@ -23,26 +23,26 @@
 DS3231 myRTC; //Seduino 2.2
 
 
-BayXBee client=BayXBee(XBEE_SLEEP_PIN,15,1000); //Sleep-Pin - Wakeuptime, timeout
-//BayDebug client=BayDebug(); 
+BayXBee client = BayXBee(Serial, XBEE_SLEEP_PIN, 15, 1000); //Sleep-Pin - Wakeuptime, timeout
+//BayDebug client=BayDebug();
 BayEOSBufferSDFat myBuffer;
 
 /*
- * Just a bunch of variables and functions to
- * handle measurements on MeteoShield
- *
- * expects to have a bayeosClient called "client"
- * and a RTC called "myRTC"
- */
+   Just a bunch of variables and functions to
+   handle measurements on MeteoShield
+
+   expects to have a bayeosClient called "client"
+   and a RTC called "myRTC"
+*/
 #include <MeteoShield.h>
 
 
 void setup() {
-  
+
   Sleep.setupWatchdog(5); //init watchdog timer to 0.5 sec
   pinMode(XBEE_SLEEP_PIN, OUTPUT);
-   
-  client.begin(38400); 
+
+  client.begin(38400);
   initShield();
   //Set 4 for EthernetShield, 10 for Stalker
   pinMode(10, OUTPUT);
@@ -50,28 +50,28 @@ void setup() {
     delay(10000);
     client.sendError("No SD!");
   }
-  
-  myBuffer=BayEOSBufferSDFat(200000000,1);
-  myBuffer.setRTC(myRTC,false); //Nutze RTC jedoch relativ!
 
-  client.setBuffer(myBuffer,100); //max skip=100!!
+  myBuffer = BayEOSBufferSDFat(200000000, 1);
+  myBuffer.setRTC(myRTC, false); //Nutze RTC jedoch relativ!
+
+  client.setBuffer(myBuffer, 100); //max skip=100!!
 }
 
 void loop() {
-  if((myRTC.now().get()-last_data)>=SAMPLING_INT){
-  	measure();
-    //write to buffer 
-        client.writeToBuffer();	  
+  if ((myRTC.now().get() - last_data) >= SAMPLING_INT) {
+    measure();
+    //write to buffer
+    client.writeToBuffer();
   }
   client.sendFromBuffer();
 
-//wenn wdcount>240 -> reset!
-  wdcount=0;
-//Entprellen des Interrupts
+  //wenn wdcount>240 -> reset!
+  wdcount = 0;
+  //Entprellen des Interrupts
   handleKippevent();
   //sleep until watchdog will wake us up...
   Sleep.sleep();
 
-  
+
 }
 
