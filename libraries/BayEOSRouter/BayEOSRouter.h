@@ -35,6 +35,7 @@ BayTFTDebug TFT = BayTFTDebug(&myGLCD, utftbuffer, utftrows, utftcols);
 #define UTFTprintP(x) utftprintPGM(PSTR(x))
 #define UTFTprintlnP(x) utftprintlnPGM(PSTR(x))
 
+uint8_t tft_output_rx=1;
 #endif
 
 #if WITH_RF24_RX
@@ -159,6 +160,10 @@ void initRouter(void) {
 
 void handle_RX_data(void) {
 	if (RX_SERIAL.available()) {
+		if(RX_SERIAL.available()>(RX_BUFFER_SIZE-100))
+			tft_output_rx=0;
+		else
+			tft_output_rx=1;
 		xbee_rx.readPacket();
 
 		if (xbee_rx.getResponse().isAvailable()) {
@@ -168,7 +173,7 @@ void handle_RX_data(void) {
 				rx_ok++;
 				client.writeToBuffer();
 #if WITH_TFT
-				if (TFT.isOn()) {
+				if (TFT.isOn() && tft_output_rx) {
 					xbee_rx.parseRX16(TFT, rx_panid);
 					TFT.sendPayload();
 					TFT.flush();
@@ -199,7 +204,7 @@ void handle_RF24(void) {
 		}
 		client.writeToBuffer();
 #if WITH_TFT
-		if (TFT.isOn()) {
+		if (TFT.isOn() && tft_output_rx) {
 			TFT.startRoutedFrame(pipe_num, 0);
 			for (uint8_t i = 0; i < len; i++) {
 				TFT.addToPayload(payload[i]);

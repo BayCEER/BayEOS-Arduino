@@ -31,6 +31,6 @@ void loop(void) {
 /*
   client.sendError("Just a test error message ;-)");
 */
-  delay(3000);
+  delay(60000);
 
 }
