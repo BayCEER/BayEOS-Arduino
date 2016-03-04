@@ -26,10 +26,10 @@ ISR(USART1_UDRE_vect)
 {
   SerialPlus1._tx_udr_empty_irq();
 }
-unsigned char tx_buffer1[16];
-unsigned char rx_buffer1[16];
+unsigned char tx_buffer1[64];
+unsigned char rx_buffer1[64];
 
-HardwareSerialPlus SerialPlus1(&UBRR1H, &UBRR1L, &UCSR1A, &UCSR1B, &UCSR1C, &UDR1,rx_buffer1,16,tx_buffer1,16);
+HardwareSerialPlus SerialPlus1(&UBRR1H, &UBRR1L, &UCSR1A, &UCSR1B, &UCSR1C, &UDR1,rx_buffer1,64,tx_buffer1,64);
 
 // Function that can be weakly referenced by serialEventRun to prevent
 // pulling in this file if it's not otherwise used.

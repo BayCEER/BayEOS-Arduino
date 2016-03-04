@@ -25,7 +25,6 @@
 
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };
 byte ip[] = { 132, 180, 112, 17 };
-uint16_t rx_ok, rx_error, tx_error;
 #define RX_SERIAL SerialPlus
 XBeePlus xbee_rx = XBeePlus(RX_SERIAL);
 
@@ -34,21 +33,30 @@ unsigned char buffer[RX_BUFFER_SIZE];
 
 BayEth client;
 BayEOSBufferRAM  myBuffer;
-uint16_t rx_panid;
-unsigned long last_alive;
+
+/*
+ * BayEOSRouter.h relies on 
+ * TX: client
+ * RX: xbee_rx
+ * 
+ * So please do not change names above...
+ * 
+ */
+#define WITH_RF24_RX 0
+#define WITH_BAYEOS_LOGGER 0
+#define WITH_TFT 0
+#define WITH_WATCHDOG 0
+#include <BayEOSRouter.h>
+
 
 void setup(void) {
-  RX_SERIAL.setRxBuffer(buffer, RX_BUFFER_SIZE);
-  xbee_rx.setSerial(RX_SERIAL);
-  xbee_rx.begin(38400);
+  initRouter();
   client.readConfigFromStringPGM(
     PSTR("192.168.0.1|80|gateway/frame/saveFlat|admin|xbee|DEMO-Router|||||")
   );
   Ethernet.begin(mac, ip);
-  while (! rx_panid) rx_panid = xbee_rx.getPANID();
   myBuffer = BayEOSBufferRAM(3000);
   client.setBuffer(myBuffer);
-
 }
 
 void loop(void) {
@@ -65,27 +73,4 @@ void loop(void) {
   client.sendFromBuffer();
 }
 
-
-void handle_RX_data(void) {
-  if (RX_SERIAL.available()) {
-    xbee_rx.readPacket();
-
-    if (xbee_rx.getResponse().isAvailable()) {
-      switch (xbee_rx.parseRX16(client, rx_panid)) {
-        case 0:
-          //ok
-          rx_ok++;
-          client.sendOrBuffer();
-
-          break;
-        case 1:
-          rx_error++;
-          break;
-        case 2:
-          break;
-      };
-    }
-  }
-
-}
 

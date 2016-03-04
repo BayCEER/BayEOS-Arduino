@@ -32,13 +32,13 @@ ISR(USART_UDRE_vect)
   SerialPlus._tx_udr_empty_irq();
 }
 
-unsigned char tx_buffer[16];
-unsigned char rx_buffer[16];
+unsigned char tx_buffer[64];
+unsigned char rx_buffer[64];
 
 #if defined(UBRRH) && defined(UBRRL)
-  HardwareSerialPlus SerialPlus(&UBRRH, &UBRRL, &UCSRA, &UCSRB, &UCSRC, &UDR,rx_buffer,16,tx_buffer,16);
+  HardwareSerialPlus SerialPlus(&UBRRH, &UBRRL, &UCSRA, &UCSRB, &UCSRC, &UDR,rx_buffer,64,tx_buffer,64);
 #else
-  HardwareSerialPlus SerialPlus(&UBRR0H, &UBRR0L, &UCSR0A, &UCSR0B, &UCSR0C, &UDR0,rx_buffer,16,tx_buffer,16);
+  HardwareSerialPlus SerialPlus(&UBRR0H, &UBRR0L, &UCSR0A, &UCSR0B, &UCSR0C, &UDR0,rx_buffer,64,tx_buffer,64);
 #endif
 
 // Function that can be weakly referenced by serialPlusEventRun to prevent

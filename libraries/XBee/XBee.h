@@ -754,6 +754,9 @@ public:
 	int i_available(void){
 		return _serial->available();
 	}
+	void begin(long baud){
+		_serial->begin(baud);
+	}
 	void i_begin(long baud){
 		_serial->begin(baud);
 	}
