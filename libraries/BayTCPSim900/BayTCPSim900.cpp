@@ -45,7 +45,7 @@ uint8_t BayGPRSInterface::init(){
 				printP("AT+CPIN=\"");
 				print(_pin);
 				println("\"");
-				if(! wait_forOK(20000)) {
+				if(wait_forOK(30000)) {
 				  _pinWrong=1;
 				  return 2; //Wrong PIN
 				}
