@@ -182,7 +182,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize){
  	printURLencoded(_sender);
 	printP("&password=");
  	printURLencoded(_password);
-	uint16_t postsize=7+strlen(_sender)+1+9+strlen(_password);
+	uint16_t postsize=7+strlenURLencoded(_sender)+1+9+strlenURLencoded(_password);
 	uint16_t mtusize=postsize;
 
 	//Send Body - second part (frames)
@@ -269,9 +269,10 @@ uint8_t BayTCPInterface::sendPayload(void){
     printP("&bayeosframes[]=");
     printURLencoded(_base64buffer); //BASE64
     println();
-//    println();
+    println(); //was commented out - do we need??
     finishTransmissionMode();
 	res=wait_for("200 OK",30000);
+	skipChars();
 	if(res) _tx_error_count++;
 	else _tx_error_count=0;
 	disconnect();
