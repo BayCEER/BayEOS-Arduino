@@ -196,9 +196,11 @@ void handle_RX_data(void) {
 void handle_RF24(void) {
 	uint8_t pipe_num, len;
 	uint8_t payload[32];
-	if ( len = radio.readPipe(payload, &pipe_num) ) {
-		//Note: RF24 is handelt like XBee with PANID0
+	if(radio.available(&pipe_num)){
 		client.startRoutedFrame(pipe_num, 0);
+		len=radio.getDynamicPayloadSize();
+		// Fetch the payload
+		radio.read( payload, len );
 		for (uint8_t i = 0; i < len; i++) {
 			client.addToPayload(payload[i]);
 		}

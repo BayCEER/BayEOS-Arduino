@@ -26,6 +26,8 @@ void loop(void) {
   client.addChannelValue(count);
   client.addChannelValue(millis() / 1000);
   client.addChannelValue(analogRead(A0));
+  for(int i=0; i<15;i++)
+    client.addChannelValue(1);
   client.sendPayload();
   count++;
 /*

@@ -27,7 +27,7 @@ private:
 
 };
 
-class BayDebug : protected HardwareSerial, public BayEOSDebugInterface {
+class BayDebug : public BayEOSDebugInterface {
 public:
 	/**
 	 * Constructor
@@ -46,11 +46,12 @@ public:
 	 **/
 	void begin(long baud,uint8_t modus=3);
 private:
-	int available(void){return HardwareSerial::available();}
-	int read(void){return HardwareSerial::read();}
-	size_t write(uint8_t b){return HardwareSerial::write(b);}
-    int peek(void){return HardwareSerial::peek();};
-    void flush(void){HardwareSerial::flush();};
+	HardwareSerial* _serial;
+	int available(void){return _serial->available();}
+	int read(void){return _serial->read();}
+	size_t write(uint8_t b){return _serial->write(b);}
+    int peek(void){return _serial->peek();};
+    void flush(void){_serial->flush();};
 
 
 };

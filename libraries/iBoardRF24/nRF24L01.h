@@ -31,6 +31,7 @@
 #define RF_CH       0x05
 #define RF_SETUP    0x06
 #define STATUS      0x07
+#define NRF_STATUS      0x07
 #define OBSERVE_TX  0x08
 #define CD          0x09
 #define RX_ADDR_P0  0x0A

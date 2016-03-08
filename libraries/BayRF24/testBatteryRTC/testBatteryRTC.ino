@@ -4,13 +4,15 @@
 #include <RF24.h>
 #include <BayRF24.h>
 
-#define RF24ADDRESS 0x45c431ae12LL
+#define POWER_PIN A3
+
+//#define RF24ADDRESS 0x45c431ae12LL
 //#define RF24ADDRESS 0x45c431ae24LL
 //#define RF24ADDRESS 0x45c431ae48LL
-//#define RF24ADDRESS 0x45c431ae96LL
+#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
 //#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x71
+#define RF24CHANNEL 0x61
 
 volatile uint8_t ticks;
 SIGNAL(TIMER2_OVF_vect){
@@ -41,10 +43,10 @@ void loop()
 void readVoltage(void){
     /* Read battery voltage */
     analogReference(INTERNAL);
-    pinMode(A3,OUTPUT);
-    digitalWrite(A3,HIGH);
+    pinMode(POWER_PIN,OUTPUT);
+    digitalWrite(POWER_PIN,HIGH);
     voltage=1.1*320/100/1023*analogRead(A0);
-    digitalWrite(A3,LOW);
-    pinMode(A3,INPUT);
+    digitalWrite(POWER_PIN,LOW);
+    pinMode(POWER_PIN,INPUT);
     analogReference(DEFAULT);  
 }

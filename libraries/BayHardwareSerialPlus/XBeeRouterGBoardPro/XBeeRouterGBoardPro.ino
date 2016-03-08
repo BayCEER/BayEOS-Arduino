@@ -271,7 +271,7 @@ void loop(void) {
 
   handle_RX_data();
 
-#if WITH_RF24_RX == 1
+#if WITH_RF24_RX 
   handle_RF24();
 #endif
 

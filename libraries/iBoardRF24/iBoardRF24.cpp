@@ -558,34 +558,18 @@ bool iBoardRF24::available(void)
 
 bool iBoardRF24::available(uint8_t* pipe_num)
 {
-  uint8_t status = get_status();
+	  if (!( read_register(FIFO_STATUS) & _BV(RX_EMPTY) )){
 
-  // Too noisy, enable if you really want lots o data!!
-  //IF_SERIAL_DEBUG(print_status(status));
+	    // If the caller wants the pipe number, include that
+	    if ( pipe_num ){
+		  uint8_t status = get_status();
+	      *pipe_num = ( status >> RX_P_NO ) & 0b111;
+	  	}
+	  	return 1;
+	  }
 
-  bool result = ( status & _BV(RX_DR) );
 
-  if (result)
-  {
-    // If the caller wants the pipe number, include that
-    if ( pipe_num )
-      *pipe_num = ( status >> RX_P_NO ) & B111;
-
-    // Clear the status bit
-
-    // ??? Should this REALLY be cleared now?  Or wait until we
-    // actually READ the payload?
-
-    write_register(STATUS,_BV(RX_DR) );
-
-    // Handle ack payload receipt
-    if ( status & _BV(TX_DS) )
-    {
-      write_register(STATUS,_BV(TX_DS));
-    }
-  }
-
-  return result;
+	  return 0;
 }
 
 /****************************************************************************/
@@ -638,8 +622,10 @@ bool iBoardRF24::read( void* buf, uint8_t len )
   // Fetch the payload
   read_payload( buf, len );
 
+  //Clear the two possible interrupt flags with one command
+  write_register(NRF_STATUS,_BV(RX_DR) | _BV(MAX_RT) | _BV(TX_DS) );
   // was this the last of the data available?
-  return read_register(FIFO_STATUS) & _BV(RX_EMPTY);
+//  return read_register(FIFO_STATUS) & _BV(RX_EMPTY);
 }
 
 /****************************************************************************/

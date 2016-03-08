@@ -132,10 +132,11 @@ uint8_t BayEOSDebugInterface::sendPayload(void){
 
 
 void BayDebug::begin(long baud, uint8_t modus){
-	HardwareSerial::begin(baud);
+	_serial->begin(baud);
 	_modus=modus;
 }
 
-BayDebug::BayDebug(HardwareSerial &serial):HardwareSerial(serial){
+BayDebug::BayDebug(HardwareSerial &serial){
+	_serial = &serial;
 }
 
