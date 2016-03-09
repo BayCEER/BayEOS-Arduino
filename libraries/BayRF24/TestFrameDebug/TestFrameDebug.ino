@@ -4,13 +4,13 @@
 #include <BayRF24.h>
 #include "printf.h"
 
-#define RF24ADDRESS 0x45c431ae12LL
+//#define RF24ADDRESS 0x45c431ae12LL
 //#define RF24ADDRESS 0x45c431ae24LL
 //#define RF24ADDRESS 0x45c431ae48LL
 //#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
-//#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x71
+#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x61
 
 
 /* ce,csn pins - adjust to your layout*/

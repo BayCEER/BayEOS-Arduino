@@ -12,7 +12,7 @@
 #define RF24CHANNEL 0x71
 
 
-#define LED_PIN 8
+#define LED_PIN 5
 
 BayRF24 client=BayRF24(9,10);
 

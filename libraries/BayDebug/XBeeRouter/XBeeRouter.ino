@@ -6,21 +6,13 @@ Runs on Arduino Mega with more then one Serial
 */
 #define RX_SERIAL Serial1
 
-#include <HardwareSerialNew.h>
 #include <XBee.h>
 #include <BayXBee.h>
 #include <BayEOS.h>
 #include <BayDebug.h>
 
-/*
- * Create a huge ring buffer to store incoming RX Packages while
- * arduino is busy 
- */
-#define RX_BUFFER_SIZE 256
-unsigned char buffer[RX_BUFFER_SIZE];
 
-
-BayDebug client=BayDebug();
+BayDebug client(Serial);
 
 XBee xbee_rx = XBee();
 Rx16Response rx16 = Rx16Response();
@@ -31,12 +23,11 @@ uint16_t rx_panid;
 unsigned long last_alive_message;
 
 void setup(void){
-  RX_SERIAL.setRxBuffer(buffer, RX_BUFFER_SIZE); 
   xbee_rx.setSerial(RX_SERIAL);
   xbee_rx.begin(38400);
 
   while(! rx_panid){
-    rx_panid=getPANID(xbee_rx);
+    rx_panid=xbee_rx.getPANID();
   }
   
   
@@ -62,7 +53,7 @@ void loop(void){
 	xbee_rx.readPacket();
 
 	if (xbee_rx.getResponse().isAvailable()) {
-          switch(parseRX16(client,xbee_rx,rx_panid)){
+          switch(xbee_rx.parseRX16(client,rx_panid)){
             case 0:
              //ok
              client.sendPayload();

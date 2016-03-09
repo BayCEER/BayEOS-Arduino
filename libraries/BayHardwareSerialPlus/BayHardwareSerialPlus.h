@@ -8,6 +8,7 @@
 #include <BayTCPSim900.h>
 #include <BayXBee.h>
 #include <BaySerial.h>
+#include <BayDebug.h>
 #include "../BayTCP/BayTCP.h"
 #include "../RTClib/RTClib.h"
 
@@ -139,6 +140,42 @@ public:
 		return _serial->available();
 	}
 	void begin(long baud){
+		_serial->begin(baud);
+	}
+	void flush(void){
+		_serial->flush();
+	}
+	void end(void){
+		_serial->end();
+	}
+	int read(void){
+		return _serial->read();
+	}
+
+	size_t write(uint8_t c){
+		return _serial->write(c);
+	}
+
+};
+
+class BayDebugPlus : public BayEOSDebugInterface {
+private:
+	HardwareSerialPlus* _serial; //Pointer to existing serial object!!
+public:
+	/**
+	 * Constructor
+	 */
+	BayDebugPlus(HardwareSerialPlus& serial=SerialPlus){
+		_serial=&serial;
+	}
+
+	int available(void){
+		return _serial->available();
+	}
+	int i_available(void){
+		return _serial->available();
+	}
+	void begin(long baud, uint8_t modus=0){
 		_serial->begin(baud);
 	}
 	void flush(void){
