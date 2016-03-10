@@ -160,12 +160,13 @@ void initRouter(void) {
 
 void handle_RX_data(void) {
 	if (RX_SERIAL.available()) {
+#if WITH_TFT
 		if(RX_SERIAL.available()>(RX_BUFFER_SIZE-100))
 			tft_output_rx=0;
 		else
 			tft_output_rx=1;
 		xbee_rx.readPacket();
-
+#endif
 		if (xbee_rx.getResponse().isAvailable()) {
 			switch (xbee_rx.parseRX16(client, rx_panid)) {
 			case 0:

@@ -10,7 +10,7 @@
 #include <BaySerial.h>
 #include <BayDebug.h>
 #include "../BayTCP/BayTCP.h"
-#include "../RTClib/RTClib.h"
+#include "../BayRTClib/RTClib.h"
 
 class BayGPRSPlus : public BayGPRSInterface {
 public:

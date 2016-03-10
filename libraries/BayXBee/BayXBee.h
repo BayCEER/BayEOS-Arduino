@@ -23,7 +23,7 @@
 #define BAYXBEE_GATEWAY 0x1
 #endif
 
-#include "../XBee/XBee.h"
+#include "XBee.h"
 #include "../BayEOS/BayEOS.h"
 #include <inttypes.h>
 #include <WString.h>

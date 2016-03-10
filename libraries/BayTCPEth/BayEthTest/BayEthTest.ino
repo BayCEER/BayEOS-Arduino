@@ -1,8 +1,5 @@
-#include <BayEOS.h>
 #include <Ethernet.h>
-#include <SPI.h>
-#include <SdFat.h>
-#include <Base64.h>
+#include <BayEOS.h>
 #include <BayTCP.h>
 #include <BayTCPEth.h>
 
