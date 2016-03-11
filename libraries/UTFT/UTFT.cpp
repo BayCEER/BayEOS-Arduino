@@ -1235,6 +1235,15 @@ void UTFT::lcdOff()
 	case PCF8833:
 		LCD_Write_COM(0x28);
 		break;
+	case S6D1121_8:
+			//turn OFF
+			LCD_Write_COM_DATA(0x07,0x0000);
+			LCD_Write_COM_DATA(0x00,0x0000);
+	//		LCD_Write_COM_DATA(0x10,0x0010); //Sleep mode
+
+			//only standby mode ON : no visible difference (?)
+			LCD_Write_COM_DATA(0x10,0x0001);
+			break;
 	case CPLD:
 		LCD_Write_COM_DATA(0x01,0x0000);
 		LCD_Write_COM(0x0F);   
@@ -1252,14 +1261,19 @@ void UTFT::lcdOn()
 		LCD_Write_COM(0x29);
 		break;
 	case S6D1121_8:
-			//turn OFF
-			LCD_Write_COM_DATA(0x07,0x0000);
-			LCD_Write_COM_DATA(0x00,0x0000);
-	//		LCD_Write_COM_DATA(0x10,0x0010); //Sleep mode
+		//turn ON
+		LCD_Write_COM_DATA(0x00,0x0001);
+		LCD_Write_COM_DATA(0x07,0x0023);
+		LCD_Write_COM_DATA(0x10,0x0000);
+		delay(30);
+		LCD_Write_COM_DATA(0x07,0x0033);
+		LCD_Write_COM_DATA(0x11,0x60B0);
+		LCD_Write_COM_DATA(0x02,0x0600);
+		LCD_Write_COM(0x22);
 
-			//only standby mode ON : no visible difference (?)
-			LCD_Write_COM_DATA(0x10,0x0001);
-			break;
+		//only standby mode OFF : no visible difference (?)
+		//LCD_Write_COM_DATA(0x10,0x0000);
+		break;
 	case CPLD:
 		LCD_Write_COM_DATA(0x01,0x0010);
 		LCD_Write_COM(0x0F);   
