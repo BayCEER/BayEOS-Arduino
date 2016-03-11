@@ -48,7 +48,7 @@ look like this:
 5. [Base64](https://github.com/adamvr/arduino-base64/)
 
 ### Included modified third party libraries
-1. [iBoard](https://github.com/andykarpov/iBoardRF24) *modified*
+1. [iBoard](https://github.com/andykarpov/iBoardRF24)
 2. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM)
 
 ### BayEOS libraries

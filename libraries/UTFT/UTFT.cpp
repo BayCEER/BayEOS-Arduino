@@ -1251,6 +1251,15 @@ void UTFT::lcdOn()
 	case PCF8833:
 		LCD_Write_COM(0x29);
 		break;
+	case S6D1121_8:
+			//turn OFF
+			LCD_Write_COM_DATA(0x07,0x0000);
+			LCD_Write_COM_DATA(0x00,0x0000);
+	//		LCD_Write_COM_DATA(0x10,0x0010); //Sleep mode
+
+			//only standby mode ON : no visible difference (?)
+			LCD_Write_COM_DATA(0x10,0x0001);
+			break;
 	case CPLD:
 		LCD_Write_COM_DATA(0x01,0x0010);
 		LCD_Write_COM(0x0F);   
