@@ -1,6 +1,6 @@
 #include "BayEOSBufferEEPROM.h"
 #define SERIAL_DEBUG 0
-BayEOSBufferEEPROM::BayEOSBufferEEPROM(const uint8_t deviceAddress):BayEOSBuffer(),_eeprom(deviceAddress){}
+BayEOSBufferEEPROM::BayEOSBufferEEPROM():BayEOSBuffer(){}
 
 void BayEOSBufferEEPROM::init(uint8_t i2c_address, unsigned long max_length, uint16_t pointer_offset){
 	_max_length=max_length-pointer_offset;
@@ -69,7 +69,7 @@ void BayEOSBufferEEPROM::flush(void){
  * MultiEEPROM
  *
  */
-BayEOSBufferMultiEEPROM::BayEOSBufferMultiEEPROM():BayEOSBuffer(),_eeprom(0x50){}
+BayEOSBufferMultiEEPROM::BayEOSBufferMultiEEPROM():BayEOSBuffer(){}
 
 void BayEOSBufferMultiEEPROM::init(uint8_t number,uint8_t* i2c_addresses, unsigned long ee_size, uint16_t pointer_offset){
 	_max_length=(unsigned long)ee_size*number-pointer_offset;

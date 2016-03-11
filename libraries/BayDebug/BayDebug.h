@@ -32,7 +32,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayDebug(HardwareSerial &serial=Serial);
+	BayDebug(HardwareSerial &serial);
 
 
 	/**

@@ -31,7 +31,7 @@ void setup(void){
   }
   
   
-  client.begin(19200,1);  
+  client.begin(9600,1);  
   client.sendMessage("XBee-Router started");
 
 }

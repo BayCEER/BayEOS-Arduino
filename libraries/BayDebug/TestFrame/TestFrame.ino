@@ -3,11 +3,11 @@
 
 
 
-BayDebug client=BayDebug();
+BayDebug client=BayDebug(Serial);
 
 
 void setup(void){
-   client.begin(19200);
+   client.begin(9600);
 }
 
 void loop(void){
