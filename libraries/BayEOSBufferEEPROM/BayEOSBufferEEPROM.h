@@ -13,7 +13,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayEOSBufferEEPROM();
+	BayEOSBufferEEPROM(const uint8_t deviceAddress=0x50);
 	/**
 	 * Init EEPROM Buffer
 	 *

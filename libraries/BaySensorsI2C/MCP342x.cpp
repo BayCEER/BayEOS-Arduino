@@ -1,4 +1,4 @@
-#include "../Wire/Wire.h"
+#include <Wire.h>
 #include "MCP342x.h"
 
 MCP342x::MCP342x()

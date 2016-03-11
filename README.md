@@ -1,8 +1,8 @@
 # BayEOS-Arduino-lib
-This is the new repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.6.x
+This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.6.x
 
 ## Installation
-Copy all folders below the libraries (BayEOS, BayEOSBoards ..) in your Arduino libraries directory.
+Copy all folders below the libraries folder (BayEOS, BayEOSBoards ..) in your Arduino libraries directory.
 
 This library relays on some third party libraries (see below). To ease up installation
 these libraries have been included into this repository.
@@ -49,6 +49,7 @@ look like this:
 
 ### Included modified third party libraries
 1. [iBoard](https://github.com/andykarpov/iBoardRF24) *modified*
+2. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM)
 
 ### BayEOS libraries
 #### BayEOS
