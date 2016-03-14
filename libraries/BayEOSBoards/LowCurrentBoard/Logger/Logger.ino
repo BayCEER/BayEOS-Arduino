@@ -76,7 +76,9 @@ void measure(){
   SHT2x.reset();
   digitalWrite(POWER_PIN,HIGH);
   analogReference(INTERNAL);
-  values[0]+=1.1*320/100/1023*analogRead(A0);
+  if(digitalRead(CONNECTED_PIN)) //only read if not connected!!
+    myLogger._bat=(1.1*320/100/1023*analogRead(A0))*1000;
+  values[0]+=((float)myLogger._bat)/1000;
   analogReference(DEFAULT);
   digitalWrite(POWER_PIN,LOW);
   count++; 
@@ -99,7 +101,7 @@ void measure(){
   } 
   ds.t_conversion();
   #endif
- 
+  
   
 }
 
@@ -112,7 +114,7 @@ void setup()
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.setBuffer(myBuffer); 
   //register all in BayEOSLogger
-  myLogger.init(client,myBuffer,myRTC,60); //min_sampling_int = 60
+  myLogger.init(client,myBuffer,myRTC,60, 2500); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled=1; 
   Wire.begin();

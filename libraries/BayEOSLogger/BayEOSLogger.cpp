@@ -87,11 +87,12 @@ void BayEOSLogger::liveData(uint16_t wait) {
 	delay(wait);
 }
 
-void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t min_sampling_int) {
+void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t min_sampling_int,uint16_t bat_warning) {
 	_rtc = &rtc;
 	_buffer = &buffer;
 	_client = &client;
 	_min_sampling_int=min_sampling_int;
+	_bat_warning=bat_warning;
 
 	readFromEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	if (_sampling_int == 0xffff) {
@@ -255,6 +256,10 @@ void BayEOSLogger::handleCommand(void) {
 		break;
 	case BayEOS_GetSamplingInt:
 		_client->addToPayload(_sampling_int);
+		break;
+	case BayEOS_GetBatStatus:
+		_client->addToPayload(_bat);
+		_client->addToPayload(_bat_warning);
 		break;
 	case BayEOS_GetName:
 		i = 1;

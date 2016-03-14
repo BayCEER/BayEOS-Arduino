@@ -25,7 +25,7 @@ public:
 	  _rtc=NULL;
 	  _mode=0;
   }
-  void init(BayEOS& client,BayEOSBuffer& buffer,RTC& rtc,uint16_t min_sampling_int=10);
+  void init(BayEOS& client,BayEOSBuffer& buffer,RTC& rtc,uint16_t min_sampling_int=10,uint16_t bat_warning=0);
 
   void handleCommand(void);
   void logData(void);
@@ -39,6 +39,8 @@ public:
 
   uint16_t _min_sampling_int;
   uint16_t _sampling_int;
+  uint16_t _bat;
+  uint16_t _bat_warning;
   uint8_t _mode;
   BayEOS* _client;
   RTC* _rtc;

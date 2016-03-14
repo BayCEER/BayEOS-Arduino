@@ -40,7 +40,7 @@
 
 #ifndef BayEOS_h
 #define BayEOS_h
-#define BayEOS_VERSION "1.2"
+#define BayEOS_VERSION "1.3"
 /*
  *  Frame-Types
  */
@@ -55,9 +55,6 @@
  * These frames wrap the original frame. In principle this can be
  * used several times. However the effective payload is reduced by
  * five (six with RSSI) byte per hub
- *
- * XBee TXResponseIO-Frames must be transformed to BayEOS_DataFrame
- * this is currently not implemented by the routers!
  */
 #define BayEOS_RoutedFrame 0x6 /* [0x6][MY_ID][PANID][Original Frame] */
 #define BayEOS_DelayedFrame 0x7 /* [0x7][(unsigned long) delay (msec)][Original Frame] */
@@ -66,13 +63,17 @@ Note RSSI is negative but without sign as uint8_t
 */
 #define BayEOS_TimestampFrame 0x9 /* [0x9][(unsigned long) timestamp (sec since 2000-01-01 00:00 GMT)][Original Frame] */
 #define BayEOS_BinaryFrame 0xa /* [0xa][(unsigned long) pos][binary data] */
-#define BayEOS_OriginFrame 0xb /* [0xb][origin_length][ORIGIN][Original Frame] */
+#define BayEOS_OriginFrame 0xb /* [0xb][origin_length][ORIGIN][Original Frame] -> Origin replaces current origin*/
 #define BayEOS_MillisecondTimestampFrame 0xc /* [0xc][(long long) timestamp (millisec since 1970-01-01 00:00 GMT)][Original Frame] */]
-#define BayEOS_ConfigFrame 0xd /* [0xd][type][subtype][TEXT....]
-  type 0x1: BoardName -> 0xd,0x1,0x0,MeinGerät
-  type 0x2: SamplingInt -> 0xd, 0x2, 0x0, int16
-  	  	    CheckDelay -> 0xd, 0x2, 0x1, int16
-*/
+#define BayEOS_RoutedOriginFrame 0xd /* [0xd][origin_length][ORIGIN][Original Frame] -> Origin is appended to current origin using "/" */
+
+/*Send commands to the Gateway via frame/save interface */
+#define BayEOS_GatewayCommand 0xe /* [0xe][type][ARGS...] */
+#define BayEOS_GatewayCommand_SetName 0x1 /* [0xe][0x1][Name]  */
+#define BayEOS_GatewayCommand_SetChannelName 0x2 /* [0xe][0x2][NR][Name]  */
+#define BayEOS_GatewayCommand_SetSamplingInt 0x3 /* [0xe][0x3][long]  */
+#define BayEOS_GatewayCommand_ApplyTemplate 0x4 /* [0xe][0x4][TemplateName]  */
+
 
 /* BayEOS Data Frames */
 #define BayEOS_Float32le 0x1
@@ -96,7 +97,12 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_ChannelNumber 0x40
 
 
-/** BayEOS Commands */
+/**
+ *  BayEOS Commands
+ *
+ *
+ *
+ */
 #define BayEOS_SetCannelAddress 0x1
 #define BayEOS_GetCannelAddress 0x2
 #define BayEOS_SetAutoSearch 0x3
@@ -121,7 +127,7 @@ Still working but depreciated!!
 #define BayEOS_StartBinaryDump 0x14 /** [unsigned long start_pos - optional][unsigned long end_pos - optional] */
 #define BayEOS_BufferCommand 0x15 /** 0: save current read pointer to EEPROM, 1: erase, 2: set read pointer to last EEPROM pos
  3 = set read pointer to write pointer,4 = set read pointer to end pos of binary dump, 5 = get read pos, 6 get write pos */
-
+#define BayEOS_GetBatStatus 0x16 /* [0x2][0x16] -> returns [0x3][0x16][uint16_t mV][uint16_t warning limit] */
 
 
 #ifndef BayEOS_MAX_PAYLOAD
