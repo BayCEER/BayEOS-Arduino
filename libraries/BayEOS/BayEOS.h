@@ -76,25 +76,35 @@ Note RSSI is negative but without sign as uint8_t
 
 
 /* BayEOS Data Frames */
+/* [0x1][0x1][offset][[float]]+...  */
 #define BayEOS_Float32le 0x1
 #define BayEOS_Int32le 0x2
 #define BayEOS_Int16le 0x3
 #define BayEOS_UInt8 0x4
 #define BayEOS_Double64le 0x5
+/* [0x1][0x21][[float]]+...  */
 #define BayEOS_WithoutOffsetFloat32le 0x21
 #define BayEOS_WithoutOffsetInt32le 0x22
 #define BayEOS_WithoutOffsetInt16le 0x23
 #define BayEOS_WithoutOffsetUInt8 0x24
 #define BayEOS_WithoutOffsetDouble64le 0x25
+/* [0x1][0x41][[Channel number][float]]+...  */
 #define BayEOS_ChannelFloat32le 0x41
 #define BayEOS_ChannelInt32le 0x42
 #define BayEOS_ChannelInt16le 0x43
 #define BayEOS_ChannelUInt8 0x44
 #define BayEOS_ChannelDouble64le 0x45
+ /* [0x1][0x81][[Label length][ChannelLabel][float]]+...  */
+#define BayEOS_LabeledChannelFloat32le 0x81
+#define BayEOS_LabeledChannelInt32le 0x82
+#define BayEOS_LabeledChannelInt16le 0x83
+#define BayEOS_LabeledChannelUInt8 0x84
+#define BayEOS_LabeledChannelDouble64le 0x85
 
 
 #define BayEOS_WithoutOffset 0x20
 #define BayEOS_ChannelNumber 0x40
+#define BayEOS_ChannelLabel 0x80
 
 
 /**
@@ -204,6 +214,7 @@ public:
 	 * returns 0 on success
 	 * returns 1 when no space is left in buffer
 	 * returns 2 when startDataFrame was not called
+	 * returns 3 when wrong subtype
 	 */
 	uint8_t addChannelValue(float v, uint8_t channel_number=0);
 	uint8_t addChannelValue(double v, uint8_t channel_number=0);
@@ -214,6 +225,22 @@ public:
 	uint8_t addChannelValue(int8_t v, uint8_t channel_number=0);
 	uint8_t addChannelValue(uint8_t v, uint8_t channel_number=0);
 
+	/**
+	 * Adds a channel value to the payload using channel_label type
+	 * will only take effect on certain subtypes
+	 * returns 0 on success
+	 * returns 1 when no space is left in buffer
+	 * returns 2 when startDataFrame was not called
+	 * returns 3 when wrong subtype
+	 */
+	uint8_t addChannelValue(float v, const char* channel_label);
+	uint8_t addChannelValue(double v, const char* channel_label);
+	uint8_t addChannelValue(long v, const char* channel_label);
+	uint8_t addChannelValue(unsigned long v, const char* channel_label);
+	uint8_t addChannelValue(int v, const char* channel_label);
+	uint8_t addChannelValue(unsigned int v, const char* channel_label);
+	uint8_t addChannelValue(int8_t v, const char* channel_label);
+	uint8_t addChannelValue(uint8_t v, const char* channel_label);
 	/**
 	 * Set first five (six with rssi) bytes of payload buffer and set _next to 5 (6)
 	 */

@@ -50,11 +50,62 @@ uint8_t BayEOS::addChannelValue(float v,uint8_t channel_number){
 		offset=_payload[1]+2;
 	}
 	if(_payload[offset]!=BayEOS_DataFrame) return 2;
+	if(_payload[offset+1] & BayEOS_ChannelLabel) return 3;
 	if( ( (_payload[offset+1] & 0xf0)==0x40) )
 		addToPayload(channel_number); //channel number
 	else if( ( ( (_payload[offset+1] & 0xf0)==0x0 ) & (_next==(2+offset)) ) )
 		addToPayload(channel_number); //offset - only once
 
+	switch(_payload[offset+1] & 0x0f){
+		case 1:
+			res=addToPayload((float) v);
+			break;
+		case 2:
+			res=addToPayload((long) v);
+			break;
+		case 3:
+			res=addToPayload((int) v);
+			break;
+		case 4:
+			res=addToPayload((uint8_t) v);
+			break;
+	}
+	if(res) return 0;
+	else return 1;
+}
+
+
+uint8_t BayEOS::addChannelValue(double v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(long v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(unsigned long v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(int v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(unsigned int v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(uint8_t v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(int8_t v,const char* channel_label){
+	return addChannelValue((float) v,channel_label);
+}
+uint8_t BayEOS::addChannelValue(float v,const char* channel_label){
+	uint8_t res=0;
+	uint8_t offset=0;
+	if(_payload[0]==BayEOS_OriginFrame){
+		offset=_payload[1]+2;
+	}
+	if(_payload[offset]!=BayEOS_DataFrame) return 2;
+	if(!(_payload[offset+1] & BayEOS_ChannelLabel)) return 3;
+	addToPayload((uint8_t) strlen(channel_label));
+	addToPayload(channel_label);
 	switch(_payload[offset+1] & 0x0f){
 		case 1:
 			res=addToPayload((float) v);

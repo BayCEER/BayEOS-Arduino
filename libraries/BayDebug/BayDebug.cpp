@@ -19,12 +19,23 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset){
 
 
 	while(offset<getPacketLength()){
-		if(channel_type==0x40){
-			channel=getPayload(offset);
+		if (channel_type == BayEOS_ChannelLabel) {
+			channel=getPayload(offset)+offset+1;//this is actually the end of the channel label
 			offset++;
-		} else channel++;
-		print("CH");
-		print(channel);
+			while(offset<getPacketLength() && offset<channel){
+				print((char) getPayload(offset));
+				offset++;
+			}
+		} else {
+			if (channel_type == 0x40) {
+
+				channel = getPayload(offset);
+				offset++;
+			} else
+				channel++;
+			print("CH");
+			print(channel);
+		}
 		print(":");
 		switch(data_type){
 		case 0x1:
