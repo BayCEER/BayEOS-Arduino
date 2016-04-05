@@ -25,16 +25,20 @@
 
 
 // 128= ticks per second!
-#define TICKS_PER_SECOND 128
-#define RAINGAUGE_LAGTICKS 64
-#define POWER_PIN A3
+#define TICKS_PER_SECOND 16
+#define RAINGAUGE_LAGTICKS 6
+#define POWER_PIN 7
 #define SAMPLING_INT 30
 #define WITHDALLAS 0
 #define WITHRAINGAUGE 1
-#define WITHWIND 1
+#define WITHWIND 0
+//#define RF24ADDRESS 0x45c431ae12LL
+//#define RF24ADDRESS 0x45c431ae24LL
+//#define RF24ADDRESS 0x45c431ae48LL
+//#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
-#define RF24ADDRESS 0x45c431ae12LL
-#define RF24CHANNEL 0x61
+#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x72
 #define SERIALDEBUG 0
 #define BUFFERDEBUG 0
 
@@ -77,7 +81,9 @@ void setup()
 
 void loop()
 {
-  //ISR-Stuff
+ //ISR-Stuff
+ handleRtcLCB();
+
  #if WITHWIND
  if(wind_event){
     wind_event=0;

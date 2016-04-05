@@ -18,8 +18,7 @@
  */
 
 #include <SPI.h>
-#include "nRF24L01.h"
-#include "RF24.h"
+#include <RF24.h>
 #include "printf.h"
 
 //
@@ -28,7 +27,7 @@
 
 // Set up nRF24L01 radio on SPI bus plus pins 7 & 8
 
-RF24 radio(7,8);
+RF24 radio(9,10);
 
 //
 // Channel info

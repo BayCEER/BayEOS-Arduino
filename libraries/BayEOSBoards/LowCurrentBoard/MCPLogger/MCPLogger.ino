@@ -67,11 +67,12 @@ const uint8_t rate = 3; //0-3: 12bit ... 18bit
 
 volatile uint16_t ticks;
 volatile uint8_t action;
+volatile uint8_t seconds;
 
 ISR(TIMER2_OVF_vect) {
   ticks++;
   if ((ticks % TICKS_PER_SECOND) == 0) {
-    myRTC._seconds += 1;
+    seconds += 1;
     uint16_t tick_mod = (ticks / TICKS_PER_SECOND) % RAW_SAMPLING_INT;
     if (tick_mod < 2) {
       action |= (1 << tick_mod);
@@ -238,6 +239,11 @@ void loop()
   //Enable logging if RTC give a time later than 2010-01-01
   if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
     myLogger._logging_disabled = 0;
+
+  if(seconds){
+    myRTC._seconds += seconds;
+    seconds=0;
+  }
 
 #if WITH_INT0
   handleINT0Event();

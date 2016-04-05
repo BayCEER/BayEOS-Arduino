@@ -47,10 +47,31 @@ const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
 	0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
 };
 #endif
+
+#ifndef RF24_CHANNEL
+#define RF24_CHANNEL 0x71
+#endif
 //GBoard Pro
 #ifndef RF24_RADIO
 iBoardRF24 radio(12, 11, 8, 7, 9, 2);
 #endif
+
+void init_RF24(void) {
+	radio.begin();
+	radio.setChannel(RF24_CHANNEL);
+	radio.setPayloadSize(32);
+	radio.enableDynamicPayloads();
+	radio.setCRCLength( RF24_CRC_16 );
+	radio.setDataRate(RF24_250KBPS);
+	radio.setPALevel(RF24_PA_MAX);
+	radio.setRetries(15,15);
+	radio.setAutoAck(true);
+	radio.openWritingPipe(pipes[0]);
+	for (uint8_t i = 0; i < 6; i++) {
+		radio.openReadingPipe(i, pipes[i]);
+	}
+	radio.startListening();
+}
 #endif
 
 #if WITH_WATCHDOG
@@ -135,6 +156,10 @@ void initRouter(void) {
 	loggerclient.begin(LOGGER_BAUD_RATE);
 #endif
 
+#if WITH_RF24_RX
+	init_RF24();
+#endif
+
 #if WITH_TFT
 	UTFTprintlnP("Starting XBee... ");
 	TFT.flush();
@@ -162,9 +187,9 @@ void handle_RX_data(void) {
 	if (RX_SERIAL.available()) {
 #if WITH_TFT
 		if(RX_SERIAL.available()>(RX_BUFFER_SIZE-100))
-			tft_output_rx=0;
+		tft_output_rx=0;
 		else
-			tft_output_rx=1;
+		tft_output_rx=1;
 		xbee_rx.readPacket();
 #endif
 		if (xbee_rx.getResponse().isAvailable()) {
@@ -194,30 +219,33 @@ void handle_RX_data(void) {
 }
 
 #if WITH_RF24_RX
+
 void handle_RF24(void) {
 	uint8_t pipe_num, len;
 	uint8_t payload[32];
-	if(radio.available(&pipe_num)){
-		client.startRoutedFrame(pipe_num, 0);
-		len=radio.getDynamicPayloadSize();
-		// Fetch the payload
-		radio.read( payload, len );
-		for (uint8_t i = 0; i < len; i++) {
-			client.addToPayload(payload[i]);
-		}
-		client.writeToBuffer();
-#if WITH_TFT
-		if (TFT.isOn() && tft_output_rx) {
-			TFT.startRoutedFrame(pipe_num, 0);
+	uint8_t count;
+	while(radio.available(&pipe_num)) {
+		if(len=radio.getDynamicPayloadSize()) {
+			client.startRoutedFrame(pipe_num, 0);
+			// Fetch the payload
+			radio.read( payload, len );
 			for (uint8_t i = 0; i < len; i++) {
-				TFT.addToPayload(payload[i]);
+				client.addToPayload(payload[i]);
 			}
-
-			TFT.sendPayload();
-			TFT.flush();
-		}
+			client.writeToBuffer();
+#if WITH_TFT
+			if (TFT.isOn() && tft_output_rx) {
+				TFT.startRoutedFrame(pipe_num, 0);
+				for (uint8_t i = 0; i < len; i++) {
+					TFT.addToPayload(payload[i]);
+				}
+				TFT.sendPayload();
+				TFT.flush();
+			}
 #endif
+		} else radio.read( payload, len);
+		if(count>10) return;
 	}
-
+	delay(1);
 }
 #endif

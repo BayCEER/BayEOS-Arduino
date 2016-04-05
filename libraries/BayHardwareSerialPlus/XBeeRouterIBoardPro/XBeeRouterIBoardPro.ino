@@ -64,7 +64,14 @@ unsigned char buffer[RX_BUFFER_SIZE];
  * So please do not change names above...
  * 
  */
-#define WITH_RF24_RX 0
+#define WITH_RF24_RX 1
+/*
+#define RF24_CHANNEL 72
+#define RF24_PIPES
+const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
+  0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
+};
+*/
 #define WITH_BAYEOS_LOGGER 0
 #define WITH_TFT 1
 #define WITH_WATCHDOG 1
@@ -135,18 +142,6 @@ void setup(void) {
   tft_autooff = millis() + UTFT_AUTOOFF;
 
 
-#if WITH_RF24_RX == 1
-  radio.begin();
-  radio.setChannel(0x71);
-  radio.enableDynamicPayloads();
-  //   radio.setCRCLength( RF24_CRC_16 ) ;
-  radio.setDataRate(RF24_250KBPS);
-  radio.setPALevel(RF24_PA_HIGH);
-  for (uint8_t i = 0; i < 6; i++) {
-    radio.openReadingPipe(i, pipes[i]);
-  }
-  radio.startListening();
-#endif
 
 }
 

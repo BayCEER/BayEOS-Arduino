@@ -69,7 +69,8 @@ unsigned char buffer[RX_BUFFER_SIZE];
  * So please do not change names above...
  * 
  */
-#define WITH_RF24_RX 0
+#define WITH_RF24_RX 1
+#define RF24_CHANNEL 0x72
 #define WITH_BAYEOS_LOGGER 0
 #define WITH_TFT 1
 #define WITH_WATCHDOG 1
@@ -178,9 +179,10 @@ void setup(void) {
   radio.begin();
   radio.setChannel(0x71);
   radio.enableDynamicPayloads();
-  //   radio.setCRCLength( RF24_CRC_16 ) ;
+  radio.setCRCLength( RF24_CRC_16 ) ;
   radio.setDataRate(RF24_250KBPS);
   radio.setPALevel(RF24_PA_HIGH);
+  radio.setRetries(15,15);
   for (uint8_t i = 0; i < 6; i++) {
     radio.openReadingPipe(i, pipes[i]);
   }

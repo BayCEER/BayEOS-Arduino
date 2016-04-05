@@ -250,7 +250,7 @@ uint8_t BayEOS::readFromBuffer(void){
 uint8_t BayEOS::sendOrBuffer(void){
 	//Try to send when no failure or _skip_counter has reached next try...
 	if(_failure_counter<2
-			|| _skip_counter>=(uint8_t) (_failure_counter*_failure_counter)
+			|| _skip_counter>=(uint16_t) ((uint16_t) _failure_counter*(uint16_t) _failure_counter)  /* 2->4 skip, 3->9 skip ...*/
 			|| _skip_counter>=_max_skip){
 		_skip_counter=0;
 		if(! sendPayload()){
@@ -259,7 +259,7 @@ uint8_t BayEOS::sendOrBuffer(void){
 			return 0;
 		} else {
 			//no success
-			_failure_counter++;
+			if(_failure_counter!=255) _failure_counter++;
 		}
 	} else _skip_counter++;
 	if(writeToBuffer()) return 0;
@@ -268,8 +268,8 @@ uint8_t BayEOS::sendOrBuffer(void){
 
 uint8_t BayEOS::sendFromBuffer(void){
 	if(readFromBuffer()){
-		if(_failure_counter<2 ||
-				_skip_counter>=(uint8_t) (_failure_counter*_failure_counter) ||
+		if(_failure_counter<2 || /* not too much failures */
+				_skip_counter>=(uint16_t) ((uint16_t) _failure_counter*(uint16_t) _failure_counter) || /* 2->4 skip, 3->9 skip ...*/
 				_skip_counter>=_max_skip){
 			_skip_counter=0;
 			if(! sendPayload()){
@@ -279,7 +279,7 @@ uint8_t BayEOS::sendFromBuffer(void){
 				return 0;
 			} else {
 				//no success
-				_failure_counter++;
+				if(_failure_counter!=255) _failure_counter++;
 				return 1;
 			}
 		} else _skip_counter++;

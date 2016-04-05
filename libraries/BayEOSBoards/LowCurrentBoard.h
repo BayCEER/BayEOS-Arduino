@@ -42,6 +42,7 @@
 
 volatile uint16_t ticks;
 volatile uint8_t action;
+volatile uint8_t seconds;
 volatile uint8_t led_blink=0;
 volatile uint8_t led_on=0;
 uint8_t startup=10;
@@ -56,7 +57,8 @@ RTC_Timer2 myRTC;
 ISR(TIMER2_OVF_vect){
   ticks++;
   if((ticks % TICKS_PER_SECOND)==0){
-    myRTC._seconds += 1;
+//    myRTC._seconds += 1; //this is not atomic - so better do in loop!
+	seconds++;
     uint16_t tick_mod=(ticks/TICKS_PER_SECOND)%SAMPLING_INT;
     if(tick_mod<ACTION_COUNT){
     	action|=(1<<tick_mod);
@@ -71,6 +73,12 @@ ISR(TIMER2_OVF_vect){
     led_blink--;
   }
 
+}
+inline void handleRtcLCB(void){
+	if(seconds){
+		myRTC._seconds += seconds;
+		seconds=0;
+	}
 }
 
 #if WITHRAINGAUGE

@@ -1,8 +1,6 @@
 #include <BayEOS.h>
 #include <BaySerial.h>
 
-
-
 BaySerial client=BaySerial(Serial);
 
 

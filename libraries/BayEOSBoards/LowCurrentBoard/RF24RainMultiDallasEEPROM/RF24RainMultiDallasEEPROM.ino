@@ -16,8 +16,8 @@
  * Rain Gauge: INT0 == D2
  *
  ***************************************************************/
-#define DALLAS_PIN A1
-#define POWER_PIN A3
+#define DALLAS_PIN 4
+#define POWER_PIN 7
 #define LED_PIN 5
 
 // 16 ticks per second!
@@ -25,8 +25,8 @@
 #define SAMPLING_INTTICKS 512
 #define WITHDALLAS 1
 #define WITHRAINGAUGE 1
-#define RF24ADDRESS 0x45c431ae12LL
-//#define RF24ADDRESS 0x45c431ae48LL
+//#define RF24ADDRESS 0x45c431ae12LL
+#define RF24ADDRESS 0x45c431ae48LL
 #define RF24CHANNEL 0x61
 
 #include <OneWire.h>
@@ -74,6 +74,8 @@ void setup()
 
 void loop()
 {
+  handleRtcLCB();
+  
   #if WITHDALLAS
   //Do conversion 32 ticks (2sec) bevor sampling!
   if(ISSET_ACTION(0)){

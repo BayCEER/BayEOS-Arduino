@@ -39,9 +39,10 @@
 #define WITHDALLAS 1
 #define WITHRAINGAUGE 1
 
-#define CONNECTED_PIN 4
-#define SAMPLING_INT 10
-#define POWER_PIN A3
+#define CONNECTED_PIN 9
+#define SAMPLING_INT 15
+#define POWER_PIN 7
+#define DALLAS_PIN 4
 uint8_t connected=0;
 
 
@@ -71,8 +72,8 @@ void measure(){
   }
  
 
-  values[1]+=SHT2x.GetHumidity();
-  values[2]+=SHT2x.GetTemperature();
+  values[1]+=SHT2x.GetTemperature();
+  values[2]+=SHT2x.GetHumidity();
   SHT2x.reset();
   digitalWrite(POWER_PIN,HIGH);
   analogReference(INTERNAL);
@@ -84,9 +85,9 @@ void measure(){
   count++; 
 
   client.startDataFrame(0x41);
-  client.addChannelValue(millis());
+  client.addChannelValue(millis(),1);
   for(uint8_t i=0;i<3;i++){ 
-    client.addChannelValue(values[i]/count,i+1); 
+    client.addChannelValue(values[i]/count,i+2); 
   }
   #if WITHRAINGAUGE
   client.addChannelValue(rain_count,5);
@@ -129,6 +130,8 @@ void loop()
   //Enable logging if RTC give a time later than 2010-01-01
   if(myLogger._logging_disabled && myRTC.now().get()>315360000L)
       myLogger._logging_disabled = 0;
+
+  handleRtcLCB();
 
   #if WITHRAINGAUGE
   handleRainEventLCB();  

@@ -87,6 +87,8 @@ void setup()
 
 void loop()
 {
+  handleRtcLCB();
+
   if(ISSET_ACTION(0)){
     UNSET_ACTION(0);
     gprs_counter++;

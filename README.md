@@ -44,12 +44,12 @@ look like this:
 1. [OneWire](http://www.pjrc.com/teensy/td_libs_OneWire.html)
 2. [RF24](https://github.com/TMRh20/RF24)
 3. [SdFat](https://github.com/greiman/SdFat)
-4. [UTFT](http://www.rinkydinkelectronics.com/library.php?id=51)
-5. [Base64](https://github.com/adamvr/arduino-base64/)
+4. [Base64](https://github.com/adamvr/arduino-base64/)
 
 ### Included modified third party libraries
-1. [iBoard](https://github.com/andykarpov/iBoardRF24)
-2. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM)
+1. [iBoard](https://github.com/andykarpov/iBoardRF24) (some ports from RF24)
+2. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM) (additional constructor)
+3. [UTFT](http://www.rinkydinkelectronics.com/library.php?id=51) (support for on/off)
 
 ### BayEOS libraries
 #### BayEOS
