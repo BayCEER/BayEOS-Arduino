@@ -2,6 +2,10 @@
 #define WITH_TFT 0
 #endif
 
+#ifndef WITH_RX_XBEE
+#define WITH_RX_XBEE 1
+#endif
+
 #ifndef WITH_WATCHDOG
 #define WITH_WATCHDOG 0
 #endif
@@ -89,13 +93,19 @@ ISR(WDT_vect) {
 /*************************************************
  Variables
  *************************************************/
-
+#if WITH_RX_XBEE
 uint16_t rx_panid;
-unsigned long last_alive, last_send, pos, last_eeprom;
+/*
+   Create a huge ring buffer to store incoming RX Packages while
+   arduino is busy with GPRS...
+*/
+#define RX_BUFFER_SIZE 1024
+unsigned char buffer[RX_BUFFER_SIZE];
+#endif
+unsigned long next_alive, next_send, next_try, pos, last_eeprom;
 uint16_t rx_ok, rx_error, tx_error;
 uint8_t rep_tx_error, tx_res;
 uint8_t last_rx_rssi;
-uint8_t startupframe, startupsend;
 
 /*************************************************
  FUNCTIONS
@@ -160,6 +170,7 @@ void initRouter(void) {
 	init_RF24();
 #endif
 
+#if WITH_RX_XBEE
 #if WITH_TFT
 	UTFTprintlnP("Starting XBee... ");
 	TFT.flush();
@@ -176,13 +187,13 @@ void initRouter(void) {
 	TFT.println(rx_panid);
 	TFT.flush();
 #endif
-	startupframe = 1;
-	startupsend = 1;
+#endif
 #if WITH_WATCHDOG
 	Sleep.setupWatchdog(9); //init watchdog timer to 8 sec
 #endif
 }
 
+#if WITH_RX_XBEE
 void handle_RX_data(void) {
 	if (RX_SERIAL.available()) {
 #if WITH_TFT
@@ -217,6 +228,7 @@ void handle_RX_data(void) {
 		}
 	}
 }
+#endif
 
 #if WITH_RF24_RX
 
@@ -249,3 +261,29 @@ void handle_RF24(void) {
 	delay(1);
 }
 #endif
+
+
+void sendData(void){
+    next_send = millis() + SENDING_INTERVAL;
+    next_try = millis() + NEXT_TRY_INTERVAL;
+    UTFTprintP("Sending ");
+    if ( (tx_res = client.sendMultiFromBuffer()) ) {
+#if WITH_TFT
+      UTFTprintP("failed - ");
+      TFT.println(tx_res);
+#endif
+      tx_error++;
+      rep_tx_error++;
+
+    } else {
+      rep_tx_error = 0;
+#if WITH_TFT
+      UTFTprintlnP("OK");
+#endif
+    }
+#if WITH_TFT
+    TFT.flush();
+#endif
+
+
+}

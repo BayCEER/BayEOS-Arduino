@@ -11,6 +11,7 @@
 //#define BOARD GBoard
 #define BOARD GBoardPro
 
+
 #define NRF24_CHANNEL 0x72
 
 #define RX_LED A2
@@ -56,13 +57,14 @@ const uint8_t pipe_5[] = {0xbe};
 
 BayGPRS client = BayGPRS(TX_SERIAL, GPRS_PIN);
 
-#define SENDING_INTERVAL 120000
+#define SENDING_INTERVAL 300000L
+#define NEXT_TRY_INTERVAL 1200000L
+#define MAX_BUFFER_AVAILABLE 5000
 
-unsigned long last_alive, last_send, pos, last_eeprom;
+unsigned long next_alive, next_send, next_try;
 uint16_t rx_ok, rx_error, tx_error;
-uint8_t rep_tx_error, tx_res;
-uint8_t last_rx_rssi;
-uint8_t startupframe, startupsend;
+
+
 
 //BayDebug client;
 BayEOSBufferSDFat myBuffer;
@@ -74,12 +76,15 @@ volatile uint8_t tx_blink = 0;
 volatile uint8_t rx_blink = 0;
 volatile uint8_t rx_on = 0;
 volatile uint8_t tx_on = 0;
-volatile uint16_t wdt_millis;
-uint16_t sleep_time;
+//volatile uint16_t wdt_millis;
+//volatile uint16_t last_wdt_millis;
+uint16_t wdt_sleep_time, current_wdcount;
+//uint16_t sleep_time;
 uint32_t total_sleep_time;
 ISR(WDT_vect) {
   wdcount++;
-  wdt_millis=millis();
+  //  last_wdt_millis = wdt_millis;
+  //  wdt_millis = millis();
   if (wdreset) wdcount = 0;
   if (wdcount > 480) { //no action for more than 120 sec.
     asm volatile (" jmp 0"); //restart programm
@@ -107,7 +112,7 @@ ISR(WDT_vect) {
 }
 
 
-void initRF24(void){
+void initRF24(void) {
   radio.powerUp();
   radio.setChannel(NRF24_CHANNEL);
   radio.setPayloadSize(32);
@@ -115,22 +120,21 @@ void initRF24(void){
   radio.setCRCLength( RF24_CRC_16 ) ;
   radio.setDataRate(RF24_250KBPS);
   radio.setPALevel(RF24_PA_MAX);
-  radio.setRetries(15,15);
+  radio.setRetries(15, 15);
   radio.setAutoAck(true);
-//  radio.openWritingPipe(pipe_0);
+  //  radio.openWritingPipe(pipe_0);
   radio.openReadingPipe(0, pipe_0);
   radio.openReadingPipe(1, pipe_1);
   radio.openReadingPipe(2, pipe_2);
   radio.openReadingPipe(3, pipe_3);
   radio.openReadingPipe(4, pipe_4);
   radio.openReadingPipe(5, pipe_5);
-  
+
   radio.startListening();
 }
 
 
 void setup(void) {
-
   if (!SD.begin(SD_CSPIN)) {
     return;
   }
@@ -142,8 +146,8 @@ void setup(void) {
 
   myBuffer = BayEOSBufferSDFat(2000000000L, 1); //Append mode!
 #if (BOARD == GBoardPro)
-//  myRTC.adjust(client.now());
-//  myBuffer.setRTC(myRTC, 0); //Relative Mode...
+  myRTC.adjust(client.now());
+  myBuffer.setRTC(myRTC, 0); //Relative Mode...
 #endif
   client.setBuffer(myBuffer, 0);
 
@@ -152,16 +156,24 @@ void setup(void) {
   client.addToPayload(__DATE__);
   client.writeToBuffer();
 
-  Sleep.setupWatchdog(4); //250ms
   radio.begin();
   initRF24();
+  Sleep.setupWatchdog(WDTO_250MS); //250ms
+  wdt_reset();
+  next_send = millis(); // just use this variable for temporal storage!
+  wdcount = 0;
+  while (wdcount < 5)
+    delay(1);
+  wdt_sleep_time = (millis() - next_send) / 5;
+  next_send = 0;
+  next_alive = 0;
+  tx_error = 0;
 }
 
 void loop(void) {
   wdreset = 1;
-  if ((millis() - last_alive) > SENDING_INTERVAL || startupframe) {
-    startupframe = 0;
-    last_alive = millis();
+  if (millis() > next_alive) {
+    next_alive = millis() + SENDING_INTERVAL;
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
@@ -169,45 +181,53 @@ void loop(void) {
     client.addChannelValue(client.getRSSI());
     client.addChannelValue((float)analogRead(A4) / 1023 * 3.3 * 10);
     client.addChannelValue(total_sleep_time / 1000);
+    client.addChannelValue(wdt_sleep_time);
+    client.addChannelValue(tx_error);
     client.writeToBuffer();
   }
 
-  if (    ((millis() - last_send) > SENDING_INTERVAL ||
-           myBuffer.available() > 2000 || startupsend)) {
-    last_send = millis();
+  if ((tx_error == 0 && (millis() > next_send || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
+      || (tx_error && millis() > next_try)) {
     radio.stopListening();
-    
-    if ( (tx_res = client.sendMultiFromBuffer()) ) {
-      tx_error++;
-      rep_tx_error++;
-    } else {
-      rep_tx_error = 0;
-      startupsend = 0;
+    wdt_reset();
+    next_send = millis() + SENDING_INTERVAL;
+    next_try = millis() + NEXT_TRY_INTERVAL;
+    wdcount = 0;
+    wdreset = 0;
 
-      if (rep_tx_error % 5 == 4) {
-        client.softSwitch();
-        client.startFrame(BayEOS_Message);
-        client.addToPayload("TX-ERROR SoftSwitch");
-        client.writeToBuffer();
-      }
+    if ( client.sendMultiFromBuffer() ) {
+      tx_error++;
+    } else {
+      tx_error = 0;
+#if (BOARD == GBoardPro)
+      myRTC.adjust(client.now());
+#endif
     }
+    if (tx_error % 5 == 4) {
+      client.softSwitch();
+      client.startFrame(BayEOS_Message);
+      client.addToPayload("TX-ERROR SoftSwitch");
+      client.writeToBuffer();
+    }
+
+    noInterrupts();
+    current_wdcount = wdcount;
+    interrupts();
+
+    while (wdcount == current_wdcount) delayMicroseconds(10);
+    delayMicroseconds(10);
+    wdt_sleep_time = (millis() + SENDING_INTERVAL - next_send) / wdcount;
     radio.startListening();
     //initRF24();
 
   }
   handle_RF24();
-  noInterrupts();
-  sleep_time=250 - ((uint16_t)millis() - wdt_millis);
-  interrupts();
-  if(sleep_time>250) sleep_time=250;
+  wdt_reset();
   Sleep.sleep();
   noInterrupts();
-  timer0_millis+=sleep_time;
+  timer0_millis += wdt_sleep_time;
   interrupts();
-  total_sleep_time+=sleep_time;
-#if (BOARD == GBoardPro)
-//  myRTC.adjust(client.now());
-#endif
+  total_sleep_time += wdt_sleep_time;
 
 }
 
@@ -227,12 +247,12 @@ void handle_RF24(void) {
       client.writeToBuffer();
       rx_blink = 1;
 
-    } else{
+    } else {
       rx_error++;
       radio.read( payload, len );
     }
-    if(count>10) return;
-  } 
+    if (count > 10) return;
+  }
   delay(1);
 }
 

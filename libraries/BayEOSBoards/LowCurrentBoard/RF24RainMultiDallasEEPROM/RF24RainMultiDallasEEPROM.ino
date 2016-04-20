@@ -4,30 +4,34 @@
  * 
  * with
  * air temperature - air moisture (SHT21)
- * rain gauge
- * soil temperature (Dallas)
+ * rain gauge/wind count
+  * soil temperature (Dallas)
  * Allows multiple Dallas on the same bus.
  * Search and delete is done in setup
  *
  * Sends Dallas values as separate frame due to payload length limitation (32 byte) of RF24
- * 
- * Wiring:
- * Dallas: DATAPIN -> A1, GND-> GND, VCC -> VCC, 4,7k Pullup
- * Rain Gauge: INT0 == D2
  *
  ***************************************************************/
 #define DALLAS_PIN 4
 #define POWER_PIN 7
 #define LED_PIN 5
 
-// 16 ticks per second!
+#define TICKS_PER_SECOND 16
 #define RAINGAUGE_LAGTICKS 12
-#define SAMPLING_INTTICKS 512
+#define SAMPLING_INT 32
 #define WITHDALLAS 1
 #define WITHRAINGAUGE 1
 //#define RF24ADDRESS 0x45c431ae12LL
-#define RF24ADDRESS 0x45c431ae48LL
-#define RF24CHANNEL 0x61
+//#define RF24ADDRESS 0x45c431ae24LL
+//#define RF24ADDRESS 0x45c431ae48LL
+//#define RF24ADDRESS 0x45c431ae96LL
+//#define RF24ADDRESS 0x45c431aeabLL
+#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x71
+
+//Set this to 1 to get BayDebug Output!
+#define SKETCH_DEBUG 0
+
 
 #include <OneWire.h>
 #include <EEPROM.h>
@@ -40,12 +44,16 @@
 #include <Sleep.h>
 #include <SHT2xSleep.h>
 #include <BayEOS.h>
+
+#if SKETCH_DEBUG
+#include <BayDebug.h>
+BayDebug client(Serial);
+#else
 #include <SPI.h>
 #include <RF24.h>
 #include <BayRF24.h>
-
-
 BayRF24 client=BayRF24(9,10);
+#endif
 BayEOSBufferEEPROM myBuffer;
 
 
@@ -61,7 +69,11 @@ void setup()
 {
   
   Wire.begin();
+#if SKETCH_DEBUG
+  client.begin(9600,1);
+#else
   client.init(RF24ADDRESS,RF24CHANNEL);
+#endif
   myBuffer.init(0x50,65536L,0); //NO flush!!
   myBuffer.setRTC(myRTC,0); //Nutze RTC relativ!
   client.setBuffer(myBuffer,100); //use skip!
@@ -125,8 +137,11 @@ void loop()
     
     client.sendFromBuffer();
   }
-
+#if SKETCH_DEBUG
+  delay(50);
+#else
   sleepLCB();
+#endif
 }
 
 

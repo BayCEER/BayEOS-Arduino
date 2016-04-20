@@ -1,15 +1,22 @@
 #include <BayEOS.h>
 #include <BayDebug.h>
+#include <BaySerial.h>
 #include <SPI.h>
 #define LPArduino 1
 #define GBoard 2
 #define GBoardPro 3
 //Set the board type here!!
-//#define BOARD LPArduino
+#define BOARD LPArduino
 //#define BOARD GBoard
-#define BOARD GBoardPro
+//#define BOARD GBoardPro
 
-BayDebug client = BayDebug(Serial);
+#define DEBUG_OUTPUT 1
+
+#if DEBUG_OUTPUT
+BayDebug client(Serial);
+#else
+BaySerial client(Serial);
+#endif
 
 #if (BOARD == GBoardPro)
 #include <iBoardRF24.h>
@@ -70,7 +77,12 @@ void setup(void) {
   radio.openReadingPipe(5, pipe_5);
   */
   radio.startListening();
+#if DEBUG_OUTPUT
   client.begin(9600, 1);
+#else
+  client.begin(38400);
+#endif
+
   printf_begin();
   Serial.println("Starting");
   radio.printDetails();

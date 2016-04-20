@@ -53,9 +53,10 @@ uint8_t BayEOS::addChannelValue(float v,uint8_t channel_number){
 	if(_payload[offset+1] & BayEOS_ChannelLabel) return 3;
 	if( ( (_payload[offset+1] & 0xf0)==0x40) )
 		addToPayload(channel_number); //channel number
-	else if( ( ( (_payload[offset+1] & 0xf0)==0x0 ) & (_next==(2+offset)) ) )
+	else if( ( ( (_payload[offset+1] & 0xf0)==0x0 ) & (_next==(2+offset)) ) ){
+		if(channel_number) channel_number--;
 		addToPayload(channel_number); //offset - only once
-
+	}
 	switch(_payload[offset+1] & 0x0f){
 		case 1:
 			res=addToPayload((float) v);
@@ -227,24 +228,30 @@ uint8_t BayEOS::readBinaryFromBuffer(unsigned long pos,unsigned long stop,unsign
 }
 
 uint8_t BayEOS::readFromBuffer(void){
-	if(! _buffer->available()) return 0;
-	_buffer->initNextPacket();
-	if(_buffer->rtc()){
-		if(_buffer->_absoluteTime)
-			startTimestampFrame(_buffer->packetMillis());
+	while( _buffer->available()){
+		_buffer->initNextPacket();
+		if(! _buffer->packetLength()){
+	    	_buffer->next();//skip empty packet
+	    	continue;
+		}
+		if(_buffer->rtc()){
+			if(_buffer->_absoluteTime)
+				startTimestampFrame(_buffer->packetMillis());
+			else
+				startDelayedFrame((_buffer->getTime()-_buffer->packetMillis())*1000);
+		}
 		else
-			startDelayedFrame((_buffer->getTime()-_buffer->packetMillis())*1000);
-	}
-	else
-	  startDelayedFrame(millis()-_buffer->packetMillis());
+		  startDelayedFrame(millis()-_buffer->packetMillis());
 
-    if(getPayloadBytesLeft()<_buffer->packetLength()){
-    	_buffer->next();
-    	return 0;
-    }
-    _buffer->readPacket(&_payload[_next]);
-    _next+=_buffer->packetLength();
-    return _buffer->packetLength();
+	    if(getPayloadBytesLeft()<_buffer->packetLength()){
+	    	_buffer->next();//skip packet - now way to send this...
+	    	continue;
+	    }
+	    _buffer->readPacket(&_payload[_next]);
+	    _next+=_buffer->packetLength();
+	    return _buffer->packetLength();
+	}
+	return 0;
 }
 
 uint8_t BayEOS::sendOrBuffer(void){

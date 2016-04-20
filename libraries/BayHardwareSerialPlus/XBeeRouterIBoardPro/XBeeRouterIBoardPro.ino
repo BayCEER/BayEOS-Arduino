@@ -15,6 +15,13 @@
 
 
 */
+#define WITH_RF24_RX 0
+#define RF24_CHANNEL 0x72
+#define WITH_BAYEOS_LOGGER 0
+#define WITH_TFT 1
+#define WITH_WATCHDOG 1
+#define WITH_RX_XBEE 1
+
 
 #include <HardwareSerialPlus.h>
 
@@ -35,7 +42,9 @@
 #include <BayHardwareSerialPlus.h>
 
 
-#define SENDING_INTERVAL 120000
+#define SENDING_INTERVAL 120000L
+#define NEXT_TRY_INTERVAL 1200000L
+#define MAX_BUFFER_AVAILABLE 1000
 #define RX_SERIAL SerialPlus3
 
 BayEth client;
@@ -49,28 +58,22 @@ BayEOSBufferSDFat myBuffer;
 RTC_SIM900 myRTC;
 
 
-/*
-   Create a huge ring buffer to store incoming RX Packages while
-   arduino is busy with GPRS...
-*/
-#define RX_BUFFER_SIZE 1024
-unsigned char buffer[RX_BUFFER_SIZE];
 
 /*
- * BayEOSRouter.h relies on 
- * TX: client
- * RX: xbee_rx
- * 
- * So please do not change names above...
- * 
- */
+   BayEOSRouter.h relies on
+   TX: client
+   RX: xbee_rx
+
+   So please do not change names above...
+
+*/
 #define WITH_RF24_RX 1
 /*
-#define RF24_CHANNEL 72
-#define RF24_PIPES
-const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
+  #define RF24_CHANNEL 72
+  #define RF24_PIPES
+  const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
   0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
-};
+  };
 */
 #define WITH_BAYEOS_LOGGER 0
 #define WITH_TFT 1
@@ -84,29 +87,37 @@ void setup(void) {
 
 
   if (!SD.begin(4)) {
+#if WITH_TFT
     UTFTprintlnP("No SD.");
     TFT.flush();
     delay(1000);
+#endif
     return;
   }
 
+#if WITH_TFT
   UTFTprintlnP("READ config");
   TFT.flush();
+#endif
   client.readConfigFromFile("ETH.TXT");
+#if WITH_TFT
   for (uint8_t i = 1; i <= 10; i++) {
     TFT.print(i);
     UTFTprintP(": ");
     TFT.println(*client.getConfigPointer((i - 1)));
   }
   TFT.flush();
+#endif
   memcpy(mac, client.parseMAC(*client.getConfigPointer(BayTCP_CONFIG_MAC)), 6);
   memcpy(ip, client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_IP)), 4);
   memcpy(mask, client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_MASK)), 4);
   memcpy(default_gw, client.parseIP(*client.getConfigPointer(BayTCP_CONFIG_DEFAULT_GW)), 4);
   if (*(*client.getConfigPointer(1) + 2) == '9') {
     client._urlencode = 0;
+#if WITH_TFT
     UTFTprintlnP("Using old port 8090 without urlencode");
     TFT.flush();
+#endif
   }
   if (ip[0])
     Ethernet.begin(mac, ip, default_gw, default_gw, mask);
@@ -116,12 +127,13 @@ void setup(void) {
 
 
   myBuffer = BayEOSBufferSDFat(2000000000, 1); //Append mode!
+  pos = myBuffer.readPos();
+#if WITH_TFT
   UTFTprintlnP("Buffer Ok");
   UTFTprintP("Size: ");
-  pos = myBuffer.readPos();
   TFT.println(pos);
   TFT.flush();
-
+#endif
 
   client.setBuffer(myBuffer, 0);
 #if WITH_BAYEOS_LOGGER
@@ -130,9 +142,10 @@ void setup(void) {
 #endif
   myBuffer.seekReadPointer(pos); //Logger.init moves Read pointer!
 
-
+#if WITH_TFT
   UTFTprintlnP("Setup ok :-)");
   TFT.flush();
+#endif
 
   client.startFrame(BayEOS_Message);
   client.addToPayload("Router started - FW ");
@@ -148,6 +161,7 @@ void setup(void) {
 void loop(void) {
   wdcount = 0; //clear watchdog count!
 
+#if WITH_TFT
   if ((tft_autooff - millis()) > UTFT_AUTOOFF) {
     tftSwitchOff();
   }
@@ -156,12 +170,12 @@ void loop(void) {
     tft_switch = 0;
     if (! TFT.isOn())  tftSwitchOn();
     tft_autooff = millis() + UTFT_AUTOOFF;
+
   }
+#endif
 
-
-  if ((millis() - last_alive) > SENDING_INTERVAL || startupframe) {
-    startupframe = 0;
-    last_alive = millis();
+  if (millis() > next_alive) {
+    next_alive = millis() + SENDING_INTERVAL;
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
@@ -171,29 +185,18 @@ void loop(void) {
     client.addChannelValue(rx_error);
     client.addChannelValue((float)analogRead(A4) / 1023 * 3.3 * 10);
     client.writeToBuffer();
-
-
-    if (((millis() - last_send) > SENDING_INTERVAL || myBuffer.available() > 2000 || startupsend)) {
-      last_send = millis();
-      UTFTprintP("Sending ");
-      if ( (tx_res = client.sendMultiFromBuffer()) ) {
-        UTFTprintP("failed - ");
-        TFT.println(tx_res);
-        tx_error++;
-        rep_tx_error++;
-
-      } else {
-        rep_tx_error = 0;
-        startupsend = 0;
-        UTFTprintlnP("OK");
-      }
-
-    }
-    TFT.flush();
-
   }
 
+
+
+  if ((tx_error == 0 && (millis() > next_send || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
+      || (tx_error && millis() > next_try) ) {
+    sendData();
+  }
+
+#if WITH_RX_XBEE
   handle_RX_data();
+#endif
 
 #if WITH_RF24_RX == 1
   handle_RF24();

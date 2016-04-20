@@ -15,7 +15,7 @@
 // the address of the chip - from 0 up to 8 - it should be hardwired with the chip's address pins on the PCB
 // for the chip type mcp3422 the address is allways 0;
 const byte addr = 0;
-const uint8_t gain = 3; //0-3: x1, x2, x4, x8
+const uint8_t gain = 0; //0-3: x1, x2, x4, x8
 const uint8_t rate = 3; //0-3: 12bit ... 18bit
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 //  create an objcet of the class MCP342x

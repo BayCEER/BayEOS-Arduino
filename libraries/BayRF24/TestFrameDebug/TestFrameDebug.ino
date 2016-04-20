@@ -10,12 +10,12 @@
 //#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
 //#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x72
+#define RF24CHANNEL 0x73
 
 
 /* ce,csn pins - adjust to your layout*/
-//BayRF24 client=BayRF24(9,10); 
-BayRF24 client=BayRF24(8,9); //GBoard 
+BayRF24 client=BayRF24(9,10); 
+//BayRF24 client=BayRF24(8,9); //GBoard 
 
 
 void setup(void){

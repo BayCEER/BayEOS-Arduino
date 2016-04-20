@@ -22,6 +22,11 @@ const uint8_t gain0 = 3; //0-3: x1, x2, x4, x8
 const uint8_t gain1 = 3; //0-3: x1, x2, x4, x8
 const uint8_t gain2 = 3; //0-3: x1, x2, x4, x8
 const uint8_t gain3 = 3; //0-3: x1, x2, x4, x8
+/*
+ * Note - setting gainl will result in the following maximum Voltages
+ * 2,048 - 1,024 - 0,512 - 0,256
+ */
+
 
 //Advanced Configuration
 //Define maximal count rates
@@ -151,25 +156,25 @@ void measure() {
   client.startDataFrame();
 #if WITH_ADC0
   mcp342x.setConf(addr, 1, 0, mode, rate, gain0);
-  delayLCB(300);
+  delayLCB(350);
   values[1] += mcp342x.getData(addr);
   client.addChannelValue(values[1] / count);
 #endif
 #if WITH_ADC1
   mcp342x.setConf(addr, 1, 1, mode, rate, gain1);
-  delayLCB(300);
+  delayLCB(350);
   values[2] += mcp342x.getData(addr);
   client.addChannelValue(values[2] / count);
 #endif
 #if WITH_ADC2
   mcp342x.setConf(addr, 1, 2, mode, rate, gain2);
-  delayLCB(300);
+  delayLCB(350);
   values[3] += mcp342x.getData(addr);
   client.addChannelValue(values[3] / count);
 #endif
 #if WITH_ADC3
   mcp342x.setConf(addr, 1, 3, mode, rate, gain3);
-  delayLCB(300);
+  delayLCB(350);
   values[4] += mcp342x.getData(addr);
   client.addChannelValue(values[4] / count);
 #endif
