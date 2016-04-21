@@ -21,13 +21,13 @@
 #define SAMPLING_INT 32
 #define WITHDALLAS 1
 #define WITHRAINGAUGE 1
-//#define RF24ADDRESS 0x45c431ae12LL
+#define RF24ADDRESS 0x45c431ae12LL
 //#define RF24ADDRESS 0x45c431ae24LL
 //#define RF24ADDRESS 0x45c431ae48LL
 //#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
-#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x71
+//#define RF24ADDRESS 0x45c431aebfLL
+#define RF24CHANNEL 0x73
 
 //Set this to 1 to get BayDebug Output!
 #define SKETCH_DEBUG 0
@@ -109,16 +109,16 @@ void loop()
   // Measure and send 
   if(ISSET_ACTION(2)){
     UNSET_ACTION(2);
-    client.startDataFrame(BayEOS_ChannelFloat32le);
-    client.addChannelValue(millis(),1);
-    client.addChannelValue(batLCB,2);
+    client.startDataFrame();
+    client.addChannelValue(millis());
+    client.addChannelValue(batLCB);
     hum=SHT2x.GetHumidity();
     temp=SHT2x.GetTemperature();
     SHT2x.reset();
-    client.addChannelValue(temp,3);
-    client.addChannelValue(hum,4);
+    client.addChannelValue(temp);
+    client.addChannelValue(hum);
     #if WITHRAINGAUGE
-    client.addChannelValue(rain_count,5);
+    client.addChannelValue(rain_count);
     #endif
     sendOrBufferLCB();
     //Read battery voltage _after_ long uptime!!!
