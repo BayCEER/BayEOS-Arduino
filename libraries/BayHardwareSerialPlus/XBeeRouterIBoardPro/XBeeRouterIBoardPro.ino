@@ -72,7 +72,7 @@ RTC_SIM900 myRTC;
   #define RF24_CHANNEL 72
   #define RF24_PIPES
   const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
-  0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
+  0x45c431ae96LL, 0x45c431aeabLL, 0x45c431aebfLL
   };
 */
 #define WITH_BAYEOS_LOGGER 0
@@ -86,13 +86,12 @@ void setup(void) {
   initRouter();
 
 
-  if (!SD.begin(4)) {
+  while(!SD.begin(4)) {
 #if WITH_TFT
     UTFTprintlnP("No SD.");
     TFT.flush();
     delay(1000);
 #endif
-    return;
   }
 
 #if WITH_TFT

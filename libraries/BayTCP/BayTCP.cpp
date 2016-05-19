@@ -169,8 +169,9 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize){
 		size=maxsize;
 	} else {
 		size=_buffer->available();
-		size<<=1; //Double size - This is just a guess. "bayeosframes[]=base64(frame)"
-		if(size<100) size=100; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
+		size*=2;
+		size+=30;//Double size and add 30 - This is just a guess. "bayeosframes[]=base64(frame)"
+		if(size<150) size=150; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
 		size+=7+strlenURLencoded(_sender)+1+9+strlenURLencoded(_password);
 		if(size>maxsize) size=maxsize;
 	}

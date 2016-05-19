@@ -95,16 +95,16 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_ChannelUInt8 0x44
 #define BayEOS_ChannelDouble64le 0x45
  /* [0x1][0x81][[Label length][ChannelLabel][float]]+...  */
-#define BayEOS_LabeledChannelFloat32le 0x81
-#define BayEOS_LabeledChannelInt32le 0x82
-#define BayEOS_LabeledChannelInt16le 0x83
-#define BayEOS_LabeledChannelUInt8 0x84
-#define BayEOS_LabeledChannelDouble64le 0x85
+#define BayEOS_LabelledChannelFloat32le 0x61
+#define BayEOS_LabelledChannelInt32le 0x62
+#define BayEOS_LabelledChannelInt16le 0x63
+#define BayEOS_LabelledChannelUInt8 0x64
+#define BayEOS_LabelledChannelDouble64le 0x65
 
 
 #define BayEOS_WithoutOffset 0x20
 #define BayEOS_ChannelNumber 0x40
-#define BayEOS_ChannelLabel 0x80
+#define BayEOS_ChannelLabel 0x60
 
 
 /**

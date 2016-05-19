@@ -17,16 +17,10 @@ RF24 radio(9, 10);
 //
 // Topology
 //
-
-// Radio pipe addresses for the nodes to communicate.  Only ping nodes need
-// dedicated pipes in this topology.  Each ping node has a talking pipe
-// that it will ping into, and a listening pipe that it will listen for
-// the pong.  The pong node listens on all the ping node talking pipes
-// and sends the pong back on the sending node's specific listening pipe.
 /*
-  const uint64_t pipes[6] = { 0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
-                            0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
-                          };
+const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
+  0x45c431ae96LL, 0x45c431aeabLL, 0x45c431aebfLL
+};
 */
 const uint64_t pipes[6] = { 0x85c831a312LL, 0x85c831a324LL, 0x85c831a348LL,
                             0x85c831a39fLL, 0x85c831a3abLL, 0x85c831a3bfLL

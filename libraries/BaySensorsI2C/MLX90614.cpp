@@ -68,6 +68,7 @@ float MLX90614::readTemp(uint8_t reg) {
 void MLX90614::enterSleepMode(void){
 	Wire.beginTransmission(_addr); // start transmission to device
 	Wire.write(MLX90614_SLEEP_MODE);
+//	Wire.write(0xF3);
 	Wire.write(0xE8);
 	Wire.endTransmission(); // end transmission
 }

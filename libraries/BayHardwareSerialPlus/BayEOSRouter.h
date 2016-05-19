@@ -48,7 +48,7 @@ uint8_t tft_output_rx=1;
 #include "iBoardRF24.h"
 #ifndef RF24_PIPES
 const uint64_t pipes[6] = {0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
-	0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
+	0x45c431ae96LL, 0x45c431aeabLL, 0x45c431aebfLL
 };
 #endif
 

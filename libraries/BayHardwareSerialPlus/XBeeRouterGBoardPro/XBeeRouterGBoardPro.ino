@@ -74,13 +74,12 @@ RTC_SIM900 myRTC;
 void setup(void) {
   initRouter();
 
-  if (!SD.begin(4)) {
+  while (!SD.begin(4)) {
 #if WITH_TFT
     UTFTprintlnP("No SD.");
     TFT.flush();
     delay(1000);
 #endif
-    return;
   }
 
 #if WITH_TFT

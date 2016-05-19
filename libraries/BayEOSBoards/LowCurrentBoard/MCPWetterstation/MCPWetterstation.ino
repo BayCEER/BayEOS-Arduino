@@ -13,22 +13,37 @@
 #define POWER_PIN 7
 #define LED_PIN 5
 
-#define TICKS_PER_SECOND 16
 #define RAINGAUGE_LAGTICKS 2
 #define SAMPLING_INT 32
 #define WITHDALLAS 0
-#define WITH_MLX 1
-#define WITHRAINGAUGE 1
-//#define RF24ADDRESS 0x45c431ae12LL
-//#define RF24ADDRESS 0x45c431ae24LL
-//#define RF24ADDRESS 0x45c431ae48LL
-//#define RF24ADDRESS 0x45c431ae96LL
-#define RF24ADDRESS 0x45c431aeabLL
-//#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x72
+#define WITH_MLX 0
+#define WITHWINDSPEED 0
 
+#define NRF24_PIPE 3
+#define RF24CHANNEL 0x61
+
+#if NRF24_PIPE == 0
+#define RF24ADDRESS 0x45c431ae12LL
+#elif NRF24_PIPE == 1
+#define RF24ADDRESS 0x45c431ae24LL
+#elif NRF24_PIPE == 2
+#define RF24ADDRESS 0x45c431ae48LL
+#elif NRF24_PIPE == 3
+#define RF24ADDRESS 0x45c431ae96LL
+#elif NRF24_PIPE == 4
+#define RF24ADDRESS 0x45c431aeabLL
+#elif NRF24_PIPE == 5
+#define RF24ADDRESS 0x45c431aebfLL
+#endif
 //Set this to 1 to get BayDebug Output!
 #define SKETCH_DEBUG 0
+
+#if WITHWINDSPEED
+#define TICKS_PER_SECOND 128
+#else
+#define TICKS_PER_SECOND 16
+#endif
+
 
 
 #include <OneWire.h>
@@ -66,6 +81,23 @@ BayEOSBufferEEPROM myBuffer;
 
 #include <LowCurrentBoard.h>
 
+
+#if WITHWINDSPEED
+volatile uint16_t wind_count=0;
+volatile uint8_t wind_event=0;
+volatile uint16_t wind_event_ticks;
+volatile uint16_t min_wind_ticks=65535;
+void wind_isr(void) {
+  if((ticks-wind_event_ticks)>4) {
+    if((ticks-wind_event_ticks)<min_wind_ticks)
+    min_wind_ticks=ticks-wind_event_ticks;
+    wind_count++;
+    wind_event=1;
+    wind_event_ticks=ticks;
+  }
+}
+#endif
+
 float temp, hum;
 
 MCP342x mcp342x = MCP342x();
@@ -91,6 +123,11 @@ void setup()
   startLCB();
 #if WITH_MLX
   mlx.enterSleepMode();  
+#endif
+#if WITHWINDSPEED
+  attachInterrupt(0,wind_isr,RISING);
+  wind_count=0;
+  wind_event=0;
 #endif
 
 
@@ -132,9 +169,11 @@ void loop()
     mcp342x.setConf(addr, 1, 3, mode, rate, gain);
     delayLCB(350);
     client.addChannelValue((100000.0 * mcp342x.getData(addr)));
-#if WITHRAINGAUGE
-    client.addChannelValue(100 * rain_count / SAMPLING_INT);
-    rain_count = 0;
+#if WITHWINDSPEED
+    client.addChannelValue(100 * wind_count / SAMPLING_INT);
+    noInterrupts();
+    wind_count = 0;
+    interrupts();
 #endif
 
 #if WITH_MLX
