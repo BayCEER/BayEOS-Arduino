@@ -43,7 +43,7 @@ BayEOSBufferEEPROM myBuffer;
 
 
 const uint64_t pipes[6] = { 0x85c831a312LL, 0x85c831a324LL, 0x85c831a348LL,
-                            0x85c831a39fLL, 0x85c831a3abLL, 0x85c831a3bfLL
+                            0x85c831a396LL, 0x85c831a3abLL, 0x85c831a3bfLL
                           };
 /*
   const uint64_t pipes[6] = { 0x45c431ae13LL, 0x45c431ae25LL, 0x45c431ae49LL,

@@ -16,7 +16,6 @@ DateTime RTC_SIM900::now() {
 }
 
 uint8_t BayGPRSInterface::init(){
-	if(_pinWrong) return 2;
 	i_begin(_baud);
 	uint8_t count=0;
 	init_start:
@@ -37,39 +36,32 @@ uint8_t BayGPRSInterface::init(){
 			wait_forOK(200);
 			//Check PIN
 			printlnP("AT+CPIN?");
-			if(wait_for("READY",2000)){
-				printlnP("AT+CPIN?");
-				wait_forPGM(PSTR("SIM "),3000,3,_base64buffer);
-				if(_base64buffer[1]=='U') return 3; //SIM: PUK!
-				if(_base64buffer[1]!='I') return 6; //No SIM
+			wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer);
+			if(_base64buffer[5]=='U') return 3; //SIM: PUK
+			if(_base64buffer[5]=='I'){ //SIM: PIN
 				printP("AT+CPIN=\"");
 				print(_pin);
 				println("\"");
 				if(wait_forOK(30000)) {
-				  _pinWrong=1;
 				  return 2; //Wrong PIN
 				}
-		#if BayTCP_DEBUG_INPUT
-				Serial.print(_pin);
-				Serial.println("\"");
-		#endif
-				printlnP("AT+CPIN?");
-				wait_for("READY",20000);
 			}
+			printlnP("AT+CPIN?");
+			if(wait_for("READY",20000)) return 6; //No SIM
 
 			// Waiting for Modem to Connect
-			for(i=0;i<100;i++){
+			for(i=0;i<127;i++){
 				printlnP("AT+CREG?");
 				if(! wait_for(",1",2000)) break;
-				delay(100);
+				delay(200);
 			}
-			if(i==100) return 4;
-			for(i=0;i<100;i++){
+			if(i==127) return 4;
+			for(i=0;i<127;i++){
 				printlnP("AT+CGATT?");
-				if(! wait_for("1",2000)) break;
-				delay(100);
+				if(! wait_for("+CGATT: 1",2000)) break;
+				delay(200);
 			}
-			if(i==100) return 5;
+			if(i==127) return 5;
 			return 0;
 
 		}
@@ -169,7 +161,7 @@ uint8_t BayGPRSInterface::connect(void){
 	if(_tx_error_count>20) softSwitch();
 	uint8_t count=0;
 	uint8_t res;
-	if(res=sendATE0()) return res;
+	if(res=sendATE0()) return res+1;
 	setup_start:
 	printlnP("AT+CIFSR");
 	if(wait_for("ERROR",200)){

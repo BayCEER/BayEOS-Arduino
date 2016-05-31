@@ -23,7 +23,7 @@ RF24 radio(9, 10);
 const uint8_t pipe_0[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 const uint8_t pipe_1[] = {0x24, 0xae, 0x31, 0xc4, 0x45};
 const uint8_t pipe_2[] = {0x48};
-const uint8_t pipe_3[] = {0x9f};
+const uint8_t pipe_3[] = {0x96};
 const uint8_t pipe_4[] = {0xab};
 const uint8_t pipe_5[] = {0xbf};
 uint16_t rx_ok, rx_error, tx_error;

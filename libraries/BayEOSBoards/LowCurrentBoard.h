@@ -193,7 +193,7 @@ const byte* new_addr;
 
 DS18B20 ds=DS18B20(DALLAS_PIN,DALLAS_OFFSET,DALLAS_CHANNELS); //Allow four sensors on the bus - channel 11-14
 
-void readAndSendDallasLCB(void) {
+void readAndSendDallasLCB(uint8_t send=1) {
 	float temp;
 	client.startDataFrame(BayEOS_ChannelFloat32le);
 	while(channel=ds.getNextChannel()) {
@@ -201,7 +201,8 @@ void readAndSendDallasLCB(void) {
 			client.addChannelValue(temp,channel);
 		}
 	}
-	client.sendOrBuffer();
+	if(send) client.sendOrBuffer();
+	else client.writeToBuffer();
 }
 
 #endif

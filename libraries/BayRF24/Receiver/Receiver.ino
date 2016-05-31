@@ -23,7 +23,7 @@ BaySerial client(Serial);
 iBoardRF24 radio(12, 11, 8, 7, 9, 2);
 //Old address style
 const uint64_t pipes[6] = { 0x45c431ae12LL, 0x45c431ae24LL, 0x45c431ae48LL,
-                            0x45c431ae9fLL, 0x45c431aeabLL, 0x45c431aebfLL
+                            0x45c431ae96LL, 0x45c431aeabLL, 0x45c431aebfLL
                           };
 
 #else
@@ -36,7 +36,7 @@ RF24 radio(9,10);
 const uint8_t pipes[6][5] = { 
     {0x12, 0xae, 0x31, 0xc4, 0x45},
     {0x24, 0xae, 0x31, 0xc4, 0x45},
-    {0x48},{0x9f},{0xab},{0xbe}
+    {0x48},{0x96},{0xab},{0xbf}
 };
 
 #endif
@@ -49,9 +49,9 @@ const uint8_t pipes[6][5] = {
 const uint8_t pipe_0[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 const uint8_t pipe_1[] = {0x24, 0xae, 0x31, 0xc4, 0x45};
 const uint8_t pipe_2[] = {0x48};
-const uint8_t pipe_3[] = {0x9f};
+const uint8_t pipe_3[] = {0x96};
 const uint8_t pipe_4[] = {0xab};
-const uint8_t pipe_5[] = {0xbe};
+const uint8_t pipe_5[] = {0xbf};
 */
 
 void setup(void) {
@@ -76,7 +76,6 @@ void setup(void) {
   radio.openReadingPipe(4, pipe_4);
   radio.openReadingPipe(5, pipe_5);
   */
-  radio.startListening();
 #if DEBUG_OUTPUT
   client.begin(9600, 1);
 #else
@@ -88,6 +87,7 @@ void setup(void) {
   radio.printDetails();
   Serial.println("------------");
   client.sendMessage("RF24-Router started");
+  radio.startListening();
 
 }
 

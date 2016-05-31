@@ -2,8 +2,7 @@
  * 
  * Sketch for read out of resistance sensors
  * 
- *
- * Sends Dallas values as separate frame due to payload length limitation (32 byte) of RF24
+ * 
  *
  ***************************************************************/
 #define DALLAS_PIN 4

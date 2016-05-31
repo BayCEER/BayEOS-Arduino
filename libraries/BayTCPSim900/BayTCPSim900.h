@@ -28,11 +28,17 @@ public:
 	 * Use international phone numbers +49151xxxxx
 	 */
 	uint8_t sendSMS(const String &phone, const String &sms);
+
 	/**
 	 * Connect to the web through apn
 	 * 0 == OK
 	 * 1 == Network TIMEOUT
-	 * 2 == GPRS MODEM TIMEOUT
+	 * 2 == NO Communication
+	 * 3 == PIN failed
+	 * 4 == PIN locked
+	 * 5 == Not CREG
+	 * 6 == Not CGATT
+	 * 7 == No SIM Card
 	 * Omit, if you just want to send SMS
 	 */
 	uint8_t connect(void);
@@ -110,8 +116,6 @@ public:
 	long _baud;
 public:
 	uint8_t _powerPin;
-	uint8_t _pinWrong;
-
 };
 
 class BayGPRS : public BayGPRSInterface {
