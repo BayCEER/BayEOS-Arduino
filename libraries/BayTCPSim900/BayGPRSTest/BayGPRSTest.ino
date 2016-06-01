@@ -6,14 +6,14 @@
 #include <BayTCPSim900.h>
 
 //Define Serial and powerPin - Depends on the Board
-//BayGPRS client=BayGPRS(Serial3,46);
-BayGPRS client = BayGPRS(Serial);
+BayGPRS client=BayGPRS(Serial2,46);
+//BayGPRS client = BayGPRS(Serial);
 
 void setup(void) {
   Serial.begin(9600);
   //  client.softSwitch();
   client.readConfigFromStringPGM(
-    PSTR("132.180.112.128|80|gateway/frame/saveFlat|import|import|TestGPRS|pinternet.interkom.de|||1802|"));
+    PSTR("132.180.112.128|80|gateway/frame/saveFlat|import|import|TestGPRS|pinternet.interkom.de|||5855|"));
   client.begin(38400);
 
 }
