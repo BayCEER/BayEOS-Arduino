@@ -6,8 +6,8 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset){
 		return;
 	}
 	offset++;
-	uint8_t data_type=(getPayload(offset) & 0x0f);
-	uint8_t channel_type=(getPayload(offset) & 0xf0);
+	uint8_t data_type=(getPayload(offset) & BayEOS_DATATYP_MASK);
+	uint8_t channel_type=(getPayload(offset) & BayEOS_OFFSETTYP_MASK);
 	uint8_t channel=0;
 
 	println("Data:");
@@ -27,7 +27,7 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset){
 				offset++;
 			}
 		} else {
-			if (channel_type == 0x40) {
+			if (channel_type == BayEOS_ChannelNumber) {
 
 				channel = getPayload(offset);
 				offset++;

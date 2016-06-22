@@ -106,6 +106,8 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_ChannelNumber 0x40
 #define BayEOS_ChannelLabel 0x60
 
+#define BayEOS_DATATYP_MASK 0x0f
+#define BayEOS_OFFSETTYP_MASK 0xf0
 
 /**
  *  BayEOS Commands

@@ -50,10 +50,10 @@ uint8_t BayEOS::addChannelValue(float v,uint8_t channel_number){
 		offset=_payload[1]+2;
 	}
 	if(_payload[offset]!=BayEOS_DataFrame) return 2;
-	if((_payload[offset+1] & BayEOS_ChannelLabel) >= BayEOS_ChannelLabel) return 3;
-	if( ( (_payload[offset+1] & 0xf0)==0x40) )
+	if((_payload[offset+1] & BayEOS_OFFSETTYP_MASK) == BayEOS_ChannelLabel) return 3;
+	if( ( (_payload[offset+1] & BayEOS_OFFSETTYP_MASK) == BayEOS_ChannelNumber) )
 		addToPayload(channel_number); //channel number
-	else if( ( ( (_payload[offset+1] & 0xf0)==0x0 ) & (_next==(2+offset)) ) ){
+	else if( ( ( (_payload[offset+1] & BayEOS_OFFSETTYP_MASK)==0x0 ) & (_next==(2+offset)) ) ){
 		if(channel_number) channel_number--;
 		addToPayload(channel_number); //offset - only once
 	}
@@ -104,7 +104,7 @@ uint8_t BayEOS::addChannelValue(float v,const char* channel_label){
 		offset=_payload[1]+2;
 	}
 	if(_payload[offset]!=BayEOS_DataFrame) return 2;
-	if((_payload[offset+1] & BayEOS_ChannelLabel)!=BayEOS_ChannelLabel) return 3;
+	if((_payload[offset+1] & BayEOS_OFFSETTYP_MASK)!=BayEOS_ChannelLabel) return 3;
 	addToPayload((uint8_t) strlen(channel_label));
 	addToPayload(channel_label);
 	switch(_payload[offset+1] & 0x0f){

@@ -17,9 +17,10 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayGPRSPlus(HardwareSerialPlus &serial=SerialPlus, uint8_t powerPin=9){
+	BayGPRSPlus(HardwareSerialPlus &serial=SerialPlus, uint8_t powerPin=9,uint8_t resetPin=0){
 		_powerPin=powerPin;
 		_urlencode=1;
+		_resetPin=resetPin;
 		_serial=&serial;
 	}
 	uint8_t begin(long baud){

@@ -101,12 +101,12 @@ uint16_t SHT2xClass::readSensor(uint8_t command)
     delayMicroseconds(500); //no hold master mode it is recommended to include a wait period of 20 μs
     //Transmitting will take about 200µs. So wait of 500µs should be sufficient
     Wire.endTransmission();               	//end
-
     while(! Wire.requestFrom(eSHT2xAddress, 3)) {
     	Sleep.sleep(TIMER2_ON | TWI_ON,SLEEP_MODE_PWR_SAVE); //Sleep here
     }
+    unsigned long start=millis();
     while( Wire.available() < 3){
-       	;
+    	;
     }
 
     //Store the result

@@ -6,8 +6,8 @@
 
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
-#include "../BayTCP/BayTCP.h"
-#include "../BayRTClib/RTClib.h"
+#include <BayTCP.h>
+#include <RTClib.h>
 
 class RTC_SIM900 : public RTC {
 public:
@@ -67,8 +67,11 @@ public:
 	 * Switch on GPRS-Modem
 	 * 0 == GPRS-modem is up and responding OK
 	 * 1 == Communication-ERROR
-	 * 2 == PIN-Error
-	 *
+	 * 2 == PIN failed
+	 * 3 == PIN locked
+	 * 4 == Not CREG
+	 * 5 == Not CGATT
+	 * 6 == No SIM Card
 	 */
 	virtual uint8_t begin(long baud);
 
@@ -77,6 +80,12 @@ public:
 	 * will switch on/off modem
 	 */
 	void softSwitch(void);
+
+	/**
+	 * perform software reset operation
+	 * only works if a resetPin is set
+	 */
+	void softReset(void);
 
 	/**
 	 * Send ATE0 command
@@ -116,6 +125,7 @@ public:
 	long _baud;
 public:
 	uint8_t _powerPin;
+	uint8_t _resetPin;
 };
 
 class BayGPRS : public BayGPRSInterface {
@@ -123,7 +133,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayGPRS(HardwareSerial &serial, uint8_t powerPin=9);
+	BayGPRS(HardwareSerial &serial, uint8_t powerPin=9,uint8_t resetPin=0);
 	uint8_t begin(long baud);
 private:
 	HardwareSerial* _serial; //Pointer to existing serial object!!
@@ -155,7 +165,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin, uint8_t powerPin=6);
+	BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin, uint8_t powerPin=6, uint8_t resetPin=0);
 	uint8_t begin(long baud);
 private:
 	int available(void){return SoftwareSerial::available();}

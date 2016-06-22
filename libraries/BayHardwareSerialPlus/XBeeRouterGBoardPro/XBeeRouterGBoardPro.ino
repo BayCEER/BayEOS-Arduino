@@ -47,7 +47,7 @@
 #define RX_SERIAL SerialPlus3
 #define TX_SERIAL SerialPlus2
 
-BayGPRSPlus client = BayGPRSPlus(TX_SERIAL, 46);
+BayGPRSPlus client = BayGPRSPlus(TX_SERIAL, 46,47);
 
 //BayDebug client;
 XBeePlus xbee_rx = XBeePlus();

@@ -68,9 +68,14 @@ ISR(TIMER2_OVF_vect) {
 	}
 
 	if((led_blink>0) && ((ticks%LED_TICK_DIV)==0)) {
-		digitalWrite(LED_PIN,led_on==0);
-		led_on=(led_on==0);
-		led_blink--;
+		if(led_on){
+			digitalWrite(LED_PIN,LOW);
+			led_on=0;
+			led_blink--;
+		} else {
+			digitalWrite(LED_PIN,HIGH);
+			led_on=1;
+		}
 	}
 
 }
@@ -212,7 +217,7 @@ void readAndSendDallasLCB(uint8_t send=1) {
  */
 void blinkLED(uint8_t times) {
 	if (LED_PIN > -1)
-		led_blink = 2 * times;
+		led_blink = times;
 }
 
 /*

@@ -66,6 +66,7 @@ uint8_t BayGPRSInterface::init(){
 
 		}
 	}
+	softReset();
 	softSwitch();
 	count++;
 #if BayTCP_DEBUG_OUTPUT
@@ -88,6 +89,21 @@ void BayGPRSInterface::softSwitch(void){
 	digitalWrite(_powerPin,LOW);
 	delay(3500);
 	_tx_error_count=0;
+}
+
+void BayGPRSInterface::softReset(void){
+	if(!_resetPin) return;
+#if SIM900_DEBUG
+	Serial.println("softReset");
+#endif
+	pinMode(_resetPin, OUTPUT);
+	digitalWrite(_resetPin,LOW);
+	delay(100);
+	digitalWrite(_resetPin,HIGH);
+	delay(100);
+	digitalWrite(_resetPin,LOW);
+	delay(100);
+	pinMode(_resetPin, INPUT);
 }
 
 
@@ -244,9 +260,10 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 }
 
 
-BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin){
+BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin,uint8_t resetPin){
 	_serial=&serial;
 	_powerPin=powerPin;
+	_resetPin=resetPin;
 	_urlencode=1;
 }
 
@@ -255,8 +272,9 @@ uint8_t BayGPRS::begin(long baud){
 	return init();
 }
 
-BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerPin):SoftwareSerial(rxPin,txPin){
+BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerPin,uint8_t resetPin):SoftwareSerial(rxPin,txPin){
 	_powerPin=powerPin;
+	_resetPin=resetPin;
 	_urlencode=1;
 }
 

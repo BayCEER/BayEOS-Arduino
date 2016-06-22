@@ -15,8 +15,12 @@ void loop(void){
    client.startDataFrame(BayEOS_Float32le);
    client.addChannelValue(millis()/1000);     
    client.sendPayload();
+
+   client.startDataFrame(BayEOS_ChannelFloat32le);
+   client.addChannelValue(millis()/1000,12);     
+   client.sendPayload();
    
-   client.startDataFrame(BayEOS_LabeledChannelFloat32le);
+   client.startDataFrame(BayEOS_LabelledChannelFloat32le);
    client.addChannelValue(millis()/1000,"cpu");     
    client.addChannelValue(analogRead(A0),"A0");     
    client.sendPayload();

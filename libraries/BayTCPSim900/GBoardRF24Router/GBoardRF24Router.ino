@@ -8,27 +8,25 @@
 #define GBoard 2
 #define GBoardPro 3
 //Set the board type here!!
-//#define BOARD GBoard
-#define BOARD GBoardPro
+#define BOARD GBoard
+//#define BOARD GBoardPro
 #define SKETCH_DEBUG 0
 
 #define NRF24_CHANNEL 0x51
-/* SET channel to enable second NRF24l01 */
 //#define NRF24_2CHANNEL 0x52
 
+
+#define RX_LED A5
+#define TX_LED A4
+#define POWER_AD_PIN A3
+#define DIVIDER (470.0+100.0)/100.0
 /*
-
-
-  #define RX_LED A9
-  #define TX_LED A10
-  #define POWER_AD_PIN A7
-*/
 #define RX_LED 0
 #define TX_LED 1
 #define POWER_AD_PIN A0
 #define DIVIDER (470.0+68.0)/68.0
-
-//#define DIVIDER (470.0+100.0)/100.0
+*/
+//
 
 /*
   #define RX_LED A15
@@ -60,6 +58,7 @@ const uint64_t pipe_4 = 0x45c431aeabLL;
 const uint64_t pipe_5 = 0x45c431aebfLL;
 #define SD_CSPIN 4
 #define GPRS_PIN 46
+#define GPRS_RESET 47
 #define TX_SERIAL Serial2
 RTC_SIM900 myRTC;
 #else
@@ -73,10 +72,11 @@ const uint8_t pipe_4[] = {0xab};
 const uint8_t pipe_5[] = {0xbf};
 #define SD_CSPIN 10
 #define GPRS_PIN 6
+#define GPRS_RESET 7
 #define TX_SERIAL Serial
 #endif
 
-BayGPRS client = BayGPRS(TX_SERIAL, GPRS_PIN);
+BayGPRS client = BayGPRS(TX_SERIAL, GPRS_PIN, GPRS_RESET);
 
 #define SENDING_INTERVAL 120000L
 #define NEXT_TRY_INTERVAL 300000L
@@ -97,6 +97,7 @@ volatile uint8_t tx_blink = 0;
 volatile uint8_t rx_blink = 0;
 volatile uint8_t rx_on = 0;
 volatile uint8_t tx_on = 0;
+volatile uint8_t program_pos = 0;
 //volatile uint16_t wdt_millis;
 //volatile uint16_t last_wdt_millis;
 uint16_t wdt_sleep_time, current_wdcount;
@@ -115,6 +116,8 @@ ISR(WDT_vect) {
     Serial.println("RESET");
     delay(100);
 #endif
+    if (program_pos > 0 && program_pos < 20)
+      EEPROM.write(0, program_pos);
     asm volatile (" jmp 0"); //restart programm
   }
 #ifdef TX_LED
@@ -186,6 +189,7 @@ void initRF24(void) {
 }
 
 uint8_t handleRF24(void) {
+  program_pos = 1;
   uint8_t pipe_num, len;
   uint8_t payload[32];
   uint8_t count;
@@ -244,6 +248,7 @@ uint8_t handleRF24(void) {
     }
     if (count > 10) break;
   }
+  program_pos = 2;
 
 #endif
   if(rx_error>5) initRF24();
@@ -255,6 +260,7 @@ uint8_t handleRF24(void) {
 
 
 void startGPRS(uint8_t checkRF24=1) {
+  program_pos = 3;
   uint8_t try_count = 0;
   while (try_count < 5) {
     wdreset = 1;
@@ -271,13 +277,15 @@ void startGPRS(uint8_t checkRF24=1) {
 #endif
     if (! tx_res) return;
     if (try_count % 2 == 0) client.softSwitch();
- 
+    program_pos = 4;
+
   }
   return;
 
 }
 
 void setup(void) {
+  program_pos = 5;
 #if SKETCH_DEBUG
   Serial.begin(9600);
   Serial.println("Starting");
@@ -329,6 +337,9 @@ void setup(void) {
   client.startFrame(BayEOS_Message);
   client.addToPayload("FW ");
   client.addToPayload(__DATE__);
+  program_pos = EEPROM.read(0);
+  client.addToPayload(" E:");
+  client.addToPayload('0' + program_pos);
   client.writeToBuffer();
 
 #if SKETCH_DEBUG
@@ -344,12 +355,20 @@ void setup(void) {
   Serial.print(millis());
   Serial.print(" ");
   Serial.println(next_alive);
+  //delay(1000);
+  //analogReference(DEFAULT);
+  //  for(uint8_t z=0;z<10;z++){
+  //    Serial.println(analogRead(A3));
+  //    delay(10);
+  //  }
 #endif
+  program_pos = 6;
 
 }
 
 void loop(void) {
   wdreset = 1;
+  program_pos = 7;
 
   if (millis() > next_alive) {
 #if SKETCH_DEBUG
@@ -387,6 +406,7 @@ void loop(void) {
     rx2_count = 0;
 #endif
     client.writeToBuffer();
+    program_pos = 8;
   }
 
 
@@ -398,6 +418,7 @@ void loop(void) {
     Serial.print(" ");
     Serial.println(next_send);
 #endif
+    program_pos = 9;
     wdt_reset();
     next_send = millis() + SENDING_INTERVAL;
     next_try = millis() + NEXT_TRY_INTERVAL;
@@ -438,20 +459,22 @@ void loop(void) {
       client.addToPayload("TX-ERROR SoftSwitch");
       client.writeToBuffer();
       startGPRS();
+      program_pos = 10;
     }
   }
 
 
 
   if (! handleRF24()) {
-    /* Sleeping seems to make RF24 RX unstable 
+    /*
+    program_pos = 11;
     wdt_reset();
     Sleep.sleep();
     noInterrupts();
     timer0_millis += wdt_sleep_time;
     interrupts();
     total_sleep_time += wdt_sleep_time;
-    */
+    program_pos = 12;*/
     delay(100);
   }
 
