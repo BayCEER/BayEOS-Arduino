@@ -53,7 +53,6 @@ public:
 	virtual void begin()=0;
 	virtual void adjust(const DateTime& dt)=0;
 	virtual DateTime now()=0;
-
 };
 
 
@@ -118,7 +117,12 @@ public:
 	uint8_t addPacket(const uint8_t *payload,uint8_t length);
 
 	/**
-	 * Initialize next package
+	 * Initialize packet
+	 */
+	uint8_t initPacket(unsigned long pos);
+
+	/**
+	 * Initialize next packet at read pointer
 	 */
 	uint8_t initNextPacket(void);
 	/**
@@ -162,16 +166,11 @@ public:
 	  }
 	  return millis(); 
 	}
-	/**
-	 * Set read pointer to 
-	 * 0 = Start of buffer
-	 * 1 = writePointer
-	 */
-	void setReadPointer(uint8_t type);
 
 	unsigned long writePos(void){ return _write_pos; }
 	unsigned long readPos(void){ return _read_pos; }
 	unsigned long endPos(void){ return _end; }
+	unsigned long length(void){ return _max_length; }
 
 
 	boolean _absoluteTime;
@@ -182,12 +181,16 @@ protected:
 	RTC* _rtc;
 	unsigned long _read_pos;
 	unsigned long _write_pos;
+	unsigned long _pos;
 	unsigned long _end;
 
 
 private:
-
-
+	uint8_t b_write(const uint8_t b);
+	uint8_t b_write(const uint8_t *b, uint8_t length);
+	int b_read();
+	int b_read(uint8_t *dest, int length);
+	uint8_t b_seek(unsigned long pos);
 	/*
 	 * reset storage to inital state
 	 */
@@ -226,6 +229,7 @@ private:
 
 	unsigned long _millis;
 	uint8_t _packet_length;
+	int _res;
 
 };
 

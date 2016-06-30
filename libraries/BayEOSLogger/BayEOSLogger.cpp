@@ -22,7 +22,7 @@ void BayEOSLogger::run(void) {
 
 	//Send data stored on SD
 	//Just one frame each time...
-	sendData();
+//	sendData();
 
 	//Send binary dump of SD-file
 	//Just one part each time
@@ -31,13 +31,13 @@ void BayEOSLogger::run(void) {
 
 void BayEOSLogger::sendBinaryDump(void) {
 	if(_mode!=LOGGER_MODE_DUMP) return;
-	if(_bufferwrap && (_long1==_buffer->endPos())){
-		_bufferwrap=0;
-		_long1=0;
-	}
 	uint8_t read=_client->readBinaryFromBuffer(_long1,_long2,_long3);
 	_long1+=read;
 	_long3+=read;
+	//Wrap around!
+	if (_long1 >= _buffer->length())
+		_long1 -= _buffer->length();
+
 	if(_long1==_long2) _mode=0;
 	if(_client->sendPayload()){
 		//send error!
@@ -100,9 +100,11 @@ void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t
 		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	}
 	readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-	if (_long1 > _buffer->writePos())
-		_long1 = _buffer->writePos();
 
+	if (_long1 > _buffer->writePos() && _long1< _buffer->endPos()) //invalid region
+		_long1 = _buffer->writePos();
+	if(_long1 >= _buffer->length()) _long1=_buffer->endPos(); //outside buffer end
+	if(_buffer->endPos()==0 && _buffer->readPos()==0) _long1=0; //empty buffer
 	_buffer->seekReadPointer(_long1);
 	writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
 	_logging_disabled=0;
@@ -118,32 +120,33 @@ void BayEOSLogger::handleCommand(void) {
 	uint8_t cmd_api = _client->getPayload(1);
 	uint8_t cmd_response_api = cmd_api;
 
-
+/* DISABLED 1.4
 	//This is for backward compatibility with older LoggerReaders
 	if(cmd_api==BayEOS_StopData){
 		_mode = 0;
 		cmd_api = BayEOS_BufferCommand;
 	}
-
+*/
 	switch (cmd_api) {
 	case BayEOS_StartBinaryDump:
 		_mode=LOGGER_MODE_DUMP;
-		if(_client->getPacketLength()>2){
+		_long1=_buffer->endPos();
+		_long2=_buffer->writePos();
+
+		if(_client->getPacketLength()>2){ //start
 			for (i = 0; i < 4; i++) {
 				*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
 			}
-		} else _long1=0;
-
-		if(_client->getPacketLength()>6){
+		}
+		if(_client->getPacketLength()>6){ //end
 			for (i = 0; i < 4; i++) {
 				*(((uint8_t*) &_long2) + i) = _client->getPayload(i + 6);
 			}
 
-		} else if(_client->getPacketLength()<3)
-			_long2 = _buffer->endPos();
-		else _long2 = _buffer->writePos();
-		if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
-		else _bufferwrap=0;
+		}
+
+		//if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
+		//else _bufferwrap=0;
 		_long3=0;
 /*
  		Serial.print("BD\t");
@@ -183,7 +186,7 @@ void BayEOSLogger::handleCommand(void) {
 		for (i = 0; i < 4; i++) {
 			*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
 		}
-		_buffer->seekReadPointer(0);
+		_buffer->seekReadPointer(_buffer->endPos());
 		while(_buffer->available()){
 			_buffer->initNextPacket();
 			if(_buffer->packetMillis()>_long1) break;
@@ -197,16 +200,17 @@ void BayEOSLogger::handleCommand(void) {
 	case BayEOS_ModeStop:
 		_mode = 0;
 		break;
-
+/* DISABLED in 1.4
 	case BayEOS_StartData:
 		_mode = LOGGER_MODE_DATA;
 		_long2 = _buffer->writePos();
 		switch (_client->getPayload(2)) {
-		case 1: /* seek read-Pointer to start */
-			_buffer->seekReadPointer(0);
+		case 1: // seek read-Pointer to start
+			_buffer->seekReadPointer(_buffer->getEnd());
 			break;
 		}
 		break;
+*/
 	case BayEOS_BufferCommand:
 		if (_client->getPayload(2) < 5) {
 			switch (_client->getPayload(2)) {
@@ -224,7 +228,7 @@ void BayEOSLogger::handleCommand(void) {
 			 please pay attention to do not call after [BinaryDump][start pos][end pos]
 			 this may result in illegal positions
 			 */
-				_buffer->set(_buffer->writePos());
+				//_buffer->set(_buffer->writePos()); ??
 				_buffer->seekReadPointer(_long2);
 				break;
 			}
@@ -239,12 +243,13 @@ void BayEOSLogger::handleCommand(void) {
 		break;
 
 	}
-
+/* DISABLED 1.4
 	//This is for backward compatibility with older LoggerReaders
 	if(cmd_response_api==BayEOS_StopData){
 		cmd_response_api=cmd_api;
 		cmd_api=BayEOS_StopData;
 	}
+	*/
 	//Command Response
 	_client->startCommandResponse(cmd_api);
 	switch (cmd_response_api) {
@@ -275,12 +280,14 @@ void BayEOSLogger::handleCommand(void) {
 		_client->addToPayload((unsigned long) _rtc->now().get());
 		break;
 	case BayEOS_StartBinaryDump:
-		_client->addToPayload((_bufferwrap?(_buffer->endPos()-_long1+_long2):(_long2-_long1)));
+		_client->addToPayload((_long1>_long2?(_buffer->length()-_long1+_long2):(_long2-_long1)));
 		break;
-	case BayEOS_StartData:
+/*	DISABLED 1.4
+ 	 case BayEOS_StartData:
 		_client->addToPayload(
 				(unsigned long) (_buffer->writePos() - _buffer->readPos()));
 		break;
+		*/
 	case BayEOS_TimeOfNextFrame:
 		if (_client->readFromBuffer()) {
 			for (i = 0; i < 4; i++) {

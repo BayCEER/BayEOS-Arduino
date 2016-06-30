@@ -40,7 +40,7 @@
 
 #ifndef BayEOS_h
 #define BayEOS_h
-#define BayEOS_VERSION "1.3"
+#define BayEOS_VERSION "1.4"
 /*
  *  Frame-Types
  */

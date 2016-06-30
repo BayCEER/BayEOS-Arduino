@@ -48,7 +48,6 @@ public:
   uint8_t _logging_disabled;
   uint8_t _logged_flag; //this is set when data is written to buffer
   //could be used to reset average calculations
-  uint8_t _bufferwrap; //used to indicate that there is a bufferwrap in binary dump
 };
 
 

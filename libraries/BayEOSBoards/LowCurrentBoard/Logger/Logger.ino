@@ -40,9 +40,9 @@
 #define WITHRAINGAUGE 1
 
 #define CONNECTED_PIN 9
-#define SAMPLING_INT 15
+#define SAMPLING_INT 30
 #define POWER_PIN 7
-#define DALLAS_PIN 4
+#define DALLAS_PIN 6
 uint8_t connected=0;
 
 
