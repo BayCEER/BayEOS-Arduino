@@ -13,18 +13,20 @@ void BayEOS::startDataFrame(uint8_t subtype, uint8_t checksum) {
 	addToPayload(subtype);
 }
 
-void BayEOS::startOriginFrame(const String &o) {
-	startFrame((uint8_t) BayEOS_OriginFrame);
+void BayEOS::startOriginFrame(const String &o, uint8_t routed) {
+	if(routed) startFrame((uint8_t) BayEOS_RoutedOriginFrame);
+	else startFrame((uint8_t) BayEOS_OriginFrame);
 	addToPayload((uint8_t) o.length());
 	addToPayload(o);
 }
 
 void BayEOS::startDataFrameWithOrigin(uint8_t subtype, const String &o,
-		uint8_t checksum) {
+		uint8_t checksum, uint8_t routed) {
 	_next = 0;
 	if (checksum)
 		addToPayload((uint8_t) BayEOS_ChecksumFrame);
-	addToPayload((uint8_t) BayEOS_OriginFrame);
+	if(routed) addToPayload((uint8_t) BayEOS_RoutedOriginFrame);
+	else addToPayload((uint8_t) BayEOS_OriginFrame);
 	addToPayload((uint8_t) o.length());
 	addToPayload(o);
 	addToPayload((uint8_t) BayEOS_DataFrame);
@@ -58,8 +60,8 @@ uint8_t BayEOS::addChannelValue(float v, uint8_t channel_number) {
 	if (_payload[0] == BayEOS_ChecksumFrame) {
 		offset = 1;
 	}
-	if (_payload[offset] == BayEOS_OriginFrame) {
-		offset += _payload[1] + 2;
+	if (_payload[offset] == BayEOS_OriginFrame || _payload[offset] == BayEOS_RoutedOriginFrame) {
+		offset += _payload[offset + 1] + 2;
 	}
 	if (_payload[offset] != BayEOS_DataFrame)
 		return 2;
@@ -120,8 +122,8 @@ uint8_t BayEOS::addChannelValue(float v, const char* channel_label) {
 	if (_payload[0] == BayEOS_ChecksumFrame) {
 		offset = 1;
 	}
-	if (_payload[offset] == BayEOS_OriginFrame) {
-		offset += _payload[1] + 2;
+	if (_payload[offset] == BayEOS_OriginFrame || _payload[offset] == BayEOS_RoutedOriginFrame) {
+		offset += _payload[offset + 1] + 2;
 	}
 	if (_payload[offset] != BayEOS_DataFrame)
 		return 2;
@@ -173,6 +175,10 @@ uint8_t BayEOS::validateChecksum() {
 			break;
 		case BayEOS_TimestampFrame:
 			offset += 5;
+			break;
+		case BayEOS_OriginFrame:
+		case BayEOS_RoutedOriginFrame:
+			offset += 2+_payload[offset+1];
 			break;
 		case BayEOS_ChecksumFrame:
 			has_checksum = 1;

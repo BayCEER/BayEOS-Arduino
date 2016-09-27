@@ -92,10 +92,13 @@ void setup(void) {
 }
 
 uint8_t nrf_payload[32];
+String origin="RF-x";
 void loop(void) {
   uint8_t pipe_num, len;
   while( radio.available(&pipe_num) ) {
-    client.startRoutedFrame(pipe_num, 0);
+ //   client.startRoutedFrame(pipe_num, 0);
+    origin[3]='0'+pipe_num;
+    client.startOriginFrame(origin,1);
     len = radio.getDynamicPayloadSize();
     radio.read(nrf_payload, len);
     Serial.print("GOT: ");

@@ -85,6 +85,21 @@ void BayEOSDebugInterface::parse(uint8_t offset){
 		println(*(uint8_t*) (getPayload()+offset+5));
 		parse(offset+6);
 		break;
+	case BayEOS_OriginFrame:
+	case BayEOS_RoutedOriginFrame:
+		if(getPayload(offset)==BayEOS_RoutedOriginFrame) print('R');
+		print("OF:");
+		offset++;
+		current_offset=getPayload(offset);
+		offset++;
+		while(current_offset>0){
+			print((char) getPayload(offset));
+			offset++;
+			current_offset--;
+		}
+		println();
+		parse(offset);
+		break;
 	case BayEOS_DelayedFrame:
 		print("DF: Delay:");
 		println(*(unsigned long*) (getPayload()+offset+1));

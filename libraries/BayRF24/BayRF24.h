@@ -23,7 +23,7 @@ public:
 		return !res;
 	}
 
-	void init(uint64_t address,uint8_t c=0x71,uint8_t pa_level=RF24_PA_MAX, uint8_t rate=RF24_250KBPS){
+	void init(uint64_t address,uint8_t c=0x71,uint8_t pa_level=RF24_PA_HIGH, uint8_t rate=RF24_250KBPS){
 		_pipe=address;
 		RF24::begin();
 		setChannel(c);

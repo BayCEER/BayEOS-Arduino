@@ -10,7 +10,7 @@
 //#define RF24ADDRESS 0x45c431ae96LL
 //#define RF24ADDRESS 0x45c431aeabLL
 //#define RF24ADDRESS 0x45c431aebfLL
-#define RF24CHANNEL 0x56
+#define RF24CHANNEL 0x72
 
 #define WITH_CHECKSUM 1
 
@@ -22,7 +22,7 @@ BayRF24 client = BayRF24(9, 10);
 void setup(void) {
   Serial.begin(9600);
   delay(300);
-  client.init(RF24ADDRESS, RF24CHANNEL);
+  client.init(RF24ADDRESS, RF24CHANNEL,RF24_PA_LOW);
   printf_begin();
   client.printDetails();
 }
