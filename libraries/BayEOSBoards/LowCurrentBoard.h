@@ -34,6 +34,10 @@
 #define ACTION_COUNT 7
 #endif
 
+#ifndef CHECKSUM_FRAMES
+#define CHECKSUM_FRAMES 0
+#endif
+
 #if TICKS_PER_SECOND>3
 #define LED_TICK_DIV (TICKS_PER_SECOND/4)
 #else
@@ -200,12 +204,15 @@ DS18B20 ds=DS18B20(DALLAS_PIN,DALLAS_OFFSET,DALLAS_CHANNELS); //Allow four senso
 
 void readAndSendDallasLCB(uint8_t send=1) {
 	float temp;
-	client.startDataFrame(BayEOS_ChannelFloat32le);
+	client.startDataFrame(BayEOS_ChannelFloat32le,CHECKSUM_FRAMES);
 	while(channel=ds.getNextChannel()) {
 		if(! ds.readChannel(channel,&temp)) {
 			client.addChannelValue(temp,channel);
 		}
 	}
+#if CHECKSUM_FRAMES
+	client.addChecksum();
+#endif
 	if(send) client.sendOrBuffer();
 	else client.writeToBuffer();
 }

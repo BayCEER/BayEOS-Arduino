@@ -67,6 +67,7 @@ RTC_SIM900 myRTC;
 #define WITH_WATCHDOG 1
 #define WITH_RX_XBEE 0
 #define WITH_RF24_RX 1
+#define WITH_RF24_CHECKSUM 0
 #define RF24_CHANNEL 0x72
 #define WITH_BAYEOS_LOGGER 0 /*not tested!!*/
 #include <BayEOSRouter.h>
@@ -213,8 +214,8 @@ void loop(void) {
   }
 #endif
 
-  if (millis() > next_alive) {
-    next_alive = millis() + SENDING_INTERVAL;
+  if ((millis() -last_alive)>SENDING_INTERVAL) {
+    last_alive = millis();
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
@@ -233,9 +234,8 @@ void loop(void) {
 #if WITH_BAYEOS_LOGGER
     ! myLogger._mode &&
 # endif
-    ((tx_error == 0 && (millis() > next_send || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
-     || (tx_error && millis() > next_try) )) {
-
+    ((tx_error == 0 && ((millis() -last_send)>SENDING_INTERVAL || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
+     || (tx_error && (millis()- last_try) > NEXT_TRY_INTERVAL) )) {
     sendData();
     unsigned long simTime = client.now().get();
     unsigned long rtcTime = myRTC.now().get();

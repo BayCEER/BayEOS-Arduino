@@ -14,6 +14,10 @@
 #define WITH_RF24_RX 0
 #endif
 
+#ifndef WITH_RF24_CHECKSUM
+#define WITH_RF24_CHECKSUM 0
+#endif
+
 #ifndef WITH_LOGGER
 #define WITH_LOGGER 0
 #endif
@@ -99,10 +103,12 @@ uint16_t rx_panid;
    Create a huge ring buffer to store incoming RX Packages while
    arduino is busy with GPRS...
 */
+#ifndef RX_BUFFER_SIZE
 #define RX_BUFFER_SIZE 1024
+#endif
 unsigned char buffer[RX_BUFFER_SIZE];
 #endif
-unsigned long next_alive, next_send, next_try, pos, last_eeprom;
+unsigned long last_alive, last_send, last_try, pos, last_eeprom;
 uint16_t rx_ok, rx_error, tx_error;
 uint8_t rep_tx_error, tx_res;
 uint8_t last_rx_rssi;
@@ -191,6 +197,9 @@ void initRouter(void) {
 #if WITH_WATCHDOG
 	Sleep.setupWatchdog(9); //init watchdog timer to 8 sec
 #endif
+	last_try-=NEXT_TRY_INTERVAL;
+	last_send-=SENDING_INTERVAL;
+	last_alive-=SENDING_INTERVAL;
 }
 
 #if WITH_RX_XBEE
@@ -238,13 +247,30 @@ void handle_RF24(void) {
 	uint8_t count;
 	while(radio.available(&pipe_num)) {
 		if(len=radio.getDynamicPayloadSize()) {
+			if(len>32){//invalid communication!
+				init_RF24();
+				break;
+			}
 			client.startRoutedFrame(pipe_num, 0);
 			// Fetch the payload
 			radio.read( payload, len );
 			for (uint8_t i = 0; i < len; i++) {
 				client.addToPayload(payload[i]);
 			}
+#if WITH_RF24_CHECKSUM
+			if(! client.validateChecksum()){
+				//strip of checksum
+				client.startRoutedFrame(pipe_num, 0);
+				for (uint8_t i = 1; i < len-2; i++) {
+					client.addToPayload(payload[i]);
+				}
+				client.writeToBuffer();
+			}
+#else
 			client.writeToBuffer();
+#endif
+
+
 #if WITH_TFT
 			if (TFT.isOn() && tft_output_rx) {
 				TFT.startRoutedFrame(pipe_num, 0);
@@ -264,9 +290,11 @@ void handle_RF24(void) {
 
 
 void sendData(void){
-    next_send = millis() + SENDING_INTERVAL;
-    next_try = millis() + NEXT_TRY_INTERVAL;
+    last_send = millis();
+    last_try = millis();
+#if WITH_TFT
     UTFTprintP("Sending ");
+#endif
     if ( (tx_res = client.sendMultiFromBuffer()) ) {
 #if WITH_TFT
       UTFTprintP("failed - ");

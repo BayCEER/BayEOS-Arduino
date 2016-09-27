@@ -74,6 +74,7 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_GatewayCommand_SetSamplingInt 0x3 /* [0xe][0x3][long]  */
 #define BayEOS_GatewayCommand_ApplyTemplate 0x4 /* [0xe][0x4][TemplateName]  */
 
+#define BayEOS_ChecksumFrame 0xf /* [0xf][frame][checksum_16bit] */
 
 /* BayEOS Data Frames */
 /* [0x1][0x1][offset][[float]]+...  */
@@ -94,7 +95,7 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_ChannelInt16le 0x43
 #define BayEOS_ChannelUInt8 0x44
 #define BayEOS_ChannelDouble64le 0x45
- /* [0x1][0x81][[Label length][ChannelLabel][float]]+...  */
+ /* [0x1][0x61][[Label length][ChannelLabel][float]]+...  */
 #define BayEOS_LabelledChannelFloat32le 0x61
 #define BayEOS_LabelledChannelInt32le 0x62
 #define BayEOS_LabelledChannelInt16le 0x63
@@ -200,14 +201,14 @@ public:
 	/**
 	 * Set first two bytes of payload buffer and set _next to 2
 	 */
-	void startDataFrame(uint8_t subtype=BayEOS_Float32le);
+	void startDataFrame(uint8_t subtype=BayEOS_Float32le,uint8_t checksum=0);
 
 	/**
 	 * Starts a Origin Frame and adds header for data frame
 	 *
 	 * just call addChannelValue() to add values
 	 */
-	void startDataFrameWithOrigin(uint8_t subtype,const String &o);
+	void startDataFrameWithOrigin(uint8_t subtype,const String &o,uint8_t checksum=0);
 
 	/**
 	 * Adds a channel value to the payload
@@ -243,6 +244,21 @@ public:
 	uint8_t addChannelValue(unsigned int v, const char* channel_label);
 	uint8_t addChannelValue(int8_t v, const char* channel_label);
 	uint8_t addChannelValue(uint8_t v, const char* channel_label);
+
+	/*
+	 * Add Checksum at end of frame
+	 */
+	uint8_t addChecksum(void);
+
+	/*
+	 * tries to validate checksum of payload
+	 * returns
+	 *  0 on success
+	 *  1 on checksum error
+	 *  2 on no checksum
+	 */
+	uint8_t validateChecksum(void);
+
 	/**
 	 * Set first five (six with rssi) bytes of payload buffer and set _next to 5 (6)
 	 */

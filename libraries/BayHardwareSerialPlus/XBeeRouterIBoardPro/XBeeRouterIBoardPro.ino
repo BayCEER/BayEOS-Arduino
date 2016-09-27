@@ -173,8 +173,8 @@ void loop(void) {
   }
 #endif
 
-  if (millis() > next_alive) {
-    next_alive = millis() + SENDING_INTERVAL;
+  if ((millis() -last_alive)>SENDING_INTERVAL) {
+    last_alive = millis();
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
@@ -188,8 +188,8 @@ void loop(void) {
 
 
 
-  if ((tx_error == 0 && (millis() > next_send || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
-      || (tx_error && millis() > next_try) ) {
+  if ((tx_error == 0 && ((millis() -last_send)>SENDING_INTERVAL || myBuffer.available() > MAX_BUFFER_AVAILABLE) )
+     || (tx_error && (millis()- last_try) > NEXT_TRY_INTERVAL) ) {
     sendData();
   }
 

@@ -23,14 +23,14 @@ public:
 		return !res;
 	}
 
-	void init(uint64_t address,uint8_t c=0x71,uint8_t pa_level=RF24_PA_MAX){
+	void init(uint64_t address,uint8_t c=0x71,uint8_t pa_level=RF24_PA_MAX, uint8_t rate=RF24_250KBPS){
 		_pipe=address;
 		RF24::begin();
 		setChannel(c);
 		setPayloadSize(32);
 		enableDynamicPayloads();
 		setCRCLength( RF24_CRC_16 ) ;
-		setDataRate(RF24_250KBPS);
+		setDataRate(rate);
 		setPALevel(pa_level);
 		setRetries(15,15);
 		setAutoAck(true);

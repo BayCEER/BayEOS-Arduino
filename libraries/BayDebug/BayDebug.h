@@ -21,6 +21,7 @@ protected:
 	uint8_t _modus;
 	uint8_t _error_next;
 private:
+	uint8_t _checksum;
 	void parse(uint8_t offset=0);
 	void parseDataFrame(uint8_t offset);
 

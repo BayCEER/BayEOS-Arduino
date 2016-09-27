@@ -18,11 +18,11 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset){
 	offset++;
 
 
-	while(offset<getPacketLength()){
+	while(offset<getPacketLength()-_checksum){
 		if (channel_type == BayEOS_ChannelLabel) {
 			channel=getPayload(offset)+offset+1;//this is actually the end of the channel label
 			offset++;
-			while(offset<getPacketLength() && offset<channel){
+			while(offset<(getPacketLength()-_checksum) && offset<channel){
 				print((char) getPayload(offset));
 				offset++;
 			}
@@ -61,6 +61,9 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset){
 }
 
 void BayEOSDebugInterface::parse(uint8_t offset){
+	uint16_t checksum;
+	uint8_t current_offset;
+
 //	print(" ");
 	switch(getPayload(offset)){
 	case BayEOS_DataFrame:
@@ -95,7 +98,7 @@ void BayEOSDebugInterface::parse(uint8_t offset){
 	case BayEOS_ErrorMessage:
 		print("EM: ");
 		offset++;
-		while(offset<getPacketLength()){
+		while(offset<getPacketLength()-_checksum){
 			print((char) getPayload(offset));
 			offset++;
 		}
@@ -104,18 +107,34 @@ void BayEOSDebugInterface::parse(uint8_t offset){
 	case BayEOS_Message:
 		print("M: ");
 		offset++;
-		while(offset<getPacketLength()){
+		while(offset<getPacketLength()-_checksum){
 			print((char) getPayload(offset));
 			offset++;
 		}
 		println();
+		break;
+	case BayEOS_ChecksumFrame:
+		checksum=0;
+		current_offset=offset;
+		while(current_offset<getPacketLength()-2){
+			checksum+=getPayload(current_offset);
+			current_offset++;
+		}
+		checksum+=*(uint16_t*)(getPayload()+current_offset);
+		print("C:");
+		if(checksum==0xffff) print( "OK");
+		else print( "ERR");
+		println();
+		offset++;
+		_checksum=2;
+		parse(offset);
 		break;
 	default:
 		print("U: ");
 		print(getPayload(0),HEX);
 		print(" ");
 		offset++;
-		while(offset<getPacketLength()){
+		while(offset<getPacketLength()-_checksum){
 			print(getPayload(offset),HEX);
 			print(":");
 			offset++;
@@ -127,6 +146,7 @@ void BayEOSDebugInterface::parse(uint8_t offset){
 }
 
 uint8_t BayEOSDebugInterface::sendPayload(void){
+	_checksum=0;
 	if(_modus & 0x1 ==0){
 	print("Payload: ");
 	for(uint8_t i=0;i<getPacketLength();i++){

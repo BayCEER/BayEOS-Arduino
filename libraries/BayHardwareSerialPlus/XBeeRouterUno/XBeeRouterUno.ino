@@ -28,9 +28,6 @@ byte ip[] = { 132, 180, 112, 17 };
 #define RX_SERIAL SerialPlus
 XBeePlus xbee_rx = XBeePlus(RX_SERIAL);
 
-#define RX_BUFFER_SIZE 200
-unsigned char buffer[RX_BUFFER_SIZE];
-
 BayEth client;
 BayEOSBufferRAM  myBuffer;
 
@@ -42,10 +39,13 @@ BayEOSBufferRAM  myBuffer;
  * So please do not change names above...
  * 
  */
+#define RX_BUFFER_SIZE 200
 #define WITH_RF24_RX 0
 #define WITH_BAYEOS_LOGGER 0
 #define WITH_TFT 0
 #define WITH_WATCHDOG 0
+#define SENDING_INTERVAL 30000L
+#define NEXT_TRY_INTERVAL 120000L
 #include <BayEOSRouter.h>
 
 
