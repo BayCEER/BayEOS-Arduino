@@ -18,7 +18,7 @@ public:
 		res=RF24::write(getPayload(),getPacketLength());
 		uint8_t curr_pa=0;
 		while(! res && curr_pa<4){
-			setPALevel(curr_pa);
+			setPALevel((rf24_pa_dbm_e) curr_pa);
 			res=RF24::write(getPayload(),getPacketLength());
 			curr_pa++;
 		}
@@ -32,7 +32,7 @@ public:
 		return !res;
 	}
 
-	void init(uint64_t address,uint8_t c=0x71,uint8_t pa_level=RF24_PA_HIGH, uint8_t rate=RF24_250KBPS){
+	void init(uint64_t address,uint8_t c=0x71,rf24_pa_dbm_e pa_level=RF24_PA_HIGH, rf24_datarate_e rate=RF24_250KBPS){
 		_pipe=address;
 		RF24::begin();
 		setChannel(c);
