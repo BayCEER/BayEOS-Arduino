@@ -13,7 +13,16 @@ public:
 		if(_powerdown) powerUp();
 		else stopListening();
 		openWritingPipe(_pipe);
-		uint8_t res=RF24::write(getPayload(),getPacketLength());
+		uint8_t res;
+
+		res=RF24::write(getPayload(),getPacketLength());
+		uint8_t curr_pa=0;
+		while(! res && curr_pa<4){
+			setPALevel(curr_pa);
+			res=RF24::write(getPayload(),getPacketLength());
+			curr_pa++;
+		}
+
 		if(_powerdown) powerDown();
 		else {
 			txStandBy();
@@ -32,6 +41,7 @@ public:
 		setCRCLength( RF24_CRC_16 ) ;
 		setDataRate(rate);
 		setPALevel(pa_level);
+		_pa_level=pa_level;
 		setRetries(15,15);
 		setAutoAck(true);
 		if(_powerdown) powerDown() ;
@@ -42,6 +52,7 @@ public:
 	}
 	uint64_t _pipe;
 	uint8_t _powerdown;
+	uint8_t _pa_level;
 };
 
 

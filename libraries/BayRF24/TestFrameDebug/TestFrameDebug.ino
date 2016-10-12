@@ -12,7 +12,7 @@
 //#define RF24ADDRESS 0x45c431aebfLL
 #define RF24CHANNEL 0x72
 
-#define WITH_CHECKSUM 1
+#define WITH_CHECKSUM 0
 
 /* ce,csn pins - adjust to your layout*/
 BayRF24 client = BayRF24(9, 10);
@@ -22,7 +22,7 @@ BayRF24 client = BayRF24(9, 10);
 void setup(void) {
   Serial.begin(9600);
   delay(300);
-  client.init(RF24ADDRESS, RF24CHANNEL,RF24_PA_LOW);
+  client.init(RF24ADDRESS, RF24CHANNEL,RF24_PA_MAX);
   printf_begin();
   client.printDetails();
 }
@@ -39,6 +39,7 @@ void loop(void) {
   else
     Serial.println("ok");
   delay(5000);
+  client.printDetails();
 
 }
 

@@ -5,7 +5,7 @@
  * with
  * air temperature - air moisture (SHT21)
  * rain gauge/wind count
-  * soil temperature (Dallas)
+ * soil temperature (Dallas)
  * Allows multiple Dallas on the same bus.
  * Search and delete is done in setup
  *
