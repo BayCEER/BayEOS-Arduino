@@ -128,13 +128,16 @@ void initRF24(void) {
 uint8_t handleRF24(void) {
 	uint8_t pipe_num, len;
 	uint8_t payload[32];
+	char origin[]="P0";
 	uint8_t count;
 	uint8_t rx = 0;
 	while (radio.available(&pipe_num)) {
 		count++;
 		if (len = radio.getDynamicPayloadSize()) {
 			rx++;
-			client.startRoutedFrame(pipe_num, 0);
+			origin[1]='0'+pipe_num;
+			client.startOriginFrame(origin,1);//Routed Origin!
+			//client.startRoutedFrame(pipe_num, 0);
 			// Fetch the payload
 			if (len > 32)
 				len = 32;
@@ -145,7 +148,8 @@ uint8_t handleRF24(void) {
 #if WITH_RF24_CHECKSUM
 			if(! client.validateChecksum()) {
 				//strip of checksum
-				client.startRoutedFrame(pipe_num, 0);
+				client.startOriginFrame(origin,1);//Routed Origin!
+//				client.startRoutedFrame(pipe_num, 0);
 				for (uint8_t i = 1; i < len-2; i++) {
 					client.addToPayload(payload[i]);
 				}
@@ -175,7 +179,9 @@ uint8_t handleRF24(void) {
 		count++;
 		if (len = radio2.getDynamicPayloadSize()) {
 			rx++;
-			client.startRoutedFrame(pipe_num, 1);
+			origin[1]='0'+pipe_num;
+			client.startOriginFrame(origin,1);//Routed Origin!
+//			client.startRoutedFrame(pipe_num, 1);
 			// Fetch the payload
 			if (len > 32) len = 32;
 			radio2.read( payload, len );
@@ -185,7 +191,8 @@ uint8_t handleRF24(void) {
 #if WITH_RF24_CHECKSUM
 			if(! client.validateChecksum()) {
 				//strip of checksum
-				client.startRoutedFrame(pipe_num, 0);
+				client.startOriginFrame(origin,1);//Routed Origin!
+//				client.startRoutedFrame(pipe_num, 0);
 				for (uint8_t i = 1; i < len-2; i++) {
 					client.addToPayload(payload[i]);
 				}

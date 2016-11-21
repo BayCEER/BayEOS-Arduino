@@ -87,13 +87,6 @@ public:
 	 */
 	void softReset(void);
 
-	/**
-	 * Send ATE0 command
-	 * will init moden if modem does not respond...
-	 * 0 == GPRS-modem is up and responding OK
-	 * 1 == Error
-	 */
-	uint8_t sendATE0(void);
 
 	/**
 	 * Switch on GPRS-Modem
@@ -169,10 +162,23 @@ public:
 	uint8_t begin(long baud);
 private:
 	int available(void){return SoftwareSerial::available();}
-	int read(void){return SoftwareSerial::read();}
+	int read(void){
+#if SIM900_DEBUG
+		int c=SoftwareSerial::read();
+		if(c!=-1) Serial.write(c);
+		return c;
+#else
+		return SoftwareSerial::read();
+#endif
+    }
 	void i_begin(long b){ SoftwareSerial::begin(b);}
 	int i_available(void){return SoftwareSerial::available();}
-	size_t write(uint8_t b){return SoftwareSerial::write(b);}
+	size_t write(uint8_t b){
+#if SIM900_DEBUG
+		Serial.write(b);
+#endif
+		return SoftwareSerial::write(b);
+	}
     int peek(void){return SoftwareSerial::peek();};
     void flush(void){SoftwareSerial::flush();};
 };

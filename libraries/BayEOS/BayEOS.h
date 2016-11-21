@@ -47,7 +47,7 @@
 
 #define BayEOS_DataFrame 0x1 /** DataFrame [0x1][TYPE][ARGS...] */
 #define BayEOS_Command 0x2 /* [0x2][CMD][ARGS...] */
-#define BayEOS_CommandResponse 0x3 /* [0x2][CMD][RESPONSE...] */
+#define BayEOS_CommandResponse 0x3 /* [0x3][CMD][RESPONSE...] */
 #define BayEOS_Message 0x4
 #define BayEOS_ErrorMessage 0x5
 /*

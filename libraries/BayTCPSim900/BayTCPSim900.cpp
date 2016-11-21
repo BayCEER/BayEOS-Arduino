@@ -17,6 +17,7 @@ DateTime RTC_SIM900::now() {
 
 uint8_t BayGPRSInterface::init(){
 	i_begin(_baud);
+	skipChars();
 	uint8_t count=0;
 	init_start:
 	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
@@ -36,23 +37,43 @@ uint8_t BayGPRSInterface::init(){
 			wait_forOK(200);
 			//Check PIN
 			printlnP("AT+CPIN?");
-			wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer);
+			if(wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer)){
+				printlnP("AT");
+				wait_forOK(200);
+				printlnP("AT+CFUN=0");
+				//Disable
+				wait_forOK(30000);
+				printlnP("AT+CFUN=1");
+				//delay(2000);
+				//Enable
+				wait_forOK(30000);
+				printlnP("AT");
+				wait_forOK(200);
+				printlnP("AT+CPIN?");
+				wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer);
+			}
 			if(_base64buffer[5]=='U') return 3; //SIM: PUK
 			if(_base64buffer[5]=='I'){ //SIM: PIN
+				printlnP("AT");
+				wait_forOK(200);
 				printP("AT+CPIN=\"");
 				print(_pin);
 				println("\"");
 				if(wait_forOK(30000)) {
 				  return 2; //Wrong PIN
 				}
+				wait_for("Ready",30000);
 			}
+			printlnP("AT");
+			wait_forOK(200);
 			printlnP("AT+CPIN?");
-			if(wait_for("READY",20000)) return 6; //No SIM
+			if(wait_for("READY",30000)) return 6; //No SIM
 
 			// Waiting for Modem to Connect
 			for(i=0;i<127;i++){
 				printlnP("AT+CREG?");
-				if(! wait_for(",1",2000)) break;
+				wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
+				if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') break; //Connected or Roaming
 				delay(200);
 			}
 			if(i==127) return 4;
@@ -108,7 +129,7 @@ void BayGPRSInterface::softReset(void){
 
 
 uint8_t BayGPRSInterface::setClock(const char* time){
-	sendATE0();
+	init();
 	printP("AT+CCLK=\"");
 	print(time);
 	printlnP("\"");
@@ -123,14 +144,14 @@ uint8_t BayGPRSInterface::setClock(const char* time){
 
 
 uint8_t BayGPRSInterface::getRSSI(void){
-	sendATE0();
+	init();
 	printlnP("AT+CSQ");
 	wait_forPGM(PSTR("+CSQ: "),500,2,_base64buffer);
 	return (uint8_t)114 -(2*(uint8_t)atoi(_base64buffer));
 }
 
 DateTime BayGPRSInterface::now(void){
-	sendATE0();
+	init();
 	printlnP("AT+CCLK?");
 	wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer); //YY/MM/DD,HH:MM:SS+02
 //	Serial.print("LocalTime:");
@@ -177,10 +198,10 @@ uint8_t BayGPRSInterface::connect(void){
 	if(_tx_error_count>20) softSwitch();
 	uint8_t count=0;
 	uint8_t res;
-	if(res=sendATE0()) return res+1;
+	if(res=init()) return res+1;
 	setup_start:
 	printlnP("AT+CIFSR");
-	if(wait_for("ERROR",200)){
+	if(wait_for("ERROR",2000)){
 		//has IP
 		printP("AT+CIPSTART=\"TCP\",\"");
 		print(_server);
@@ -231,22 +252,16 @@ uint8_t BayGPRSInterface::connect(void){
 }
 
 void BayGPRSInterface::disconnect(void){
-	//sendATE0();
+	//init();
 	printlnP("AT+CIPCLOSE");
 	wait_forOK(2000);
 //	printlnP("AT+CIPSHUT");
 //	wait_forOK(2000);
 }
 
-uint8_t BayGPRSInterface::sendATE0(void){
-	skipChars();
-	printlnP("ATE0");
-	if(wait_forOK(3000)) return init();
-	return 0;
-}
 
 uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
-	sendATE0();
+	init();
 	printlnP("AT+CMGF=1");//humanreadable SMS
 	if(wait_forOK(2000)) return 2;
 	printP("AT+CMGS=\"");//Target phone number
