@@ -74,13 +74,13 @@ uint8_t BayGPRSInterface::init(){
 				printlnP("AT+CREG?");
 				wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
 				if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') break; //Connected or Roaming
-				delay(200);
+				delay(500);
 			}
 			if(i==127) return 4;
 			for(i=0;i<127;i++){
 				printlnP("AT+CGATT?");
 				if(! wait_for("+CGATT: 1",2000)) break;
-				delay(200);
+				delay(500);
 			}
 			if(i==127) return 5;
 			return 0;

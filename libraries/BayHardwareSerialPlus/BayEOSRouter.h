@@ -259,11 +259,6 @@ void handle_RF24(void) {
 			}
 #if WITH_RF24_CHECKSUM
 			if(! client.validateChecksum()){
-				//strip of checksum
-				client.startRoutedFrame(pipe_num, 0);
-				for (uint8_t i = 1; i < len-2; i++) {
-					client.addToPayload(payload[i]);
-				}
 				client.writeToBuffer();
 			}
 #else

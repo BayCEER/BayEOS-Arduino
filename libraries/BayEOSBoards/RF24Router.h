@@ -2,7 +2,7 @@
  * Functions and Variables for RF24Routing
  *
  * expects the following global variables to be defined:
- *
+ * radio, client
  */
 uint16_t rx_ok, rx_error, rx1_count, rx2_count;
 
@@ -16,6 +16,26 @@ volatile uint8_t tx_blink = 0;
 volatile uint8_t rx_blink = 0;
 volatile uint8_t rx_on = 0;
 volatile uint8_t tx_on = 0;
+
+#ifndef POWER_DIVIDER
+#define POWER_DIVIDER (470.0+100.0)/100.0
+#endif
+
+#ifndef POWER_AD_PIN
+#define POWER_AD_PIN A3
+#endif
+
+#ifndef SENDING_INTERVAL
+#define SENDING_INTERVAL 180000L
+#endif
+
+#ifndef NEXT_TRY_INTERVAL
+#define NEXT_TRY_INTERVAL 300000L
+#endif
+
+#ifndef MAX_BUFFER_AVAILABLE
+#define MAX_BUFFER_AVAILABLE 5000
+#endif
 
 unsigned long last_alive, last_send, last_try;
 uint16_t tx_error;
@@ -70,7 +90,7 @@ void initWatchdog(void) {
 
 	Sleep.setupWatchdog(WDTO_250MS); //250ms
 #ifdef RX_LED
-			pinMode(RX_LED, OUTPUT);
+	pinMode(RX_LED, OUTPUT);
 #endif
 #ifdef TX_LED
 	pinMode(TX_LED, OUTPUT);
@@ -128,17 +148,15 @@ void initRF24(void) {
 uint8_t handleRF24(void) {
 	uint8_t pipe_num, len;
 	uint8_t payload[32];
-	char origin[]="P0";
+	char origin[] = "P0";
 	uint8_t count;
 	uint8_t rx = 0;
 	while (radio.available(&pipe_num)) {
 		count++;
 		if (len = radio.getDynamicPayloadSize()) {
 			rx++;
-			origin[1]='0'+pipe_num;
-			client.startOriginFrame(origin,1);//Routed Origin!
-			//client.startRoutedFrame(pipe_num, 0);
-			// Fetch the payload
+			origin[1] = '0' + pipe_num;
+			client.startOriginFrame(origin, 1); //Routed Origin!
 			if (len > 32)
 				len = 32;
 			radio.read(payload, len);
@@ -147,12 +165,6 @@ uint8_t handleRF24(void) {
 			}
 #if WITH_RF24_CHECKSUM
 			if(! client.validateChecksum()) {
-				//strip of checksum
-				client.startOriginFrame(origin,1);//Routed Origin!
-//				client.startRoutedFrame(pipe_num, 0);
-				for (uint8_t i = 1; i < len-2; i++) {
-					client.addToPayload(payload[i]);
-				}
 				client.writeToBuffer();
 				rx_blink = 1;
 				rx1_count++;
@@ -180,8 +192,7 @@ uint8_t handleRF24(void) {
 		if (len = radio2.getDynamicPayloadSize()) {
 			rx++;
 			origin[1]='0'+pipe_num;
-			client.startOriginFrame(origin,1);//Routed Origin!
-//			client.startRoutedFrame(pipe_num, 1);
+			client.startOriginFrame(origin,1); //Routed Origin!
 			// Fetch the payload
 			if (len > 32) len = 32;
 			radio2.read( payload, len );
@@ -190,12 +201,6 @@ uint8_t handleRF24(void) {
 			}
 #if WITH_RF24_CHECKSUM
 			if(! client.validateChecksum()) {
-				//strip of checksum
-				client.startOriginFrame(origin,1);//Routed Origin!
-//				client.startRoutedFrame(pipe_num, 0);
-				for (uint8_t i = 1; i < len-2; i++) {
-					client.addToPayload(payload[i]);
-				}
 				client.writeToBuffer();
 				rx_blink = 1;
 				rx1_count++;
@@ -218,7 +223,8 @@ uint8_t handleRF24(void) {
 #endif
 	if (rx_error > 5)
 		initRF24();
-	if(count>10) initRF24();
+	if (count > 10)
+		initRF24();
 
 	delay(1);
 	return rx;
