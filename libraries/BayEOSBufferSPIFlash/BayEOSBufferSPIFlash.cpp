@@ -34,20 +34,24 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 		if (_temp < _max_length)
 			_end = _temp;
 
-		//We have to erase the current write poiter sector as we do not know whether it has be written something after the pointer
+		//We have to erase the current write pointer sector as we do not know whether it has be written something after the pointer
 		checkEraseSector(_write_pos, _write_pos + 4096);
-		//copy current sector from start to write poiter to following sector
-		_pos = _write_pos & 0xfffff000L;
+		//copy current sector from start to write pointer to following sector
+		_pos = _write_pos & 0xfffff000L; //current sector
+		_temp = ((_pos + 4096)>=_max_length?0:_pos+4096); //target sector
 		while (_pos < _write_pos) {
-			_flash->writeByte(_pos + 4096, _flash->readByte(_pos));
+			_flash->writeByte(_temp, _flash->readByte(_pos),false);
 			_pos++;
+			_temp++;
 		}
 		_flash->eraseSector(_write_pos);
 		//copy back
 		_pos = _write_pos & 0xfffff000L;
+		_temp = ((_pos + 4096)>=_max_length?0:_pos+4096);
 		while (_pos < _write_pos) {
-			_flash->writeByte(_pos, _flash->readByte(_pos + 4096));
+			_flash->writeByte(_pos, _flash->readByte(_temp),false);
 			_pos++;
+			_temp++;
 		}
 	} else{
 		reset();
@@ -84,7 +88,7 @@ void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
 	if (_pos < _max_length) {
 		checkEraseSector(_pos, _pos + 1);
-		_flash->writeByte(_pos, b);
+		_flash->writeByte(_pos, b,false);
 		_pos++;
 		return 1;
 
@@ -94,7 +98,7 @@ uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
 	if (_pos + length < _max_length) {
 		checkEraseSector(_pos, _pos + length);
-		_flash->writeByteArray(_pos, b, length);
+		_flash->writeByteArray(_pos, b, length,false);
 		_pos += length;
 		return length;
 	}
@@ -141,14 +145,14 @@ void BayEOSBufferSPIFlash::flush(void) {
 	_temp = 0x0f0f0f0fL;
 	uint8_t *p;
 	p = (uint8_t*) &_temp;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset, p, 4);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset, p, 4,false);
 
 	p = (uint8_t*) &_read_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 4, p, 4);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 4, p, 4,false);
 	p = (uint8_t*) &_write_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 8, p, 4);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 8, p, 4,false);
 	p = (uint8_t*) &_end;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 12, p, 4);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 12, p, 4,false);
 	_flush_offset++;
 	_flush_count = 0;
 #if SERIAL_DEBUG
