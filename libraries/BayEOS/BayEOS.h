@@ -70,9 +70,11 @@ Note RSSI is negative but without sign as uint8_t
 /*Send commands to the Gateway via frame/save interface */
 #define BayEOS_GatewayCommand 0xe /* [0xe][type][ARGS...] */
 #define BayEOS_GatewayCommand_SetName 0x1 /* [0xe][0x1][Name]  */
-#define BayEOS_GatewayCommand_SetChannelName 0x2 /* [0xe][0x2][NR][Name]  */
+#define BayEOS_GatewayCommand_ApplyTemplate 0x2 /* [0xe][0x2][TemplateName/UUID/URL]  */
 #define BayEOS_GatewayCommand_SetSamplingInt 0x3 /* [0xe][0x3][long]  */
-#define BayEOS_GatewayCommand_ApplyTemplate 0x4 /* [0xe][0x4][TemplateName]  */
+#define BayEOS_GatewayCommand_SetCheckDelay 0x4 /* [0xe][0x4][long]  */
+
+//#define BayEOS_GatewayCommand_SetChannelName 0x21 /* [0xe][0x2][NR][Name]  */
 
 #define BayEOS_ChecksumFrame 0xf /* [0xf][frame][checksum_16bit] */
 
