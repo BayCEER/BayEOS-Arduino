@@ -89,17 +89,17 @@ uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
 	if (_pos < _max_length) {
 		checkEraseSector(_pos, _pos + 1);
 		_flash->writeByte(_pos, b,false);
-		_pos++;
+		//_pos++;
 		return 1;
 
 	}
 	return 0;
 }
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
-	if (_pos + length < _max_length) {
+	if (_pos + length <= _max_length) {
 		checkEraseSector(_pos, _pos + length);
 		_flash->writeByteArray(_pos, b, length,false);
-		_pos += length;
+		//_pos += length;
 		return length;
 	}
 	return 0;
@@ -107,19 +107,19 @@ uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
 
 uint8_t BayEOSBufferSPIFlash::seek(unsigned long pos) {
 	if (pos < _max_length) {
-		_pos = pos;
+		//_pos = pos;
 		return true;
 	} else
 		return false;
 }
 
 int BayEOSBufferSPIFlash::read(void) {
-	return _flash->readByte(_pos++);
+	return _flash->readByte(_pos);
 }
 
 int BayEOSBufferSPIFlash::read(uint8_t *dest, int length) {
 	_flash->readByteArray(_pos, dest, length);
-	_pos += length;
+	//_pos += length;
 	return length;
 }
 

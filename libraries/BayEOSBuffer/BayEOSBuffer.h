@@ -183,14 +183,14 @@ protected:
 	unsigned long _write_pos;
 	unsigned long _pos;
 	unsigned long _end;
-
-
-private:
 	uint8_t b_write(const uint8_t b);
 	uint8_t b_write(const uint8_t *b, uint8_t length);
 	int b_read();
 	int b_read(uint8_t *dest, int length);
 	uint8_t b_seek(unsigned long pos);
+
+
+private:
 	/*
 	 * reset storage to inital state
 	 */
@@ -212,12 +212,15 @@ private:
 	virtual uint8_t seek(unsigned long pos)=0;
 
 	/*
-	 * read one byte from the buffer - retruns -1 on failure
+	 * read one byte from the buffer
+	 * returns -1 on failure
 	 */
 	virtual int read(void)=0;
 
 	/*
-	 * read length bytes from the buffer - retruns -1 on failure
+	 * read length bytes from the buffer into destination
+	 * returns number of bytes read
+	 * -1 on failure
 	 */
 	virtual int read(uint8_t *dest,int length)=0;
 

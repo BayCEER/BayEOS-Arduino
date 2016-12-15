@@ -39,7 +39,7 @@ private:
 	void flush(void);
 
 	uint8_t* _buffer;
-	uint8_t* _pos;
+	uint8_t* _ram_pos;
 };
 
 #endif

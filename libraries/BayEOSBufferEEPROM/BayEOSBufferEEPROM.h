@@ -36,7 +36,7 @@ private:
 	void flush(void);
 
 	I2C_eeprom _eeprom;
-	unsigned long _pos;
+//	unsigned long _pos; // will inherit from BayEOSBuffer!
 	uint8_t _flush;
 };
 
@@ -71,7 +71,7 @@ private:
 	uint8_t _number;
 	unsigned long _ee_size;
 	unsigned long _ee_mask;
-	unsigned long _pos;
+//	unsigned long _pos; // will inherit from BayEOSBuffer!
 	uint8_t _flush;
 };
 

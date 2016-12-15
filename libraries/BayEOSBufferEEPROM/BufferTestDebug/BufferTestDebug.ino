@@ -1,18 +1,34 @@
 #include <BayEOSBuffer.h>
-#include <BayEOSBufferRAM.h>
+#include <Wire.h>
+#include <I2C_eeprom.h>
+#include <BayEOSBufferEEPROM.h>
 #include <BayEOS.h>
 #include <BayDebug.h>
 
 
-BayDebug client = BayDebug(Serial);
-BayEOSBufferRAM myBuffer;
-unsigned long last_data;
-unsigned long last_buffered_data;
+//Set 0 for single EEPROM
+#define MULTIEEPROM 1
 
+#if MULTIEEPROM
+uint8_t i2c_addresses[]={0x50,0x51,0x52,0x53};
+BayEOSBufferMultiEEPROM myBuffer;
+#else
+BayEOSBufferEEPROM myBuffer;
+#endif
+
+BayDebug client = BayDebug(Serial);
 
 void setup(void) {
-  client.begin(9600,1);
-  myBuffer = BayEOSBufferRAM(900);
+  client.begin(9600, 1);
+  Serial.println("Starting...");
+  delay(10);
+#if MULTIEEPROM
+  myBuffer.init(2,i2c_addresses,65536L); //with flush
+  //myBuffer.reset(); //uncomment to clear buffer
+ #else
+ myBuffer.init(0x50, 65536L,0); //no flush!
+#endif
+  //myBuffer.reset(); //This will set all pointers to zero
   client.setBuffer(myBuffer);
 }
 
@@ -48,5 +64,5 @@ void loop(void) {
     Serial.println(myBuffer.available());
   }
   i++;
-  delay(100);
+  delay(1);
 }

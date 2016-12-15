@@ -34,7 +34,7 @@ private:
 	void checkEraseSector(const unsigned long start_pos, unsigned long end_pos);
 
 	SPIFlash* _flash;
-	unsigned long _pos,_temp;
+	unsigned long _temp;
 	uint8_t _flush_skip;
 	uint8_t _flush_count;
 	uint8_t _flush_offset;

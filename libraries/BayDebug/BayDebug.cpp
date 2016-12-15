@@ -146,7 +146,7 @@ void BayEOSDebugInterface::parse(uint8_t offset){
 		break;
 	default:
 		print("U: ");
-		print(getPayload(0),HEX);
+		print(getPayload(offset),HEX);
 		print(" ");
 		offset++;
 		while(offset<getPacketLength()-_checksum){

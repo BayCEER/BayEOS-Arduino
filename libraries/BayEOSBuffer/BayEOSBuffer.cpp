@@ -15,8 +15,7 @@ uint8_t BayEOSBuffer::b_seek(unsigned long pos) {
 }
 uint8_t BayEOSBuffer::b_write(const uint8_t b) {
 	_res = write(b);
-	if (_res)
-		_pos++;
+	_pos++;
 	if (_pos == _max_length) {
 		b_seek(0);
 	}
@@ -28,7 +27,7 @@ uint8_t BayEOSBuffer::b_write(const uint8_t *b, uint8_t length) {
 	_res = (((unsigned long) (_pos + length)) <= _max_length ?
 			length : _max_length - _pos);
 	_res = write(b, _res);
-	if (!_res)
+	if (_res<0)
 		return 0; //error!!
 	_pos += _res;
 	if (_pos == _max_length) {
@@ -37,10 +36,10 @@ uint8_t BayEOSBuffer::b_write(const uint8_t *b, uint8_t length) {
 	if (_res < length) {
 		//second write
 		_res = write(b + _res, length - _res);
-		if (_res) {
-			_pos = _res;
-			_res = length;
-		}
+		if(_res<0)
+			return 0; //error!!
+		_pos+=_res;
+		_res = length;
 	}
 	return _res;
 
@@ -48,10 +47,8 @@ uint8_t BayEOSBuffer::b_write(const uint8_t *b, uint8_t length) {
 
 int BayEOSBuffer::b_read() {
 	_res = read();
-	if (_res != -1)
-		_pos++;
+	_pos++;
 	if (_pos == _max_length) {
-		_pos = 0;
 		b_seek(0);
 	}
 	return _res;
@@ -71,10 +68,9 @@ int BayEOSBuffer::b_read(uint8_t *dest, int length) {
 	if (_res < length) {
 		//second read
 		_res = read(dest + _res, length - _res);
-		if (_res != -1) {
-			_pos = _res;
-			_res = length;
-		}
+		if (_res == -1) return -1;
+		_pos = _res;
+		_res = length;
 	}
 	return _res;
 }
@@ -219,12 +215,11 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
 
 	unsigned long time = getTime();
 	uint8_t* b = (uint8_t *) &time;
-	uint8_t count = 0;
-	count += b_write(b, 4);
-	count += b_write(length);
-	count += b_write(payload, length);
+	b_write(b, 4);
+	b_write(length);
+	b_write(payload, length);
 
-	_write_pos += count;
+	_write_pos += length + 5;
 	if (_write_pos >= _max_length)
 		_write_pos -= _max_length;
 
@@ -239,7 +234,7 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
 	Serial.println();
 #endif
 	flush();
-	return count;
+	return length + 5;
 }
 
 //PROGMEM prog_uint8_t daysInMonth[]  = {31,28,31,30,31,30,31,31,30,31,30,31};
