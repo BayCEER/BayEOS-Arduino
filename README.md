@@ -45,6 +45,7 @@ look like this:
 2. [RF24](https://github.com/TMRh20/RF24)
 3. [SdFat](https://github.com/greiman/SdFat)
 4. [Base64](https://github.com/adamvr/arduino-base64/)
+5. [SPIFlash](https://github.com/Marzogh/SPIFlash/)
 
 ### Included modified third party libraries
 1. [iBoard](https://github.com/andykarpov/iBoardRF24) (some ports from RF24)
