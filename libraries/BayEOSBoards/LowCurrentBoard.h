@@ -83,10 +83,13 @@ ISR(TIMER2_OVF_vect) {
 	}
 
 }
+
 inline void handleRtcLCB(void) {
 	if (seconds) {
+		cli();
 		myRTC._seconds += seconds;
 		seconds = 0;
+		sei();
 	}
 }
 

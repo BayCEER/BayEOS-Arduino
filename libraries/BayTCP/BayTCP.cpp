@@ -222,7 +222,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize){
     println();
     println();
     finishTransmissionMode();
-	res=wait_for("200 OK",30000);
+	res=wait_for("HTTP/1.1 200",30000);
 	if(res){
 		_buffer->seekReadPointer(readpos);
 		_tx_error_count++;
@@ -272,7 +272,7 @@ uint8_t BayTCPInterface::sendPayload(void){
     println();
     println(); //was commented out - do we need??
     finishTransmissionMode();
-	res=wait_for("200 OK",30000);
+	res=wait_for("HTTP/1.1 200",30000);
 	skipChars();
 	if(res) _tx_error_count++;
 	else _tx_error_count=0;
