@@ -9,6 +9,7 @@
 // include types & constants of Wiring core API
 #include <Arduino.h>
 
+// MCP342x Base Address (0x68 in HEX)
 #define MCP342x_ADR B01101000
 
 // library interface description
