@@ -51,7 +51,7 @@ ISR(WDT_vect) {
 #endif
 #ifdef RX_LED
   if (rx_blink) {
-    if(digitalRead(RX_LED)) tx_blink--;
+    if(digitalRead(RX_LED)) rx_blink--;
     digitalWrite(RX_LED,!digitalRead(RX_LED)); 
   }
 #endif

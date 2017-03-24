@@ -48,7 +48,6 @@ volatile uint16_t ticks;
 volatile uint8_t action;
 volatile uint8_t seconds;
 volatile uint8_t led_blink = 0;
-volatile uint8_t led_on = 0;
 uint8_t startup = 10;
 float batLCB;
 RTC_Timer2 myRTC;
@@ -61,7 +60,7 @@ RTC_Timer2 myRTC;
 ISR(TIMER2_OVF_vect) {
 	ticks++;
 	if((ticks % TICKS_PER_SECOND)==0) {
-//    myRTC._seconds += 1; //this is not atomic - so better do in loop!
+		myRTC._seconds += 1; //RTC_Timer2.get() and adjust() are interrupt save now!
 		seconds++;
 		uint16_t tick_mod=(ticks/TICKS_PER_SECOND)%SAMPLING_INT;
 		if(tick_mod<ACTION_COUNT) {
@@ -72,25 +71,14 @@ ISR(TIMER2_OVF_vect) {
 	}
 
 	if((led_blink>0) && ((ticks%LED_TICK_DIV)==0)) {
-		if(led_on){
-			digitalWrite(LED_PIN,LOW);
-			led_on=0;
-			led_blink--;
-		} else {
-			digitalWrite(LED_PIN,HIGH);
-			led_on=1;
-		}
+		if(digitalRead(LED_PIN)) led_blink--;
+		digitalWrite(LED_PIN,!digitalRead(LED_PIN));
 	}
 
 }
 
 inline void handleRtcLCB(void) {
-	if (seconds) {
-		cli();
-		myRTC._seconds += seconds;
-		seconds = 0;
-		sei();
-	}
+	// no longer needed!!
 }
 
 #if WITHRAINGAUGE
@@ -98,21 +86,22 @@ float rain_count=0;
 volatile uint8_t rain_event=0;
 volatile uint16_t rain_event_ticks;
 void rain_isr(void) {
+	if(rain_event && ((ticks-rain_event_ticks)>(TICKS_PER_SECOND/2))){
+		rain_count++;
+	}
 	rain_event=1;
 	rain_event_ticks=ticks;
 }
-#ifndef RAINGAUGE_LAGTICKS
-#define RAINGAUGE_LAGTICKS 12
-#endif
 
+//Wird in loop aufgerufen
 void handleRainEventLCB(void) {
-	if(rain_event) {
-		detachInterrupt(0);
-	}
-	if(rain_event && ((ticks-rain_event_ticks)>RAINGAUGE_LAGTICKS)) {
-		attachInterrupt(0,rain_isr,FALLING);
-		rain_count++;
-		rain_event=0;
+	if(rain_event){
+		noInterrupts();
+		if(rain_event && ((ticks-rain_event_ticks)>(TICKS_PER_SECOND/2))){
+			rain_count++;
+			rain_event=0;
+		}
+		interrupts();
 	}
 }
 #endif

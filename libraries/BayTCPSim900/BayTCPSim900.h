@@ -72,9 +72,23 @@ public:
 	 * 4 == Not CREG
 	 * 5 == Not CGATT
 	 * 6 == No SIM Card
+	 *
+	 * if unlock_only is set, function returns already after unlocking the modem
 	 */
-	virtual uint8_t begin(long baud);
+	uint8_t begin(long baud,uint8_t unlock_only=0);
 
+	/**
+	 * Checks if modem is registered to network
+	 */
+	uint8_t isRegistered(void);
+
+	/**
+	 * Checks if modem is attached to network
+	 */
+	uint8_t isAttached(void);
+
+
+	/**
 	/**
 	 * perform soft switch operation
 	 * will switch on/off modem
@@ -99,7 +113,7 @@ public:
 	 * 6 == No SIM Card
 	 *
 	 */
-	uint8_t init(void);
+	uint8_t init(uint8_t unlock_only=0);
 
 
 
@@ -127,7 +141,6 @@ public:
 	 * Constructor
 	 */
 	BayGPRS(HardwareSerial &serial, uint8_t powerPin=9,uint8_t resetPin=0);
-	uint8_t begin(long baud);
 private:
 	HardwareSerial* _serial; //Pointer to existing serial object!!
 	int available(void){return _serial->available();}
@@ -159,7 +172,6 @@ public:
 	 * Constructor
 	 */
 	BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin, uint8_t powerPin=6, uint8_t resetPin=0);
-	uint8_t begin(long baud);
 private:
 	int available(void){return SoftwareSerial::available();}
 	int read(void){

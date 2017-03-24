@@ -250,11 +250,16 @@ DateTime RTC_PCF8563::now() {
 // RTC_Timer2 implementation
 
 void RTC_Timer2::adjust(const DateTime& dt) {
+	noInterrupts();
     _seconds = dt.get();
+    interrupts();
 }
 
 DateTime RTC_Timer2::now() {
-    return _seconds;
+	noInterrupts();
+    unsigned long s=_seconds;
+    interrupts();
+    return s;
 }
 
 ////////////////////////////////////////////////////////////////////////////////

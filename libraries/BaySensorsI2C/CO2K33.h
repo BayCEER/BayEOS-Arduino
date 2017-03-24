@@ -1,6 +1,6 @@
 //  This is a library for the K33 CO2 module connected to Arduino via I2C
 #ifndef __CO2K33_H__
-#define __CO2Kee_H__
+#define __CO2K33_H__
 
 #include "Arduino.h"
 #include <Wire.h>

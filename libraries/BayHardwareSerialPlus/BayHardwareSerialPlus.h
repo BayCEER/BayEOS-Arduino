@@ -23,10 +23,6 @@ public:
 		_resetPin=resetPin;
 		_serial=&serial;
 	}
-	uint8_t begin(long baud){
-		_baud=baud;
-		return init();
-	}
 private:
 	HardwareSerialPlus* _serial; //Pointer to existing serial object!!
 	int available(void){return _serial->available();}

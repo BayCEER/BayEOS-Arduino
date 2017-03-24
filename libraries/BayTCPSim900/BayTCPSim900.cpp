@@ -15,7 +15,7 @@ DateTime RTC_SIM900::now() {
     return offset+diff;
 }
 
-uint8_t BayGPRSInterface::init(){
+uint8_t BayGPRSInterface::init(uint8_t unlock_only){
 	i_begin(_baud);
 	skipChars();
 	uint8_t count=0;
@@ -69,17 +69,17 @@ uint8_t BayGPRSInterface::init(){
 			printlnP("AT+CPIN?");
 			if(wait_for("READY",30000)) return 6; //No SIM
 
+			//Return here - Moden will try to connect and attach in the background!
+			if(unlock_only) return 0;
+
 			// Waiting for Modem to Connect
 			for(i=0;i<127;i++){
-				printlnP("AT+CREG?");
-				wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
-				if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') break; //Connected or Roaming
+				if(isRegistered()) break;
 				delay(500);
 			}
 			if(i==127) return 4;
 			for(i=0;i<127;i++){
-				printlnP("AT+CGATT?");
-				if(! wait_for("+CGATT: 1",2000)) break;
+				if(isAttached()) break;
 				delay(500);
 			}
 			if(i==127) return 5;
@@ -148,6 +148,19 @@ uint8_t BayGPRSInterface::getRSSI(void){
 	printlnP("AT+CSQ");
 	wait_forPGM(PSTR("+CSQ: "),500,2,_base64buffer);
 	return (uint8_t)114 -(2*(uint8_t)atoi(_base64buffer));
+}
+
+uint8_t BayGPRSInterface::isRegistered(void){
+	printlnP("AT+CREG?");
+	wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
+	if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') return 1; //Connected or Roaming
+	else return 0;
+}
+
+uint8_t BayGPRSInterface::isAttached(void){
+	printlnP("AT+CGATT?");
+	if(! wait_for("+CGATT: 1",2000)) return 1;
+	return 0;
 }
 
 DateTime BayGPRSInterface::now(void){
@@ -274,6 +287,11 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 	return 0;
 }
 
+uint8_t BayGPRSInterface::begin(long baud,uint8_t unlock_only){
+	_baud=baud;
+	return init(unlock_only);
+}
+
 
 BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin,uint8_t resetPin){
 	_serial=&serial;
@@ -282,10 +300,6 @@ BayGPRS::BayGPRS(HardwareSerial &serial,uint8_t powerPin,uint8_t resetPin){
 	_urlencode=1;
 }
 
-uint8_t BayGPRS::begin(long baud){
-	_baud=baud;
-	return init();
-}
 
 BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerPin,uint8_t resetPin):SoftwareSerial(rxPin,txPin){
 	_powerPin=powerPin;
@@ -293,8 +307,4 @@ BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerP
 	_urlencode=1;
 }
 
-uint8_t BayGPRSsoftserial::begin(long baud){
-	_baud=baud;
-	return init();
-}
 
