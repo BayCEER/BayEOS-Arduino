@@ -450,10 +450,11 @@ uint8_t BayTCPInterface::wait_forPGM(const char* str,uint16_t timeout,uint8_t by
 	  if(offset<length){
 		  if(c==_pgm_buffer[offset])
 		    offset++;
-		  else if(offset>0){
+		  else offset=0;
+/*		  else if(offset>0){
 			  skipChars();
 			return 1;
-		  }
+		  }*/
 	  }
 
 	  if(offset==length){

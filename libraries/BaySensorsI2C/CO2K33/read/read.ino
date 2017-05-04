@@ -33,6 +33,10 @@ void loop() {
   Serial.print("HUM:");
   Serial.println(sensor.readHumidity());
   Serial.println();
+/*  Serial.print("CO2:");
+  Serial.println(sensor.readCO2());
+  Serial.print("CO2:");
+  Serial.println(sensor.readCO2());*/
   delay(5000);
   
 

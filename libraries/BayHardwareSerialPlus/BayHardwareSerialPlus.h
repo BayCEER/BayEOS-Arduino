@@ -37,6 +37,7 @@ private:
 
 	}
 	void i_begin(long b){ _serial->begin(b);}
+	void i_end(void){ _serial->end();}
 	int i_available(void){return _serial->available();}
 	size_t write(uint8_t b){
 #if SIM900_DEBUG

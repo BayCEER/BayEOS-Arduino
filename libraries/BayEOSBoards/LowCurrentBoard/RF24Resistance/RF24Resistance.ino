@@ -34,25 +34,18 @@
 #endif
 
 //Set this to 1 to get BayDebug Output!
-#define SKETCH_DEBUG 1
+#define SKETCH_DEBUG 0
 
 
-#include <OneWire.h>
-#include <EEPROM.h>
-#include <DS18B20.h>
 #include <BayEOSBuffer.h>
 #include <Wire.h>
-#include <RTClib.h>
 #include <BayEOSBufferRAM.h>
-#include <Sleep.h>
 #include <BayEOS.h>
 
 #if SKETCH_DEBUG
 #include <BayDebug.h>
 BayDebug client(Serial);
 #else
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 BayRF24 client=BayRF24(9,10);
 #endif
@@ -86,8 +79,6 @@ void setup()
 
 void loop()
 {
-  handleRtcLCB();
-  
   #if WITHDALLAS
   //Do conversion 32 ticks (2sec) bevor sampling!
   if(ISSET_ACTION(0)){

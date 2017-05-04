@@ -77,6 +77,13 @@ public:
 	 */
 	uint8_t begin(long baud,uint8_t unlock_only=0);
 
+	/*
+	 * Change the baud rate of the Modem
+	 * 0 == OK
+	 * 1 == Failed
+	 */
+	uint8_t changeIPR(long baud);
+
 	/**
 	 * Checks if modem is registered to network
 	 */
@@ -86,7 +93,6 @@ public:
 	 * Checks if modem is attached to network
 	 */
 	uint8_t isAttached(void);
-
 
 	/**
 	/**
@@ -118,6 +124,7 @@ public:
 
 
 	virtual void i_begin(long baud);
+	virtual void i_end(void);
 
 	/*
 	 * Flush the transfer depending on MTU of Network
@@ -155,6 +162,7 @@ private:
 
 	}
 	void i_begin(long b){ _serial->begin(b);}
+	void i_end(void){ _serial->end();}
 	int i_available(void){return _serial->available();}
 	size_t write(uint8_t b){
 #if SIM900_DEBUG
@@ -184,6 +192,7 @@ private:
 #endif
     }
 	void i_begin(long b){ SoftwareSerial::begin(b);}
+	void i_end(void){ SoftwareSerial::end();}
 	int i_available(void){return SoftwareSerial::available();}
 	size_t write(uint8_t b){
 #if SIM900_DEBUG

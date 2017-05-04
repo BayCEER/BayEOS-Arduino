@@ -7,6 +7,11 @@
  * 3. Changes in CONSTANTS must be declared before include
  */
 
+#include <DS18B20.h>
+#include <Sleep.h>
+#include <RTClib.h>
+
+
 #ifndef LCB_BAT_MULTIPLIER
 #define LCB_BAT_MULTIPLIER 1.1*320/100/1023
 #endif
@@ -47,6 +52,8 @@
 volatile uint16_t ticks;
 volatile uint8_t action;
 volatile uint8_t seconds;
+volatile unsigned long current_micros, last_micros;
+volatile uint8_t adjust_osccal_flag;
 volatile uint8_t led_blink = 0;
 uint8_t startup = 10;
 float batLCB;
@@ -59,10 +66,32 @@ RTC_Timer2 myRTC;
  */
 ISR(TIMER2_OVF_vect) {
 	ticks++;
+	if(adjust_osccal_flag){
+		last_micros=current_micros;
+		current_micros=micros();
+		adjust_osccal_flag++;
+		if(adjust_osccal_flag>2){
+			if((current_micros-last_micros)>(1005000L/TICKS_PER_SECOND)){
+				if(OSCCAL) OSCCAL--;
+				else adjust_osccal_flag=0; //reached limit!
+			}
+			else if((current_micros-last_micros)<(995000L/TICKS_PER_SECOND)){
+				if(OSCCAL<255) OSCCAL++;
+				else adjust_osccal_flag=0; //reached limit!
+			}
+			else {
+				//Timing is ok :-)
+				adjust_osccal_flag=0;
+			}
+
+		}
+
+	}
+
 	if((ticks % TICKS_PER_SECOND)==0) {
 		myRTC._seconds += 1; //RTC_Timer2.get() and adjust() are interrupt save now!
 		seconds++;
-		uint16_t tick_mod=(ticks/TICKS_PER_SECOND)%SAMPLING_INT;
+		uint16_t tick_mod=myRTC._seconds%SAMPLING_INT;
 		if(tick_mod<ACTION_COUNT) {
 			action|=(1<<tick_mod);
 		} else {
@@ -80,6 +109,17 @@ ISR(TIMER2_OVF_vect) {
 inline void handleRtcLCB(void) {
 	// no longer needed!!
 }
+
+/*
+ * Adjust the OSCCAL of internal oscillator using TIMER2 RTC
+ */
+void adjust_OSCCAL(void){
+	adjust_osccal_flag=1;
+	while(adjust_osccal_flag){
+		delay(1);
+	}
+}
+
 
 #if WITHRAINGAUGE
 float rain_count=0;

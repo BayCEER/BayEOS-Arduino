@@ -15,84 +15,99 @@ DateTime RTC_SIM900::now() {
     return offset+diff;
 }
 
+uint8_t BayGPRSInterface::changeIPR(long baud) {
+	_baud = baud;
+	long t_baud[] = { baud, 9600, 38400, 57600 };
+	for (uint8_t i = 0; i < 4; i++) {
+		i_begin(t_baud[i]);
+		skipChars();
+		printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
+		delay(100);
+		println();
+		printP("AT+IPR=");
+		println(_baud);
+		if (!wait_forOK(200)) {
+			i_end();
+			i_begin(_baud);
+			return 0;
+		}
+		i_end();
+	}
+	return 1;
+
+}
 uint8_t BayGPRSInterface::init(uint8_t unlock_only){
-	i_begin(_baud);
-	skipChars();
 	uint8_t count=0;
 	init_start:
+	uint8_t i=0;
+	printP("AT"); //Wake up
+	delay(200);
+	println();
+	wait_forOK(1000);
+	printlnP("AT"); //Check communication
+	if(! wait_forOK(200)){
+		//communication ok!
+		printlnP("ATE0"); //Command echo off
+		wait_forOK(500);
+		printlnP("AT+CSCLK=2"); //Auto-Sleepmode
+		wait_forOK(500);
+		//Check PIN
+		printlnP("AT+CPIN?");
+		while(wait_forPGM(PSTR("+CPIN: "),5000,7,_base64buffer)){
+			printlnP("AT");
+			wait_forOK(200);
+			printlnP("AT+CFUN=0");
+			//Disable
+			wait_forOK(10000);
+			printlnP("AT+CFUN=1");
+			//delay(2000);
+			//Enable
+			wait_forOK(10000);
+			printlnP("AT");
+			wait_forOK(200);
+			printlnP("AT+CPIN?");
+			i++;
+			if(i>2) return 6;
+		}
+		if(_base64buffer[5]=='U') return 3; //SIM: PUK
+		if(_base64buffer[5]=='I'){ //SIM: PIN
+			printlnP("AT");
+			wait_forOK(200);
+			printP("AT+CPIN=\"");
+			print(_pin);
+			println("\"");
+			if(wait_forOK(30000)) {
+			  return 2; //Wrong PIN
+			}
+			wait_for("SMS Ready",(unlock_only?5000:60000));
+		}
+		//Return here - Moden will try to connect and attach in the background!
+		if(unlock_only) return 0;
+		// Waiting for Modem to Connect
+		for(i=0;i<127;i++){
+			if(isRegistered()) break;
+			delay(500);
+		}
+		if(i==127) return 4;
+		for(i=0;i<127;i++){
+			if(isAttached()) break;
+			delay(500);
+		}
+		if(i==127) return 5;
+		return 0;
+	}
+
+	softReset();
+	softSwitch();
+	i_begin(_baud);
+	skipChars();
 	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
 	delay(100);
 	println();
 	printP("AT+IPR=");
 	println(_baud);
 	wait_forOK(200);
-	for(uint8_t i=0;i<5;i++){
-		printlnP("ATE0"); //Command echo off
-		if(! wait_forOK(200)){
-			//communication ok!
-			printlnP("AT+CLTS=1"); //Enable Local Network Time
-			wait_forOK(200);
-			printlnP("AT+CSCLK=2"); //Auto-Sleepmode
-			//Attention: Setting AT+IPR=BAUD-Rate does not work with Auto-Sleepmode enabled!!
-			wait_forOK(200);
-			//Check PIN
-			printlnP("AT+CPIN?");
-			if(wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer)){
-				printlnP("AT");
-				wait_forOK(200);
-				printlnP("AT+CFUN=0");
-				//Disable
-				wait_forOK(30000);
-				printlnP("AT+CFUN=1");
-				//delay(2000);
-				//Enable
-				wait_forOK(30000);
-				printlnP("AT");
-				wait_forOK(200);
-				printlnP("AT+CPIN?");
-				wait_forPGM(PSTR("+CPIN: "),30000,7,_base64buffer);
-			}
-			if(_base64buffer[5]=='U') return 3; //SIM: PUK
-			if(_base64buffer[5]=='I'){ //SIM: PIN
-				printlnP("AT");
-				wait_forOK(200);
-				printP("AT+CPIN=\"");
-				print(_pin);
-				println("\"");
-				if(wait_forOK(30000)) {
-				  return 2; //Wrong PIN
-				}
-				wait_for("Ready",30000);
-			}
-			printlnP("AT");
-			wait_forOK(200);
-			printlnP("AT+CPIN?");
-			if(wait_for("READY",30000)) return 6; //No SIM
-
-			//Return here - Moden will try to connect and attach in the background!
-			if(unlock_only) return 0;
-
-			// Waiting for Modem to Connect
-			for(i=0;i<127;i++){
-				if(isRegistered()) break;
-				delay(500);
-			}
-			if(i==127) return 4;
-			for(i=0;i<127;i++){
-				if(isAttached()) break;
-				delay(500);
-			}
-			if(i==127) return 5;
-			return 0;
-
-		}
-	}
-	softReset();
-	softSwitch();
 	count++;
-#if BayTCP_DEBUG_OUTPUT
-	Serial.print("i-");
-#endif
 
 	if(count>1) return 1;
 	goto init_start;
@@ -144,13 +159,16 @@ uint8_t BayGPRSInterface::setClock(const char* time){
 
 
 uint8_t BayGPRSInterface::getRSSI(void){
-	init();
+	printlnP("AT");
+	wait_forOK(200);
 	printlnP("AT+CSQ");
 	wait_forPGM(PSTR("+CSQ: "),500,2,_base64buffer);
 	return (uint8_t)114 -(2*(uint8_t)atoi(_base64buffer));
 }
 
 uint8_t BayGPRSInterface::isRegistered(void){
+	printlnP("AT");
+	wait_forOK(200);
 	printlnP("AT+CREG?");
 	wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
 	if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') return 1; //Connected or Roaming
@@ -158,13 +176,16 @@ uint8_t BayGPRSInterface::isRegistered(void){
 }
 
 uint8_t BayGPRSInterface::isAttached(void){
+	printlnP("AT");
+	wait_forOK(200);
 	printlnP("AT+CGATT?");
 	if(! wait_for("+CGATT: 1",2000)) return 1;
 	return 0;
 }
 
 DateTime BayGPRSInterface::now(void){
-	init();
+	printlnP("AT");
+	wait_forOK(200);
 	printlnP("AT+CCLK?");
 	wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer); //YY/MM/DD,HH:MM:SS+02
 //	Serial.print("LocalTime:");
@@ -220,7 +241,7 @@ uint8_t BayGPRSInterface::connect(void){
 		print(_server);
 		printP("\",");
 		println(_port);
-		if(wait_for("CONNECT",20000)) return 1;
+		if(wait_for("CONNECT",10000)) return 1;
 
 		printlnP("AT+CIPSEND?");
 		if(! wait_forPGM(PSTR(": "),200,4,_base64buffer)){
@@ -231,7 +252,7 @@ uint8_t BayGPRSInterface::connect(void){
 
 
 		printlnP("AT+CIPSEND");
-		if(wait_for("> ",20000)) return 1;
+		if(wait_for("> ",10000)) return 1;
 		return 0;
 	}
 
@@ -258,7 +279,7 @@ uint8_t BayGPRSInterface::connect(void){
 	if(wait_forOK(400)) goto setup_start;
 
 	printlnP("AT+CIICR");
-	if(wait_forOK(30000)) goto setup_start;
+	if(wait_forOK(10000)) goto setup_start;
 
     goto setup_start;
 
@@ -289,6 +310,14 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 
 uint8_t BayGPRSInterface::begin(long baud,uint8_t unlock_only){
 	_baud=baud;
+	i_begin(_baud);
+	skipChars();
+	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
+	delay(100);
+	println();
+	printP("AT+IPR=");
+	println(_baud);
+	wait_forOK(200);
 	return init(unlock_only);
 }
 

@@ -45,6 +45,7 @@ BayDebug client(Serial);
   float last_rain_count;
 #endif
 float tmp_float;
+unsigned long last_measurement;
 
 #include <math.h>
 float ntc10_R2T(float r){
@@ -79,7 +80,7 @@ void loop()
 
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
-    digitalWrite(4,HIGH); //Humidity with Upstepper!
+   digitalWrite(4,HIGH); //Humidity with Upstepper!
     delayLCB(1000); //We have to 1 second
     client.startDataFrame();
     client.addChannelValue(millis());
@@ -92,7 +93,8 @@ void loop()
 
     mcp342x.setConf(addr, 1, 0, mode, rate, gain); //Solar
     delayLCB(100);
-    client.addChannelValue(mcp342x.getData(addr)*1000); //solar
+    //Solar : 0.5 W/m² per mV
+    client.addChannelValue(mcp342x.getData(addr)*1000*0.5); //solar
     digitalWrite(6,LOW); //Solar
 
     mcp342x.setConf(addr, 1, 2, mode, rate, gain); //Widerstand
@@ -106,12 +108,14 @@ void loop()
     mcp342x.setConf(addr, 1, 1, mode, rate, gain); //Humidity
     delayLCB(100);
     client.addChannelValue(mcp342x.getData(addr)*100); //Humidity 
-    readBatLCB();
     digitalWrite(4,LOW); //Humidity
     
     digitalWrite(A3,HIGH); //Winddirection
     delayLCB(20);
-    client.addChannelValue(analogRead(A2)); //Winddirection
+    tmp_float=analogRead(A2);
+    tmp_float*712/1023;
+    if(tmp_float>360) tmp_float=360;
+    client.addChannelValue(tmp_float); //Winddirection
     digitalWrite(A3,LOW); //Winddirection
     
 #if WITHWIND
@@ -119,19 +123,24 @@ void loop()
     tmp_float=wind_count;
     wind_count = 0;
     interrupts();
-    client.addChannelValue(tmp_float / (float)SAMPLING_INT);
+    if(tmp_float){
+      //Calibration equation
+      tmp_float=tmp_float *60 / (float)(myRTC.now().get()-last_measurement)/37.547+0.28;
+    }
+    last_measurement=myRTC.now().get();
+    client.addChannelValue(tmp_float);
 #endif
 
 #if WITHRAINGAUGE
     noInterrupts();
     tmp_float=rain_count;
     interrupts();
-    client.addChannelValue(tmp_float);
-    client.addChannelValue((tmp_float-last_rain_count)/(float)SAMPLING_INT*60);
+    //RG2+WS-CA: 0.2mm per count
+    client.addChannelValue(tmp_float*0.2);
+    client.addChannelValue((tmp_float-last_rain_count)/(float)SAMPLING_INT*60*0.2);
     last_rain_count=tmp_float;
 #endif
-     sendOrBufferLCB();
-     delay(50);
+    client.writeToBuffer();
     
   }
 

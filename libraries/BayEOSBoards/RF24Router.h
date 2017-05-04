@@ -14,8 +14,6 @@ volatile uint16_t wdcount = 0;
 volatile uint8_t wdreset = 0;
 volatile uint8_t tx_blink = 0;
 volatile uint8_t rx_blink = 0;
-volatile uint8_t rx_on = 0;
-volatile uint8_t tx_on = 0;
 
 #ifndef POWER_DIVIDER
 #define POWER_DIVIDER (470.0+100.0)/100.0
@@ -49,7 +47,7 @@ ISR(WDT_vect) {
 		wdcount = 0;
 		wdreset = 0;
 	}
-	if (wdcount > 480) { //no action for more than 120 sec.
+	if (wdcount > 960) { //no action for more than 240 sec.
 #if SKETCH_DEBUG
 		Serial.println("RESET");
 		delay(100);
@@ -58,25 +56,21 @@ ISR(WDT_vect) {
 	}
 #ifdef TX_LED
 	if (tx_blink) {
-		if (tx_on) {
+		if (digitalRead(TX_LED)) {
 			digitalWrite(TX_LED, LOW);
-			tx_on = 0;
 			tx_blink--;
 		} else {
 			digitalWrite(TX_LED, HIGH);
-			tx_on = 1;
 		}
 	}
 #endif
 #ifdef RX_LED
 	if (rx_blink) {
-		if (rx_on) {
+		if (digitalRead(RX_LED)) {
 			digitalWrite(RX_LED, LOW);
-			rx_on = 0;
 			rx_blink--;
 		} else {
 			digitalWrite(RX_LED, HIGH);
-			rx_on = 1;
 		}
 	}
 #endif
@@ -149,6 +143,9 @@ uint8_t handleRF24(void) {
 	uint8_t pipe_num, len;
 	uint8_t payload[32];
 	char origin[] = "P0";
+#ifdef RF24_P1_LETTER
+	origin[0]=RF24_P1_LETTER;
+#endif
 	uint8_t count;
 	uint8_t rx = 0;
 	while (radio.available(&pipe_num)) {
@@ -186,6 +183,12 @@ uint8_t handleRF24(void) {
 
 #ifdef NRF24_2CHANNEL
 	count=0;
+#ifdef RF24_P2_LETTER
+	origin[0]=RF24_P2_LETTER;
+#else
+	origin[0]='R';
+#endif
+		
 	while (radio2.available(&pipe_num)) {
 		wdreset = 1;
 		count++;
@@ -203,13 +206,13 @@ uint8_t handleRF24(void) {
 			if(! client.validateChecksum()) {
 				client.writeToBuffer();
 				rx_blink = 1;
-				rx1_count++;
+				rx2_count++;
 			} else
 			rx_error++;
 #else
 			client.writeToBuffer();
 			rx_blink = 1;
-			rx1_count++;
+			rx2_count++;
 #endif
 
 		} else {
@@ -218,7 +221,6 @@ uint8_t handleRF24(void) {
 		}
 		if (count > 10) break;
 	}
-	program_pos = 2;
 
 #endif
 	if (rx_error > 5)
