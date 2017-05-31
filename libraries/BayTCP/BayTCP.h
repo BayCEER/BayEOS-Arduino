@@ -59,12 +59,11 @@ protected:
 public:
     using Print::write; // pull in write(str) and write(buf, size) from Print
 	/**
-	 * Send the BayXBee payload as base64 encoded string
+	 * Send the BayEOS payload as base64 encoded string
 	 * returns 0 for success
 	 * 1 == no success
 	 * 2 == timeout
-	 * 3 == network timeout
-	 * 4 == gprs modem timeout
+	 * 3 and more == result code of connect()+2
 	 */
 	uint8_t sendPayload(void);
 
@@ -74,6 +73,7 @@ public:
 	 * 0 == OK
 	 * 1 == Network TIMEOUT
 	 * 2 == Device TIMEOUT
+	 * 3 and more == specific result codes of implementation
 	 */
 	virtual uint8_t connect(void);
 
@@ -90,8 +90,7 @@ public:
 	 * returns 0 for success
 	 * 1 == no success
 	 * 2 == timeout
-	 * 3 == network timeout
-	 * 4 == gprs modem timeout
+	 * 3 and more == result code of connect()+2
 	 */
 	uint8_t sendMultiFromBuffer(uint16_t maxsize=5000);
 
