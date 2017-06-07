@@ -345,9 +345,10 @@ void startLCB() {
 	blinkLED(3);
 	delayLCB(2000);
 	noInterrupts();
-	ticks = SAMPLING_INT * TICKS_PER_SECOND - 1;
-	interrupts();
 	action = 0;
+	ticks = 0;
+	myRTC._seconds=SAMPLING_INT-1;
+	interrupts();
 }
 
 void sendOrBufferLCB() {

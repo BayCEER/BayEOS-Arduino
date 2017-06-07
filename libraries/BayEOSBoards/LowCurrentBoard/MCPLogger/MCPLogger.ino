@@ -77,6 +77,7 @@ volatile uint8_t seconds;
 ISR(TIMER2_OVF_vect) {
   ticks++;
   if ((ticks % TICKS_PER_SECOND) == 0) {
+    myRTC._seconds += 1; //RTC_Timer2.get() and adjust() are interrupt save now!
     seconds += 1;
     uint16_t tick_mod = (ticks / TICKS_PER_SECOND) % RAW_SAMPLING_INT;
     if (tick_mod < 2) {
@@ -245,10 +246,6 @@ void loop()
   if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
     myLogger._logging_disabled = 0;
 
-  if(seconds){
-    myRTC._seconds += seconds;
-    seconds=0;
-  }
 
 #if WITH_INT0
   handleINT0Event();

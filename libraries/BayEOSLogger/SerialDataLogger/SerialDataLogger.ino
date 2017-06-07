@@ -95,17 +95,6 @@ void loop() {
   //   delay(200);
   myLogger.run();
 
-  //    if(last_mode<myRTC.now().get()){
-  //      last_mode=myRTC.now().get();
-  //    client.startFrame(BayEOS_Message);
-  //    client.addToPayload("Mode:");
-  //    client.addToPayload(myLogger._mode+'0');
-  //    client.sendPayload();
-  //    }
-  /*
-      if(! (myLogger._send_data || myLogger._live_data || Serial.available()))
-        Sleep.sleep();
-  */
 }
 
 
