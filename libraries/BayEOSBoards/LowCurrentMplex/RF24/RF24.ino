@@ -3,6 +3,7 @@
 #define SAMPLING_INT 32
 #define ACTION_COUNT 1
 #define WITH_CHECKSUM 1
+#define POWER_PIN 6
 
 
 #if NRF24_PIPE == 0
@@ -62,12 +63,13 @@ void setup()
 #endif
   myBuffer.init(flash, 10); //This will restore old pointers
   myBuffer.setRTC(myRTC, 0); //Nutze RTC relativ!
-  // myBuffer.reset();
+  myBuffer.reset();
   client.setBuffer(myBuffer, 100); //use skip!
   initLCB(); //init time2
   pinMode(A1, OUTPUT);
   pinMode(A2, OUTPUT);
-  pinMode(A3, OUTPUT);
+  pinMode(A3, OUTPUT); 
+  pinMode(POWER_PIN,OUTPUT);
   readBatLCB();
   startLCB();
 }
@@ -78,11 +80,13 @@ void loop()
   // Measure and send
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
+    digitalWrite(POWER_PIN,HIGH);
     client.startDataFrame(BayEOS_Float32le, WITH_CHECKSUM);
     for (uint8_t ch = 0; ch < 8; ch++) {
       digitalWrite(A1, ch & 0x4);
       digitalWrite(A2, ch & 0x2);
       digitalWrite(A3, ch & 0x1);
+      delayLCB(10);
       mcp342x.setConf(addr, 1, 0, mode, rate, gain);
       delayLCB(100);
       span = mcp342x.getData(addr);
@@ -100,6 +104,8 @@ void loop()
       }
 
     }
+    digitalWrite(POWER_PIN,LOW);
+
 #if WITH_CHECKSUM
     client.addChecksum();
 #endif

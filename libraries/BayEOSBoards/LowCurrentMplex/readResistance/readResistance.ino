@@ -45,13 +45,20 @@ void loop()
     mcp342x.setConf(addr, 1, 0, mode, rate, gain);
     delay(300);
     span = mcp342x.getData(addr);
+    float strom=span/14.3;
     dtostrf(span, 10, 6, str_buf);
+    Serial.print(str_buf);
+    Serial.print("\t");
+    dtostrf(strom, 10, 6, str_buf);
     Serial.print(str_buf);
     Serial.print("\t");
     mcp342x.setConf(addr, 1, 1, mode, rate, gain);
     delay(300);
     span = mcp342x.getData(addr);
     dtostrf(span, 10, 6, str_buf);
+    Serial.print(str_buf);
+    Serial.print("\t");
+    dtostrf(span/strom, 10, 6, str_buf);
     Serial.println(str_buf);
     
   }
