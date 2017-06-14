@@ -315,7 +315,7 @@ void checkSend(void) {
 	last_send = millis();
 	last_try = millis();
 
-	if (tx_res = client.sendMultiFromBuffer()) {
+	if (tx_res = client.sendMultiFromBuffer(MAX_BUFFER_AVAILABLE)) {
 		tx_error++;
 	} else {
 		tx_error = 0;

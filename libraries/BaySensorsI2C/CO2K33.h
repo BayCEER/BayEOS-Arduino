@@ -27,6 +27,7 @@ class CO2K33
       float readTemperature(void);
       float readCO2(void);
       float readHumidity(void);
+      float readABC(void);
  /*
   * writeRAM Commands
   *
@@ -39,11 +40,14 @@ class CO2K33
       uint8_t zeroCalibration(void);
       uint8_t backgroundCalibration(void);
       uint8_t triggerMeasurement(void);
+      uint8_t disableABC(void);
 
     private:
       void wakeUp(void);
       float readRAM(uint8_t memaddr);
       uint8_t writeRAM(uint8_t memaddr,uint8_t* command, uint8_t length);
+      float readEEPROM(uint8_t memaddr);
+      uint8_t writeEEPROM(uint8_t memaddr,uint8_t* command, uint8_t length);
       uint8_t i;
       uint8_t buffer[4];
       int value;
