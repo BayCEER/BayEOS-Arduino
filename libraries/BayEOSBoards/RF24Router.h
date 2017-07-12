@@ -4,7 +4,11 @@
  * expects the following global variables to be defined:
  * radio, client
  */
-uint16_t rx_ok, rx_error, rx1_count, rx2_count;
+uint16_t rx_ok, rx1_count, rx1_error;
+
+#ifdef NRF24_2CHANNEL
+uint16_t rx2_count, rx2_error;
+#endif
 
 #ifndef WITH_RF24_CHECKSUM
 #define WITH_RF24_CHECKSUM 0
@@ -24,7 +28,7 @@ volatile uint8_t rx_blink = 0;
 #endif
 
 #ifndef SENDING_INTERVAL
-#define SENDING_INTERVAL 180000L
+#define SENDING_INTERVAL 120000L
 #endif
 
 #ifndef NEXT_TRY_INTERVAL
@@ -32,7 +36,7 @@ volatile uint8_t rx_blink = 0;
 #endif
 
 #ifndef MAX_BUFFER_AVAILABLE
-#define MAX_BUFFER_AVAILABLE 5000
+#define MAX_BUFFER_AVAILABLE 2000
 #endif
 
 unsigned long last_alive, last_send, last_try;
@@ -108,7 +112,6 @@ void initRF24(void) {
 	radio.setPALevel(RF24_PA_MAX);
 	radio.setRetries(15, 15);
 	radio.setAutoAck(true);
-	//  radio.openWritingPipe(pipe_0);
 	radio.openReadingPipe(0, pipe_0);
 	radio.openReadingPipe(1, pipe_1);
 	radio.openReadingPipe(2, pipe_2);
@@ -128,7 +131,6 @@ void initRF24(void) {
 	radio2.setPALevel(RF24_PA_MAX);
 	radio2.setRetries(15, 15);
 	radio2.setAutoAck(true);
-	//  radio.openWritingPipe(pipe_0);
 	radio2.openReadingPipe(0, pipe_0);
 	radio2.openReadingPipe(1, pipe_1);
 	radio2.openReadingPipe(2, pipe_2);
@@ -166,7 +168,7 @@ uint8_t handleRF24(void) {
 				rx_blink = 1;
 				rx1_count++;
 			} else
-			rx_error++;
+			rx1_error++;
 #else
 			client.writeToBuffer();
 			rx_blink = 1;
@@ -174,7 +176,7 @@ uint8_t handleRF24(void) {
 #endif
 
 		} else {
-			rx_error++;
+			rx1_error++;
 			radio.read(payload, len);
 		}
 		if (count > 10)
@@ -208,7 +210,7 @@ uint8_t handleRF24(void) {
 				rx_blink = 1;
 				rx2_count++;
 			} else
-			rx_error++;
+			rx2_error++;
 #else
 			client.writeToBuffer();
 			rx_blink = 1;
@@ -216,15 +218,13 @@ uint8_t handleRF24(void) {
 #endif
 
 		} else {
-			rx_error++;
+			rx2_error++;
 			radio2.read( payload, len );
 		}
 		if (count > 10) break;
 	}
 
 #endif
-	if (rx_error > 5)
-		initRF24();
 	if (count > 10)
 		initRF24();
 
@@ -272,6 +272,13 @@ void checkAlive(void) {
 #endif
 			)
 		initRF24();
+	if (rx1_error > 5
+#ifdef NRF24_2CHANNEL
+			|| rx2_error>5
+#endif
+			)
+		initRF24();
+
 	last_alive = millis();
 	client.startDataFrame(BayEOS_Float32le);
 	client.addChannelValue(millis() / 1000);
@@ -288,10 +295,14 @@ void checkAlive(void) {
 	client.addChannelValue(tx_error);
 	client.addChannelValue(tx_res);
 	client.addChannelValue(rx1_count);
+	client.addChannelValue(rx1_error);
 	rx1_count = 0;
+	rx1_error = 0;
 #ifdef NRF24_2CHANNEL
 	client.addChannelValue(rx2_count);
+	client.addChannelValue(rx2_error);
 	rx2_count = 0;
+	rx2_error = 0;
 #endif
 	client.writeToBuffer();
 
@@ -320,7 +331,10 @@ void checkSend(void) {
 	} else {
 		tx_error = 0;
 #if (BOARD == GBoardPro)
-		myRTC.adjust(client.now());
+		unsigned long current_time=client.now().get();
+		if(current_time>31536000L){
+			myRTC.adjust(current_time);
+		}
 #endif
 	}
 	tx_blink = tx_res + 1;

@@ -186,18 +186,22 @@ uint8_t BayGPRSInterface::isAttached(void){
 DateTime BayGPRSInterface::now(void){
 	printlnP("AT");
 	wait_forOK(200);
+	uint8_t m,d,hh,mm,ss;
+	uint16_t y;
+	DateTime dt;
 	printlnP("AT+CCLK?");
-	wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer); //YY/MM/DD,HH:MM:SS+02
+	if(! wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer)){ //YY/MM/DD,HH:MM:SS+02
 //	Serial.print("LocalTime:");
 //	Serial.println(_base64buffer);
-	uint16_t y = atoi(_base64buffer+0) + 2000;
-	uint8_t m = atoi(_base64buffer+3);
-	uint8_t d = atoi(_base64buffer+6);
-	uint8_t hh = atoi(_base64buffer+9);
-	uint8_t mm = atoi(_base64buffer+12);
-	uint8_t ss = atoi(_base64buffer+15);
-	DateTime dt=DateTime (y, m, d, hh, mm, ss);
-	dt=DateTime(dt.get()-(3600L*atoi(_base64buffer+17))); //Adjust for Timezone!
+		y = atoi(_base64buffer+0) + 2000;
+		m = atoi(_base64buffer+3);
+		d = atoi(_base64buffer+6);
+		hh = atoi(_base64buffer+9);
+		mm = atoi(_base64buffer+12);
+		ss = atoi(_base64buffer+15);
+		dt=DateTime (y, m, d, hh, mm, ss);
+		dt=DateTime(dt.get()-(3600L*atoi(_base64buffer+17))); //Adjust for Timezone!
+	}
 	return dt;
 }
 /*
