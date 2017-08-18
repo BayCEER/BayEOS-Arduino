@@ -63,12 +63,12 @@ void RD200M_interface::update(void) {
 			_state = 5;
 			break;
 		case 5: //Value higher Value
-			_value = c * 100;
+			_value = c;
 			_state = 6;
 			_csum += c;
 			break;
 		case 6: //Value lower Value
-			_value += c;
+			_value += 0.01*c;
 			_state = 7;
 			_csum += c;
 			break;

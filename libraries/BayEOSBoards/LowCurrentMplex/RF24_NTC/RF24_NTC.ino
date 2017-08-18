@@ -4,9 +4,10 @@
 #define ACTION_COUNT 1
 #define WITH_CHECKSUM 1
 #define POWER_PIN 6
+/* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
+#define NTC10FACTOR 0.5
 
-
-#define PRE_RESISTOR 14.3
+#define PRE_RESISTOR 14300
 
 #if NRF24_PIPE == 0
 #define RF24ADDRESS 0x45c431ae12LL
@@ -53,6 +54,12 @@ BayEOSBufferSPIFlash myBuffer;
 
 #include <LowCurrentBoard.h>
 
+float ntc10_R2T(float r){
+  float log_r=log(r);
+  return 440.61073-75.69303*log_r+
+         4.20199*log_r*log_r-0.09586*log_r*log_r*log_r;
+}
+
 
 void setup()
 {
@@ -78,12 +85,13 @@ void setup()
 
 void loop()
 {
-  float span, strom;
+  float span, strom, ntc10r;
   // Measure and send
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
     digitalWrite(POWER_PIN,HIGH);
-    client.startDataFrame(BayEOS_Float32le, WITH_CHECKSUM);
+    client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
+    client.addChannelValue(1000*batLCB);
     for (uint8_t ch = 0; ch < 8; ch++) {
       digitalWrite(A1, ch & 0x4);
       digitalWrite(A2, ch & 0x2);
@@ -96,15 +104,8 @@ void loop()
       mcp342x.setConf(addr, 1, 1, mode, rate, gain);
       delayLCB(100);
       span = mcp342x.getData(addr);
-      client.addChannelValue(span / strom, ch+1);
-      if (ch == 3) {
-#if WITH_CHECKSUM
-        client.addChecksum();
-#endif
-        client.sendOrBuffer();
-        client.startDataFrame(BayEOS_Float32le, WITH_CHECKSUM);
-      }
-
+      ntc10r= span / strom / NTC10FACTOR;
+      client.addChannelValue(1000*ntc10_R2T(ntc10r));
     }
     digitalWrite(POWER_PIN,LOW);
 

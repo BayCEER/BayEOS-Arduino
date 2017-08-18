@@ -21,7 +21,7 @@ public:
     void update(void);
     void reset(void);
     void init(void);
-    int _value;
+    float _value;
     uint8_t _elapsed;
     uint8_t _up;
     uint8_t _status;
