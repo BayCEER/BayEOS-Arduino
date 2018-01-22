@@ -35,7 +35,7 @@
 
 const byte addr = 0;
 const uint8_t gain = 0; //0-3: x1, x2, x4, x8
-const uint8_t rate = 2; //0-3: 12bit ... 18bit
+const uint8_t rate = 3; //0-3: 12bit ... 18bit
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 //  create an objcet of the class MCP342x
 MCP342x mcp342x = MCP342x();
@@ -98,11 +98,11 @@ void loop()
       digitalWrite(A3, ch & 0x1);
       delayLCB(10);
       mcp342x.setConf(addr, 1, 0, mode, rate, gain);
-      delayLCB(100);
+      delayLCB(300);
       span = mcp342x.getData(addr);
       strom = span / PRE_RESISTOR;
       mcp342x.setConf(addr, 1, 1, mode, rate, gain);
-      delayLCB(100);
+      delayLCB(300);
       span = mcp342x.getData(addr);
       ntc10r= span / strom / NTC10FACTOR;
       client.addChannelValue(1000*ntc10_R2T(ntc10r));

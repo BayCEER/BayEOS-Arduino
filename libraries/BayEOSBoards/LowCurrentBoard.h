@@ -7,7 +7,6 @@
  * 3. Changes in CONSTANTS must be declared before include
  */
 
-#include <DS18B20.h>
 #include <Sleep.h>
 #include <RTClib.h>
 
@@ -218,6 +217,8 @@ void readWindDirectionLCB() {
 #endif
 
 #if WITHDALLAS
+#include <DS18B20.h>
+
 uint8_t channel;
 const byte* new_addr;
 #ifndef DALLAS_PIN

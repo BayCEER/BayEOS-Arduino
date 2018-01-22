@@ -68,15 +68,14 @@ void loop() {
   }
   
   //check if still connected
-  if(connected) 
-    connected++;
- 
-  if(connected>100 && digitalRead(CONNECTED_PIN)){
-    client.flush();
-    client.end();
-    connected=0;
-  } 
-
+  if(connected && digitalRead(CONNECTED_PIN)){
+     connected++;
+     if(connected>5){
+      client.flush();
+      client.end();
+      connected=0;    
+     }
+  }
   //Connected pin is pulled to GND
   if(!connected && ! digitalRead(CONNECTED_PIN)){
     connected=1;
