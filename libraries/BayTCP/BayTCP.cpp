@@ -341,6 +341,9 @@ void BayTCPInterface::writeConfigToEEPROM(int eeoffset){
 	}
 }
 
+const char* BayTCPInterface::getConfig(void){
+	return _config_buffer;
+}
 
 char** BayTCPInterface::getConfigPointer(uint8_t index){
 	switch(index){

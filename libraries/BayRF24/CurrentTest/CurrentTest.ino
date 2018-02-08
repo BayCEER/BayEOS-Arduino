@@ -7,10 +7,6 @@
    Write        4mA   5A   0.69ms
 
 */
-#include <BayEOS.h>
-#include <SPI.h>
-#include <RF24.h>
-#include <BayEOS.h>
 #include <BayRF24.h>
 #include <Sleep.h>
 

@@ -10,7 +10,7 @@
 #ifndef RTClib_H
 #define RTClib_H
 
-#include "../BayEOSBuffer/BayEOSBuffer.h"
+#include <BayEOSBuffer.h>
 
 
 

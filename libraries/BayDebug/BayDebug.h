@@ -48,11 +48,11 @@ public:
 	void begin(long baud,uint8_t modus=3);
 private:
 	HardwareSerial* _serial;
-	int available(void){return _serial->available();}
-	int read(void){return _serial->read();}
-	size_t write(uint8_t b){return _serial->write(b);}
-    int peek(void){return _serial->peek();};
-    void flush(void){_serial->flush();};
+	int available(void);
+	int read(void);
+	size_t write(uint8_t b);
+    int peek(void);
+    void flush(void);
 
 
 };

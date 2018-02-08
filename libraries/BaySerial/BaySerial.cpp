@@ -134,3 +134,26 @@ BaySerial::BaySerial(HardwareSerial &serial,int timeout){
    _serial=&serial;
 }
 
+int BaySerial::available(void){
+	return _serial->available();
+}
+int BaySerial::i_available(void){
+	return _serial->available();
+}
+void BaySerial::begin(long baud){
+	_serial->begin(baud);
+}
+void BaySerial::flush(void){
+	_serial->flush();
+}
+void BaySerial::end(void){
+	_serial->end();
+}
+int BaySerial::read(void){
+	return _serial->read();
+}
+
+size_t BaySerial::write(uint8_t c){
+	return _serial->write(c);
+}
+

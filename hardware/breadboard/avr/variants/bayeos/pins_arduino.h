@@ -3,6 +3,7 @@
   Part of Arduino - http://www.arduino.cc/
 
   Copyright (c) 2007 David A. Mellis
+  Adjusted for BayEOS Low Power Arduino (c) 2017 Stefan Holzheu
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public

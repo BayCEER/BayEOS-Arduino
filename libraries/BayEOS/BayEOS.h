@@ -85,6 +85,9 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_Int16le 0x3
 #define BayEOS_UInt8 0x4
 #define BayEOS_Double64le 0x5
+#define BayEOS_String 0x6 /* [length (2b)][string] */
+#define BayEOS_Binary 0x7 /* [offset][length (2b)][data] */
+
 /* [0x1][0x21][[float]]+...  */
 #define BayEOS_WithoutOffsetFloat32le 0x21
 #define BayEOS_WithoutOffsetInt32le 0x22
@@ -151,7 +154,7 @@ Still working but depreciated!!
 
 
 
-#include "../BayEOSBuffer/BayEOSBuffer.h"
+#include <BayEOSBuffer.h>
 
 
 class BayEOS {
@@ -337,37 +340,27 @@ public:
 	/**
 	 * returns remaining space in payload buffer
 	 */
-	uint8_t getPayloadBytesLeft(void) const{
-		return (BayEOS_MAX_PAYLOAD-_next);
-	}
+	uint8_t getPayloadBytesLeft(void) const;
 
 	/**
 	 * payload buffer length
 	 */
-	uint8_t getPayloadLength(void) const{
-		return BayEOS_MAX_PAYLOAD;
-	}
+	uint8_t getPayloadLength(void) const;
 
 	/**
 	 * packet length in payload
 	 */
-	uint8_t getPacketLength(void) const{
-		return _next;
-	}
+	uint8_t getPacketLength(void) const;
 
 	/**
 	 * get read pointer to payload
 	 */
-	const uint8_t *getPayload(void) const{
-		return _payload;
-	}
+	const uint8_t *getPayload(void) const;
 
 	/*
 	 * get a byte from payload
 	 */
-	uint8_t getPayload(uint8_t index) const{
-		return _payload[index];
-	}
+	uint8_t getPayload(uint8_t index) const;
 
 
 	/**

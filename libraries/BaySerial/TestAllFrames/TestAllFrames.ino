@@ -2,7 +2,6 @@
 * Test-Sketch sending all types of BayEOS-Frames...
 */
 
-#include <BayEOS.h>
 #include <BaySerial.h>
 
 

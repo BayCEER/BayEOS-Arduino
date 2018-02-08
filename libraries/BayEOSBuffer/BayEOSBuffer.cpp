@@ -237,6 +237,41 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
 	return length + 5;
 }
 
+uint8_t BayEOSBuffer::packetLength(void){
+	return _packet_length;
+}
+
+unsigned long BayEOSBuffer::packetMillis(void){
+	return _millis;
+}
+
+
+void BayEOSBuffer::setRTC(RTC& rtc,boolean absolute_time) {
+	_rtc = &rtc;
+	_absoluteTime=absolute_time;
+}
+
+uint8_t BayEOSBuffer::rtc(void){
+  if(_rtc!=NULL) return 1;
+  return 0;
+}
+
+
+unsigned long BayEOSBuffer::getTime(void){
+  if(_rtc!=NULL){
+	//DateTime now=_rtc->now();
+	return _rtc->now().get();
+  }
+  return millis();
+}
+
+unsigned long BayEOSBuffer::writePos(void){ return _write_pos; }
+unsigned long BayEOSBuffer::readPos(void){ return _read_pos; }
+unsigned long BayEOSBuffer::endPos(void){ return _end; }
+unsigned long BayEOSBuffer::length(void){ return _max_length; }
+
+
+
 //PROGMEM prog_uint8_t daysInMonth[]  = {31,28,31,30,31,30,31,31,30,31,30,31};
 
 static uint8_t daysInMonth[] =
@@ -356,4 +391,11 @@ long DateTime::get() const {
 	uint16_t days = date2days(yOff, m, d);
 	return time2long(days, hh, mm, ss);
 }
+
+uint16_t DateTime::year() const { return 2000 + yOff; }
+uint8_t DateTime::month() const { return m; }
+uint8_t DateTime::day() const { return d; }
+uint8_t DateTime::hour() const { return hh; }
+uint8_t DateTime::minute() const { return mm; }
+uint8_t DateTime::second() const { return ss; }
 

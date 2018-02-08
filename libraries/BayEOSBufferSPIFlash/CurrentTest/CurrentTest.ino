@@ -12,7 +12,6 @@
 
 */
 #include <BayEOSBufferSPIFlash.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <Sleep.h>
 

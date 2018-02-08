@@ -1,6 +1,3 @@
-#include <BayEOS.h>
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 #include "printf.h"
 

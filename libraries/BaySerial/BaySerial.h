@@ -64,12 +64,12 @@ public:
 		sendAck(TX_BREAK);
 	}
 
-	virtual int i_available(void);
-	virtual void begin(long baud);
- 	virtual int read(void);
-	virtual size_t write(uint8_t c);
-	virtual void flush(void);
-	virtual void end(void);
+	virtual int i_available(void)=0;
+	virtual void begin(long baud)=0;
+ 	virtual int read(void)=0;
+	virtual size_t write(uint8_t c)=0;
+	virtual void flush(void)=0;
+	virtual void end(void)=0;
 
 protected:
 	uint8_t readPacket(uint8_t type=API_DATA);
@@ -100,28 +100,13 @@ public:
 	BaySerial(HardwareSerial& serial,int timeout=1000);
 	//BaySerial(void);
 
-	int available(void){
-		return _serial->available();
-	}
-	int i_available(void){
-		return _serial->available();
-	}
-	void begin(long baud){
-		_serial->begin(baud);
-	}
-	void flush(void){
-		_serial->flush();
-	}
-	void end(void){
-		_serial->end();
-	}
-	int read(void){
-		return _serial->read();
-	}
-
-	size_t write(uint8_t c){
-		return _serial->write(c);
-	}
+	int available(void);
+	int i_available(void);
+	void begin(long baud);
+	void flush(void);
+	void end(void);
+	int read(void);
+	size_t write(uint8_t c);
 
 };
 

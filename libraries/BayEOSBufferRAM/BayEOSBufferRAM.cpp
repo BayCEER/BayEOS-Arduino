@@ -1,5 +1,7 @@
 #include "BayEOSBufferRAM.h"
 
+BayEOSBufferRAM::BayEOSBufferRAM(void){}
+
 BayEOSBufferRAM::BayEOSBufferRAM(uint16_t max_length,uint16_t min_free):BayEOSBuffer(){
 	while((_buffer=(uint8_t *)malloc(max_length))==NULL){
 		max_length-=10;
@@ -55,3 +57,8 @@ int BayEOSBufferRAM::read(uint8_t *dest,int length){
 
 void BayEOSBufferRAM::flush(void){
 }
+
+void BayEOSBufferRAM::resetStorage(void){
+}
+
+

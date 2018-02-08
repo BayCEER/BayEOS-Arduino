@@ -18,8 +18,8 @@
 #ifndef BaySoftwareSerial_h
 #define BaySoftwareSerial_h
 
-#include <SoftwareSerial.h>
 #include <BaySerial.h>
+#include <SoftwareSerial.h>
 
 class BaySoftwareSerial : public SoftwareSerial, public BaySerialInterface {
 public:
@@ -28,27 +28,13 @@ public:
 	 */
 	BaySoftwareSerial(uint8_t rxPin, uint8_t txPin ,int timeout=10000);
 
-	int available(void){
-		return SoftwareSerial::available();
-	}
-	int i_available(void){
-		return SoftwareSerial::available();
-	}
-	void begin(long baud){
-		SoftwareSerial::begin(baud);
-	}
-	void flush(void){
-		SoftwareSerial::flush();
-	}
-	void end(void){
-		SoftwareSerial::end();
-	}
-	int read(void){
-		return SoftwareSerial::read();
-	}
-	size_t write(uint8_t c){
-		return SoftwareSerial::write(c);
-	}
+	int available(void);
+	int i_available(void);
+	void begin(long baud);
+	void flush(void);
+	void end(void);
+	int read(void);
+	size_t write(uint8_t c);
 
 };
 

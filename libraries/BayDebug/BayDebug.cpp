@@ -185,4 +185,20 @@ void BayDebug::begin(long baud, uint8_t modus){
 BayDebug::BayDebug(HardwareSerial &serial){
 	_serial = &serial;
 }
+int BayDebug::available(void){
+	return _serial->available();
+}
+int BayDebug::read(void){
+	return _serial->read();
+}
+size_t BayDebug::write(uint8_t b){
+	return _serial->write(b);
+}
+int BayDebug::peek(void){
+	return _serial->peek();
+};
+void BayDebug::flush(void){
+	_serial->flush();
+};
+
 

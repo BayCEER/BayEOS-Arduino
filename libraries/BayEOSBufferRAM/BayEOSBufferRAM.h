@@ -15,7 +15,7 @@ public:
 	/**
 	 * Constructor ...
 	 */
-	BayEOSBufferRAM(void){};
+	BayEOSBufferRAM(void);
 
 	/**
 	 * Constructor using dynamic memory allocation
@@ -30,7 +30,7 @@ public:
 
 
 private:
-	void resetStorage(void){}
+	void resetStorage(void);
 	uint8_t write(const uint8_t b);
 	uint8_t write(const uint8_t *b,uint8_t length);
 	uint8_t seek(unsigned long pos);

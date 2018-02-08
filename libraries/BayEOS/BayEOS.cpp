@@ -384,3 +384,24 @@ uint8_t BayEOS::sendFromBuffer(void) {
 	return 0;
 }
 
+uint8_t BayEOS::getPayloadBytesLeft(void) const{
+	return (BayEOS_MAX_PAYLOAD-_next);
+}
+
+uint8_t BayEOS::getPayloadLength(void) const{
+	return BayEOS_MAX_PAYLOAD;
+}
+
+uint8_t BayEOS::getPacketLength(void) const{
+	return _next;
+}
+
+const uint8_t* BayEOS::getPayload(void) const{
+	return _payload;
+}
+
+uint8_t BayEOS::getPayload(uint8_t index) const{
+	return _payload[index];
+}
+
+

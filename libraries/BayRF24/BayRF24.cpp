@@ -1,0 +1,54 @@
+#include "BayRF24.h"
+
+BayRF24::BayRF24(uint8_t _cepin, uint8_t _cspin, uint8_t powerdown = 1) :
+		RF24(_cepin, _cspin) {
+	_powerdown = powerdown;
+}
+
+
+uint8_t BayRF24::sendPayload(void) {
+	if (_powerdown)
+		powerUp();
+	else
+		stopListening();
+	openWritingPipe (_pipe);
+	uint8_t res;
+
+	res = RF24::write(getPayload(), getPacketLength());
+	uint8_t curr_pa = 0;
+	while (!res && curr_pa < 4) {
+		setPALevel((rf24_pa_dbm_e) curr_pa);
+		res = RF24::write(getPayload(), getPacketLength());
+		curr_pa++;
+	}
+
+	if (_powerdown)
+		powerDown();
+	else {
+		txStandBy();
+		startListening();
+	}
+
+	return !res;
+}
+
+void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
+		RF24_PA_HIGH, rf24_datarate_e rate = RF24_250KBPS) {
+	_pipe = address;
+	RF24::begin();
+	setChannel(c);
+	setPayloadSize(32);
+	enableDynamicPayloads();
+	setCRCLength (RF24_CRC_16);
+	setDataRate(rate);
+	setPALevel(pa_level);
+	_pa_level = pa_level;
+	setRetries(15, 15);
+	setAutoAck(true);
+	if (_powerdown)
+		powerDown();
+}
+
+bool BayRF24::i_available(uint8_t* pipe_nr) {
+	return RF24::available(pipe_nr);
+}

@@ -51,7 +51,7 @@ public:
 
 
 
-	virtual void i_begin(long baud);
+	virtual void i_begin(long baud)=0;
 
 	/*
 	 * Flush the transfer depending on MTU of Network

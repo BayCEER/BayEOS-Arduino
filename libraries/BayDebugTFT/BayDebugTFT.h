@@ -21,16 +21,16 @@ public:
 	 * Constructor
 	 */
 	BayTFTDebug(UTFT *utft, char *tx_buffer, uint8_t rows, uint8_t cols);
-	void flush(void){TFTStream::flush();};
+	void flush(void);
 	using TFTStream::println;
 	using TFTStream::print;
 	using TFTStream::write;
-	size_t write(uint8_t b){return TFTStream::write(b);}
+	size_t write(uint8_t b);
 
 private:
-    int available(void){return 0;};
-    int peek(void){return 0;};
-    int read(void){return 0;};
+    int available(void);
+    int peek(void);
+    int read(void);
 
 };
 

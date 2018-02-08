@@ -5,11 +5,8 @@ SPIFlash and TIMER2 RTC
 
 
 #include <EEPROM.h> 
-#include <Wire.h>
 #include <RTClib.h>
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferSPIFlash.h>
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
 #include <Sleep.h>

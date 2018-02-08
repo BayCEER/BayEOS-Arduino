@@ -1,4 +1,3 @@
-#include <BayEOS.h>
 #include <BaySerial.h>
 
 BaySerial client=BaySerial(Serial);
@@ -16,7 +15,7 @@ void loop(void){
    * Please keep in mind, that the payload of the BayEOS object
    * is limited to 100 byte
    */
-   client.startDataFrame(BayEOS_LabeledChannelFloat32le);
+   client.startDataFrame(BayEOS_LabelledChannelFloat32le);
    client.addChannelValue(millis()/1000,"cpu");     
    client.addChannelValue(analogRead(A0),"A0");     
    client.sendPayload();

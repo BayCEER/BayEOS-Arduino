@@ -1,7 +1,4 @@
 #include <Sleep.h>
-#include <BayEOS.h>
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 
 #define RF24ADDRESS 0x45c431ae12LL

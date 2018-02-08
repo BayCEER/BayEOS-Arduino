@@ -123,8 +123,8 @@ public:
 
 
 
-	virtual void i_begin(long baud);
-	virtual void i_end(void);
+	virtual void i_begin(long baud)=0;
+	virtual void i_end(void)=0;
 
 	/*
 	 * Flush the transfer depending on MTU of Network
@@ -150,29 +150,16 @@ public:
 	BayGPRS(HardwareSerial &serial, uint8_t powerPin=9,uint8_t resetPin=0);
 private:
 	HardwareSerial* _serial; //Pointer to existing serial object!!
-	int available(void){return _serial->available();}
-	int read(void){
-#if SIM900_DEBUG
-		int c=_serial->read();
-		if(c!=-1) Serial.write(c);
-		return c;
-#else
-		return _serial->read();
-#endif
-
-	}
-	void i_begin(long b){ _serial->begin(b);}
-	void i_end(void){ _serial->end();}
-	int i_available(void){return _serial->available();}
-	size_t write(uint8_t b){
-#if SIM900_DEBUG
-		Serial.write(b);
-#endif
-		return _serial->write(b);
-	}
-    int peek(void){return _serial->peek();};
-    void flush(void){_serial->flush();};
+	int available(void);
+	int read(void);
+	void i_begin(long b);
+	void i_end(void);
+	int i_available(void);
+	size_t write(uint8_t b);
+    int peek(void);
+    void flush(void);
 };
+
 
 class BayGPRSsoftserial : private SoftwareSerial, public BayGPRSInterface {
 public:
@@ -180,28 +167,16 @@ public:
 	 * Constructor
 	 */
 	BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin, uint8_t powerPin=6, uint8_t resetPin=0);
+	uint8_t begin(long baud,uint8_t unlock_only=0);
 private:
-	int available(void){return SoftwareSerial::available();}
-	int read(void){
-#if SIM900_DEBUG
-		int c=SoftwareSerial::read();
-		if(c!=-1) Serial.write(c);
-		return c;
-#else
-		return SoftwareSerial::read();
-#endif
-    }
-	void i_begin(long b){ SoftwareSerial::begin(b);}
-	void i_end(void){ SoftwareSerial::end();}
-	int i_available(void){return SoftwareSerial::available();}
-	size_t write(uint8_t b){
-#if SIM900_DEBUG
-		Serial.write(b);
-#endif
-		return SoftwareSerial::write(b);
-	}
-    int peek(void){return SoftwareSerial::peek();};
-    void flush(void){SoftwareSerial::flush();};
+	int available(void);
+	int read(void);
+	void i_begin(long b);
+	void i_end(void);
+	int i_available(void);
+	size_t write(uint8_t b);
+    int peek(void);
+    void flush(void);
 };
 
 

@@ -1,14 +1,10 @@
-#include <BayEOSBuffer.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
-#include <XBee.h>
 #include <BayXBee.h>
 
 
 //BayXBee client=BayXBee(Serial);
-BayDebug client;
+BayDebug client(Serial);
 BayEOSBufferSDFat myBuffer;
 unsigned long last_data;
 unsigned long last_buffered_data;

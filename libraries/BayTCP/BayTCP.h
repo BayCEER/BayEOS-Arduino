@@ -75,12 +75,12 @@ public:
 	 * 2 == Device TIMEOUT
 	 * 3 and more == specific result codes of implementation
 	 */
-	virtual uint8_t connect(void);
+	virtual uint8_t connect(void)=0;
 
 	/**
 	 * Disconnect from the web
 	 */
-	virtual void disconnect(void);
+	virtual void disconnect(void)=0;
 
 
 
@@ -124,7 +124,7 @@ public:
 	 * get pointer to config buffer
 	 * server\0port\0path\0user\0\0password\0sender\0apn\0apn_pw\0apn_user\0\pin\0
 	 */
-	const char* getConfig(void){ return _config_buffer; }
+	const char* getConfig(void);
 
 	const uint8_t* parseMAC(const char* str);
 	const uint8_t* parseIP(const char* str);
@@ -141,8 +141,8 @@ public:
 	 */
 	boolean _urlencode;
 protected:
-	virtual void flushMTU(void);
-	virtual void finishTransmissionMode(void);
+	virtual void flushMTU(void)=0;
+	virtual void finishTransmissionMode(void)=0;
 	void printPostHeader(uint16_t size);
 	void setConfigPointers(void);
 	uint8_t addToConfigBuffer(uint8_t offset,const char* str);

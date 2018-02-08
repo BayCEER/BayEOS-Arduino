@@ -1,7 +1,4 @@
 #include <Sleep.h>
-#include <BayEOS.h>
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 
 #define POWER_PIN A3

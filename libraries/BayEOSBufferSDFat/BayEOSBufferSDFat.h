@@ -4,9 +4,9 @@
 #ifndef BayEOSBufferSDFat_h
 #define BayEOSBufferSDFat_h
 #include <inttypes.h>
-#include "../SdFat/SdFat.h"
-#include "../BayEOS/BayEOS.h"
-#include "../BayEOSBuffer/BayEOSBuffer.h"
+#include <SdFat.h>
+#include <BayEOSBuffer.h>
+#include <BayEOS.h>
 
 
 class BayEOSBufferSDFat : public BayEOSBuffer {
