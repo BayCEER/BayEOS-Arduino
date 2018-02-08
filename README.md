@@ -2,7 +2,8 @@
 This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.6.x
 
 ## Installation
-Copy all folders below the libraries folder (BayEOS, BayEOSBoards ..) in your Arduino libraries directory.
+1. Copy the URL (https://raw.githubusercontent.com/BayCEER/BayEOS-Arduino/master/package_BayEOS_index.json) to your additional boardmanager-URLs in your arduino IDE preferences (file/preferences)
+2. Install the package via tools/Board/Boardmanager
 
 This library relays on some third party libraries (see below). To ease up installation
 these libraries have been included into this repository.

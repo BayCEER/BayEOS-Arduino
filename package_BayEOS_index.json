@@ -1,0 +1,46 @@
+{
+  "packages": [
+    {
+      "name": "BayEOS",
+      "maintainer": "BayCEER IT",
+      "websiteURL": "http://www.bayceer.uni-bayreuth.de/bayeos/",
+      "email": "holzheu@bayceer.uni-bayreuth.de",
+      "help": {
+        "online": "https://github.com/BayCEER/BayEOS-Arduino/"
+      },
+      "platforms": [
+        {
+          "name": "BayEOS AVR Boards",
+          "architecture": "avr",
+          "version": "0.0.2",
+          "category": "BayEOS Arduino",
+          "url": "https://github.com/BayCEER/BayEOS-Arduino/archive/v0.0.2.zip",
+          "checksum": "SHA-256:e1ba090c16ba597af7b840b2a8881009442682c0488ef14efb433354c0740cb5",
+          "help": {
+            "online": "https://github.com/BayCEER/BayEOS-Arduino/"
+          },
+          "archiveFileName": "BayEOS-Arduino-0.0.2.zip",
+          "boards": [
+            {
+              "name": "BayEOS Low Power Board"
+            }
+          ],
+          "size": "3705534"
+        }
+      ],
+      "toolsDependencies": [
+        {
+          "packager": "arduino",
+          "name": "avr-gcc",
+          "version": "4.8.1-arduino5"
+        },
+        {
+          "packager": "arduino",
+          "name": "avrdude",
+          "version": "6.0.1-arduino5"
+        }
+      ],
+      "tools": []
+     }
+  ]
+}
