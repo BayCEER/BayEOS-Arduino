@@ -16,26 +16,14 @@
  * Rain Gauge: INT0 == D2
  *
  ***************************************************************/
-#include <EEPROM.h> 
-#include <Wire.h>
-#include <RTClib.h>
-#include <BayEOSBuffer.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
-#include <Sleep.h>
-#include <Wire.h>
 #include <SHT2xSleep.h>
-#include <OneWire.h>
-#include <EEPROM.h>
-#include <DS18B20.h>
-
 
 // 16 ticks per second!
-#define WITHDALLAS 1
-#define WITHRAINGAUGE 1
+#define WITHDALLAS 0
+#define WITHRAINGAUGE 0
 
 #define CONNECTED_PIN 9
 #define SAMPLING_INT 30

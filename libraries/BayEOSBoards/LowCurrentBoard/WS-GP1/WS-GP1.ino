@@ -22,12 +22,9 @@
 #define SAMPLING_INT 30
 #define ACTION_COUNT 1
 
-#include <RTClib.h>
 #include <BayEOSBufferSPIFlash.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <MCP342x.h>
-#include <Sleep.h>
 #include <SHT2xSleep.h>
 MCP342x mcp342x = MCP342x();
 const byte addr = 0;

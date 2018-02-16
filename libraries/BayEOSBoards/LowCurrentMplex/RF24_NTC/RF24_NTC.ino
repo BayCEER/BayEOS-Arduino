@@ -27,10 +27,7 @@
 #define SKETCH_DEBUG 0
 
 
-#include <BayEOSBuffer.h>
-#include <Wire.h>
 #include <BayEOSBufferSPIFlash.h>
-#include <BayEOS.h>
 #include <MCP342x.h>
 
 const byte addr = 0;
@@ -64,7 +61,6 @@ float ntc10_R2T(float r){
 void setup()
 {
 
-  Wire.begin();
 #if SKETCH_DEBUG
   client.begin(9600, 1);
 #else

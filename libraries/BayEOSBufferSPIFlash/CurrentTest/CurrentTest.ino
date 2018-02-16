@@ -1,8 +1,7 @@
 /*
    Simple Sketch for BayEOSBufferSPIFlash
 
-   Connect SPIFlash to Hardware SPI
-   CS Pin is 10
+   SPIFlash is connected to Hardware SPI with CS=Pin 8
                 avr.  max.  time
    Power Down   6µA
    Read         5mA   15mA  0.54ms
@@ -28,7 +27,7 @@ SIGNAL(TIMER2_OVF_vect) {
 
 BayDebug client = BayDebug(Serial);
 #if WITH_FLASH
-SPIFlash flash(10);
+SPIFlash flash(8); 
 BayEOSBufferSPIFlash myBuffer;
 #endif
 

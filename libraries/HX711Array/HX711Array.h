@@ -75,39 +75,4 @@ public:
 	void tare(float t);
 };
 
-class NTC_Sensor {
-protected:
-	float ntc_type; //e.g. 3.0 for 3k or 5.0 for 5k....
-public:
-	virtual float readResistance(void)=0;
-	float getTemp(void);
-};
-
-class NTC_ADC: public NTC_Sensor {
-private:
-	uint8_t power_pin;
-	uint8_t adc_pin;
-	float pre_resistor;
-public:
-	NTC_ADC(uint8_t pp, uint8_t ap, float pr, float nt);
-	float readResistance(void);
-};
-
-#include <MCP342x.h>
-class NTC_MCP342x: public NTC_Sensor {
-private:
-	uint8_t power_pin;
-	uint8_t adc_ch_r;
-	uint8_t adc_ch_ntc;
-	float pre_resistor;
-	MCP342x* mcp;
-
-public:
-	NTC_MCP342x(MCP342x &m, uint8_t pp, uint8_t ch_r, uint8_t ch_n, float pr, float nt);
-	float readResistance(void);
-	uint8_t sleep_count;
-
-};
-
-
 #endif /* HX711Array_h */

@@ -1,5 +1,4 @@
 #include <MCP_MPLEX.h>
-#include <Wire.h>
 #include <MCP342x.h>
 
 const byte addr = 0;
@@ -16,7 +15,6 @@ const uint16_t R[]={ 19877, 19975, 20028, 19966,
 void setup()
 {
   Serial.begin(9600);
-  Wire.begin();
   pinMode(MPLEX_POWER_PIN,OUTPUT);
   pinMode(5,OUTPUT);
 }

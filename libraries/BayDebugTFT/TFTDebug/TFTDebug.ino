@@ -1,8 +1,4 @@
-#include <BayEOS.h>
-#include <BayDebug.h>
 
-#include <UTFT.h>
-#include <TFTStream.h>
 #include <BayDebugTFT.h>
 
 /*

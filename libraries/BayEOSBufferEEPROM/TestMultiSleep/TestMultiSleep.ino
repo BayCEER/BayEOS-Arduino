@@ -9,11 +9,7 @@ RTC Oszillator was
 
 */
 
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <Sleep.h>
 #include <RTClib.h>
@@ -27,7 +23,7 @@ ISR(TIMER2_OVF_vect){
 
 
 
-BayDebug client=BayDebug(); 
+BayDebug client=BayDebug(Serial); 
 
 //define two i2c addresses
 uint8_t i2c_addresses[]={0x50,0x51,0x52,0x53};

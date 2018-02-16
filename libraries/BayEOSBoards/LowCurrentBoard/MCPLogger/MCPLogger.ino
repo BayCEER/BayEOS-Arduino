@@ -36,21 +36,13 @@ const uint8_t gain3 = 3; //0-3: x1, x2, x4, x8
 #define COUNT_LAGTICKS 12
 // The logger will store average values of several raw samples.
 // Raw sampling interval can be defined here. More samples increase power consumption
-#define RAW_SAMPLING_INT 30
+#define SAMPLING_INT 30
 
 
 
-#include <EEPROM.h>
-#include <Wire.h>
-#include <RTClib.h>
-#include <BayEOSBuffer.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
-#include <Sleep.h>
-#include <Wire.h>
 #include <MCP342x.h>
 
 #define CONNECTED_PIN 9
@@ -63,32 +55,13 @@ BaySerial client(Serial);
 uint8_t i2c_addresses[] = {0x50, 0x51, 0x52, 0x53};
 BayEOSBufferMultiEEPROM myBuffer;
 BayEOSLogger myLogger;
-RTC_Timer2 myRTC;
 MCP342x mcp342x = MCP342x();
 const byte addr = 0;
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 const uint8_t rate = 3; //0-3: 12bit ... 18bit
 
+#include <LowCurrentBoard.h>
 
-volatile uint16_t ticks;
-volatile uint8_t action;
-volatile uint8_t seconds;
-
-ISR(TIMER2_OVF_vect) {
-  ticks++;
-  if ((ticks % TICKS_PER_SECOND) == 0) {
-    myRTC._seconds += 1; //RTC_Timer2.get() and adjust() are interrupt save now!
-    seconds += 1;
-    uint16_t tick_mod = (ticks / TICKS_PER_SECOND) % RAW_SAMPLING_INT;
-    if (tick_mod < 2) {
-      action |= (1 << tick_mod);
-    } else {
-      action |= (1 << 7);
-    }
-  }
-
-
-}
 
 #if WITH_COUNT0
 volatile uint8_t int0_event = 0;
@@ -133,10 +106,6 @@ void handleINT1Event(void) {
 }
 
 #endif
-
-
-
-
 
 
 
@@ -203,21 +172,11 @@ void measure() {
 
 void setup()
 {
-#if TICKS_PER_SECOND==128
-  Sleep.setupTimer2(1); //init timer2 to 0,0078125sec
-#elif TICKS_PER_SECOND==16
-  Sleep.setupTimer2(2); //init timer2 to 0,0625sec
-#elif TICKS_PER_SECOND==4
-  Sleep.setupTimer2(3); //init timer2 to 0,25sec
-#elif TICKS_PER_SECOND==2
-  Sleep.setupTimer2(4); //init timer2 to 0,5sec
-#elif TICKS_PER_SECOND==1
-  Sleep.setupTimer2(5); //init timer2 to 1sec
-#else
-#error unsupported TICKS_PER_SECOND
-#endif
+  initLCB(); //init time2   
   pinMode(CONNECTED_PIN, INPUT);
   digitalWrite(CONNECTED_PIN, HIGH);
+    pinMode(POWER_PIN,OUTPUT);
+
 #if WITH_COUNT0
   digitalWrite(2, HIGH); //Enable Pullup on Pin 2 == INT0
   attachInterrupt(0, int0_isr, FALLING);
@@ -238,6 +197,7 @@ void setup()
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
   Wire.begin();
+  startLCB();
 }
 
 void loop()
@@ -256,7 +216,7 @@ void loop()
 
 
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
-                                       (myRTC._seconds - last_measurement) >= RAW_SAMPLING_INT)) {
+                                       (myRTC._seconds - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC._seconds;
     measure();
   }
@@ -282,21 +242,9 @@ void loop()
   //Connected pin is pulled to GND
   if (!connected && ! digitalRead(CONNECTED_PIN)) {
     connected = 1;
+    adjust_OSCCAL();
     client.begin(38400);
   }
-}
-
-
-void sleepLCB() {
-  Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-}
-
-void delayLCB(uint16_t millis) {
-  millis /= (1000 / TICKS_PER_SECOND);
-  uint16_t start_ticks = ticks;
-  do {
-    sleepLCB();
-  } while ((ticks - start_ticks) < millis);
 }
 
 

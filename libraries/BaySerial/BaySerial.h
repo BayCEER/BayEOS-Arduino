@@ -91,7 +91,7 @@ protected:
 };
 
 class BaySerial : public BaySerialInterface {
-private:
+protected:
 	HardwareSerial* _serial; //Pointer to existing serial object!!
 public:
 	/**

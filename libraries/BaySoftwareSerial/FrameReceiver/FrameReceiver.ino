@@ -1,5 +1,3 @@
-#include <BayEOS.h>
-#include <SoftwareSerial.h>
 #include <BaySoftwareSerial.h>
 
 

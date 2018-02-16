@@ -5,9 +5,7 @@
  * please adjust SAMPLING_INT, TRY_INT when 
  * using with a real device
  */
-#include <BayEOS.h>
 #include <BayDebug.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
 #include <Sleep.h>
 #include <RAD7Serial.h>

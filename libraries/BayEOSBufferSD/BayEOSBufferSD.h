@@ -6,8 +6,8 @@
 #define BayEOSBufferSD_h
 #include <inttypes.h>
 #include <SD.h>
-#include "../BayEOS/BayEOS.h"
-#include "../BayEOSBuffer/BayEOSBuffer.h"
+#include <BayEOS.h>
+#include <BayEOSBuffer.h>
 
 
 
@@ -23,10 +23,6 @@ public:
 	 * this is especially usefull for logger applications
 	 */
 	BayEOSBufferSD(unsigned long max_length,uint8_t append=0,const char *f="bayeos.db");
-	/**
-	 * Resets the file to zero
-	 */
-	void reset(void);
 
 private:
 	void resetStorage(void);

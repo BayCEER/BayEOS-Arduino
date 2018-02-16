@@ -1,3 +1,11 @@
+/*
+ * This Sketch builds on an array
+ * 
+ * OSCCAL->freq
+ * 
+ * 
+ */
+
 #include <Sleep.h>
 
 unsigned long freq[256];

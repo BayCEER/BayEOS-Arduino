@@ -21,7 +21,7 @@
 
 #include <inttypes.h>
 #include <BayEOS.h>
-#include "../BaySerial/BaySerial.h"
+#include <BaySerial.h>
 #include <HardwareSerial.h>
 #include <Arduino.h>
 #include <EEPROM.h>

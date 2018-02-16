@@ -1,4 +1,3 @@
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <RF24.h>
 

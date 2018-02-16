@@ -1,4 +1,5 @@
 #include <HX711Array.h>
+#include <NTC.h>
 #include <Sleep.h>
 uint8_t dout[] = {A5};
 uint8_t sck = A4;

@@ -1,6 +1,4 @@
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferRAM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 
 

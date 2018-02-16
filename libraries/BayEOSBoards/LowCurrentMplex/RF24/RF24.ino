@@ -1,3 +1,6 @@
+
+#define PRE_RESISTOR 14.3
+
 #define NRF24_PIPE 0
 #define RF24CHANNEL 0x47
 #define SAMPLING_INT 32
@@ -6,7 +9,6 @@
 #define POWER_PIN 6
 
 
-#define PRE_RESISTOR 14.3
 
 #if NRF24_PIPE == 0
 #define RF24ADDRESS 0x45c431ae12LL

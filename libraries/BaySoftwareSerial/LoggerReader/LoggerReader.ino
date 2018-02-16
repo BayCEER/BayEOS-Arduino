@@ -1,7 +1,5 @@
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSBuffer.h>
-#include <SoftwareSerial.h>
 #include <BaySoftwareSerial.h>
 #include <BayDebug.h>
 

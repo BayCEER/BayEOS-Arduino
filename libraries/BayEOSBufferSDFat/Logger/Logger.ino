@@ -1,22 +1,10 @@
-/*
-  This is a example for a simple and cheap logger based on
-  I2C EEPROM and TIMER2 RTC
-*/
 /******************************************************
 
    Sample Logger Sketch for Seeduino 2.2 with SD-Card
 
-   Uses Watchdog
-
  *****************************************************/
-
-#include <EEPROM.h>
-#include <Wire.h>
 #include <RTClib.h>
-#include <BayEOSBuffer.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
 #include <Sleep.h>

@@ -1,7 +1,4 @@
-#include <BayEOS.h>
 #include <BaySerial.h>
-#include <SdFat.h>
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferSDFat.h>
 #include <BayEOSLogger.h>
 #include <Wire.h>

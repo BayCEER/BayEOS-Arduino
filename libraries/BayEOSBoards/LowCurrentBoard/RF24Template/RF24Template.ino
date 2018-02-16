@@ -24,10 +24,8 @@
 #define RF24ADDRESS 0x45c431aebfLL
 #endif
 
-#include <BayEOSBuffer.h>
-#include <Wire.h>
+
 #include <BayEOSBufferRAM.h>
-#include <BayEOS.h>
 #include <BayRF24.h>
 BayRF24 client=BayRF24(9,10);
 BayEOSBufferRAM myBuffer;

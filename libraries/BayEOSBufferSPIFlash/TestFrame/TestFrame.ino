@@ -7,7 +7,6 @@
 
 */
 #include <BayEOSBufferSPIFlash.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 
 

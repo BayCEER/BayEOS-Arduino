@@ -1,5 +1,5 @@
 # BayEOS-Arduino-lib
-This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.6.x
+This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.8.x
 
 ## Installation
 1. Copy the URL (https://raw.githubusercontent.com/BayCEER/BayEOS-Arduino/master/package_BayEOS_index.json) to your additional boardmanager-URLs in your arduino IDE preferences (file/preferences)
@@ -12,9 +12,7 @@ these libraries have been included into this repository.
 A typical example sketch for sending sensordata and messages to a BayEOS gateway
 look like this:
 
-    #include <Ethernet.h>
-    #include <BayEOS.h>
-    #include <BayTCP.h>
+    //Include a BayEOS Transport Class
     #include <BayTCPEth.h>
     //Please enter a valid Mac and IP
     byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };

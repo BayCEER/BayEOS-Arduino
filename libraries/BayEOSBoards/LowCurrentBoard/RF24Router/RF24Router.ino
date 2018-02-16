@@ -22,19 +22,8 @@ keeping nRF24l01+ in listening mode!!!
 #define RF24ADDRESS 0x45c431ae48LL
 #define RF24CHANNEL 0x61
 
-#include <OneWire.h>
-#include <EEPROM.h>
-#include <DS18B20.h>
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <RTClib.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <Sleep.h>
 #include <SHT2xSleep.h>
-#include <BayEOS.h>
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 
 

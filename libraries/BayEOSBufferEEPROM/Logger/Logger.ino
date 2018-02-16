@@ -3,14 +3,8 @@ This is a example for a simple and cheap logger based on
 I2C EEPROM and TIMER2 RTC
 */
 
-
-#include <EEPROM.h> 
-#include <Wire.h>
 #include <RTClib.h>
-#include <BayEOSBuffer.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BaySerial.h>
 #include <BayEOSLogger.h>
 #include <Sleep.h>

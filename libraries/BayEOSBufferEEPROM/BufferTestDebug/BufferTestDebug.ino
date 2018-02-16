@@ -1,8 +1,4 @@
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 
 
@@ -10,7 +6,7 @@
 #define MULTIEEPROM 1
 
 #if MULTIEEPROM
-uint8_t i2c_addresses[]={0x50,0x51,0x52,0x53};
+uint8_t i2c_addresses[] = {0x50, 0x51, 0x52, 0x53};
 BayEOSBufferMultiEEPROM myBuffer;
 #else
 BayEOSBufferEEPROM myBuffer;
@@ -23,10 +19,10 @@ void setup(void) {
   Serial.println("Starting...");
   delay(10);
 #if MULTIEEPROM
-  myBuffer.init(2,i2c_addresses,65536L); //with flush
+  myBuffer.init(2, i2c_addresses, 65536L); //with flush
   //myBuffer.reset(); //uncomment to clear buffer
- #else
- myBuffer.init(0x50, 65536L,0); //no flush!
+#else
+  myBuffer.init(0x50, 65536L, 0); //no flush!
 #endif
   //myBuffer.reset(); //This will set all pointers to zero
   client.setBuffer(myBuffer);

@@ -1,9 +1,6 @@
-#include <EEPROM.h>
-#include <BayEOS.h>
-#include <BaySerial.h>
 #include <BayBluetooth.h>
 
-BayBluetooth client=BayBluetooth();
+BayBluetooth client=BayBluetooth(Serial);
 
 void setup(void){
    digitalWrite(7, HIGH); // Pull Up 

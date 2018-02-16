@@ -1,8 +1,4 @@
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 
 

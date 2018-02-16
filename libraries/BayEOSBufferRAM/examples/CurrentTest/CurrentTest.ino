@@ -7,16 +7,14 @@
    Write        4mA   5A   0.69ms
 
 */
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferRAM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <Sleep.h>
 
 volatile unsigned long seconds = 0;
 
 //The very important 32.686kHz interrupt handler
-SIGNAL(TIMER2_OVF_vect) {
+ISR(TIMER2_OVF_vect) {
   //seconds++;
   seconds += 1; //Adjust to your timer2 time!
 }

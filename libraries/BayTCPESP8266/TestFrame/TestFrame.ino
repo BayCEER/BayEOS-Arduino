@@ -1,8 +1,3 @@
-#include <BayEOS.h>
-#include <SoftwareSerial.h>
-#include <SdFat.h>
-#include <Base64.h>
-#include <BayTCP.h>
 #include <BayTCPESP8266.h>
 
 

@@ -3,7 +3,7 @@
 
 #define ETH_DEBUG 0
 
-#include "../BayTCP/BayTCP.h"
+#include <BayTCP.h>
 #include <Ethernet.h>
 #include <SPI.h>
 

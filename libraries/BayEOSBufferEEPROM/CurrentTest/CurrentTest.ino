@@ -8,18 +8,14 @@
    Write+Flush  5mA   6mA  24.59ms
 
 */
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
 #include <BayDebug.h>
 #include <Sleep.h>
 
 volatile unsigned long seconds = 0;
 
 //The very important 32.686kHz interrupt handler
-SIGNAL(TIMER2_OVF_vect) {
+ISR(TIMER2_OVF_vect) {
   //seconds++;
   seconds += 1; //Adjust to your timer2 time!
 }

@@ -1,4 +1,13 @@
-#include <Wire.h>
+/*
+ * Sample Sketch to read resistance using
+ * 
+ * MCP, a 8bit Multiplexer and a preresistor
+ * 
+ * 
+ */
+#define PRERESISTOR 14300.0
+
+
 #include <MCP342x.h>
 
 // the address of the chip - from 0 up to 8 - it should be hardwired with the chip's address pins on the PCB
@@ -20,11 +29,6 @@ void setup()
 {
   Serial.begin(9600);
   //  General Call Reset as per Datasheet of the mcp3422/4 
-  Serial.print("General Call Reset... ");
-  Wire.beginTransmission(B00000000);
-  Wire.write(B00000110);
-  Wire.endTransmission();
-  Serial.println("fertig");
   pinMode(POWER_PIN,OUTPUT);
   digitalWrite(POWER_PIN,HIGH);
   pinMode(A1,OUTPUT);
@@ -45,7 +49,7 @@ void loop()
     mcp342x.setConf(addr, 1, 0, mode, rate, gain);
     delay(300);
     span = mcp342x.getData(addr);
-    float strom=span/14.3;
+    float strom=span/PRERESISTOR*1000; //current in mA
     dtostrf(span, 10, 6, str_buf);
     Serial.print(str_buf);
     Serial.print("\t");

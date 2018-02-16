@@ -6,7 +6,7 @@
 
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
-#include "../BayTCP/BayTCP.h"
+#include <BayTCP.h>
 
 
 class BayESP8266Interface : public BayTCPInterface {

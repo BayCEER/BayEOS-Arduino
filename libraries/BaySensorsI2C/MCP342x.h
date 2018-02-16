@@ -20,14 +20,25 @@ class MCP342x
      * Constructor
     */
     MCP342x();
+
+    MCP342x(byte adc_addr);
+
+
+    /*
+     * Resets MCP and sets MCP in sleep mode!
+     *
+     */
+    void reset(void);
     /**
      * get ADC value in V
     */
     float getData(byte adc_addr);
+    float getData(void);
     /**
      * set configuration as binary
     */
     void setConf(uint8_t adc_addr, uint8_t conf);
+    void setConf(uint8_t conf);
     /**
      * set configuration
      * 	rdy	-	ready bit ->	in continuous mode has no effect
@@ -49,6 +60,25 @@ class MCP342x
      * 				gain = 3  ->  x8 gain     * adc_addr: 0-3
     */
 	void setConf(byte adc_addr, byte rdy, byte ch, byte mode, byte rate, byte gain);
+
+	/*
+	 * Only store configuration for rate and gain.
+	 * Nothing is send to MCP!
+	 */
+	void storeConf(byte rate, byte gain);
+
+	/*
+	 * Trigger conversion for Channel
+	 * uses stored configuration
+	 */
+	void runADC(byte ch);
+
+	/*
+	 * gives ADC-Time (depends on rate)
+	 */
+	int getADCTime(void);
+
+
   private:
 //		void print_binary(byte);
 //    byte confByte;
@@ -57,6 +87,9 @@ class MCP342x
     byte gain;
     long zahl;
     byte output_bcd[5];
+    byte _adr;
+    byte _conf_rg;
+
 
     void readOutputRegister(byte adc_addr);
 //    void saveData(void);

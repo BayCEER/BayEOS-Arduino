@@ -4,7 +4,6 @@ SPIFlash and TIMER2 RTC
 */
 
 
-#include <EEPROM.h> 
 #include <RTClib.h>
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>

@@ -2,14 +2,7 @@
 Test Multibuffer and URLEncode
 */
 
-#include <BayEOS.h>
-#include <Ethernet.h>
-#include <SPI.h>
-#include <SdFat.h>
-#include <Base64.h>
-#include <BayTCP.h>
 #include <BayTCPEth.h>
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferRAM.h>
 
 

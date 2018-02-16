@@ -4,6 +4,22 @@
 MCP342x::MCP342x()
 {
   Wire.begin();
+  _adr=0;
+}
+
+MCP342x::MCP342x(byte adc_adr)
+{
+  Wire.begin();
+  _adr=adc_adr;
+}
+
+
+void MCP342x::reset(void){
+	  //  General Call Reset as per Datasheet of the mcp3422/4
+	  Wire.beginTransmission(B00000000);
+	  Wire.write(B00000110);
+	  Wire.endTransmission();
+	  setConf(B10000000);
 }
 
 
@@ -54,28 +70,22 @@ void MCP342x::setConf(byte adc_addr, byte rdy, byte ch, byte mode, byte rate, by
 							((B00000001 & mode)	<< 4)		|
 							((B00000011 & rate)	<< 2)		|
 							 (B00000011 & gain);
-	
-//  confByte = conf;
-//   resolution = (conf & B00001100) >> 2;
-//   gain = (conf & B00000011);
-  
-// 	Serial.println();
-// 	Serial.print("conf= ");
-// 	Serial.print(conf);
-// 	Serial.print("   ");
-// 	Serial.print("res= ");
-// 	Serial.print(resolution);
-// 	Serial.print("   ");
-// 	Serial.print("gain= ");
-// 	Serial.print(gain);
-// 	Serial.print("   ");
-
-//   Wire.beginTransmission(MCP3422_ADR);
-// //  Wire.send(0x00); // reset register pointer
-//   Wire.write(conf);
-//   Wire.endTransmission();
 
   setConf(adc_addr, conf);
+}
+
+void MCP342x::storeConf(byte rate, byte gain)
+{
+	_conf_rg =				((B00000011 & rate)	<< 2)		|
+							 (B00000011 & gain);
+}
+
+void MCP342x::runADC(byte ch){
+	setConf(_adr,(B10000000 | _conf_rg | ((B00000011 & ch)<<5)));
+}
+
+void MCP342x::setConf(uint8_t conf){
+	setConf(_adr,conf);
 }
 
 void MCP342x::setConf(uint8_t adc_addr, uint8_t conf)
@@ -86,22 +96,31 @@ void MCP342x::setConf(uint8_t adc_addr, uint8_t conf)
 
   resolution = (conf & B0001100) >> 2;
   gain = (conf & B00000011);
-  
-//   Serial.println();
-// 	Serial.print("conf= ");
-// 	Serial.print(conf);
-// 	Serial.print("   ");
-// 	Serial.print("res= ");
-// 	Serial.print(resolution);
-// 	Serial.print("   ");
-// 	Serial.print("gain= ");
-// 	Serial.print(gain);
-// 	Serial.print("   ");
-//	cli();
+
   Wire.beginTransmission(address);
   Wire.write(conf);
   Wire.endTransmission();
-//	sei();
+}
+
+int MCP342x::getADCTime(void){
+	switch(resolution){
+	case 3:
+		return 1000/3.75+1;
+		break;
+	case 2:
+		return 1000/15+1;
+		break;
+	case 1:
+		return 1000/60+1;
+		break;
+	case 0:
+		return 1000/240+1;
+		break;
+	}
+}
+
+float MCP342x::getData(void){
+	return getData(_adr);
 }
 
 

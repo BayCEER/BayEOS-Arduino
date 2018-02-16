@@ -6,20 +6,10 @@
 *
 *****************************************************/
 
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <BayEOS.h>
-#include <Sleep.h>
-#include <SoftwareSerial.h>
-#include <RTClib.h>
-#include <Base64.h>
-#include <SdFat.h>
-#include <BayTCP.h>
 #include <BayTCPSim900.h>
 
-#define GPRS_POWER_PIN 8
+#define GPRS_POWER_PIN 7
 
 BayGPRS client=BayGPRS(Serial);
 BayEOSBufferEEPROM myBuffer;

@@ -1,7 +1,4 @@
-#include <BayEOS.h>
 #include <BayDebug.h>
-
-
 
 BayDebug client=BayDebug(Serial);
 

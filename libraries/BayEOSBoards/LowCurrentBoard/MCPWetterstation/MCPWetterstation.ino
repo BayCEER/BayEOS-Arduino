@@ -46,19 +46,8 @@
 #define TICKS_PER_SECOND 16
 #endif
 
-
-
-#include <OneWire.h>
-#include <EEPROM.h>
-#include <DS18B20.h>
-#include <BayEOSBuffer.h>
-#include <Wire.h>
-#include <RTClib.h>
-#include <I2C_eeprom.h>
 #include <BayEOSBufferEEPROM.h>
-#include <Sleep.h>
 #include <SHT2xSleep.h>
-#include <BayEOS.h>
 #include <MCP342x.h>
 
 #if WITH_MLX
@@ -79,8 +68,6 @@ void switch_off_mlx(void) {
 #include <BayDebug.h>
 BayDebug client(Serial);
 #else
-#include <SPI.h>
-#include <RF24.h>
 #include <BayRF24.h>
 BayRF24 client = BayRF24(9, 10);
 #endif

@@ -1,16 +1,5 @@
-#include <BayEOS.h>
-#include <SdFat.h>
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferSDFat.h>
-#include <Ethernet.h>
-#include <SPI.h>
-#include <SdFat.h>
-#include <Base64.h>
-#include <BayTCP.h>
 #include <BayTCPEth.h>
-
-
-
 
 byte mac[6];
 byte ip[4];

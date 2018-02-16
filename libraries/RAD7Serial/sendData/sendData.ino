@@ -1,6 +1,4 @@
-#include <BayEOS.h>
 #include <BayTCPSim900.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
 #include <Sleep.h>
 #include <RAD7Serial.h>

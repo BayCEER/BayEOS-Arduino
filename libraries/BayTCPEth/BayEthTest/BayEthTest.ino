@@ -1,6 +1,3 @@
-#include <Ethernet.h>
-#include <BayEOS.h>
-#include <BayTCP.h>
 #include <BayTCPEth.h>
 
 

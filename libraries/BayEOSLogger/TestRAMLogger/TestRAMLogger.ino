@@ -5,14 +5,10 @@
  */
 
 
-#include <BayEOS.h>
 #include <BaySerial.h>
-#include <BayEOSBuffer.h>
 #include <BayEOSBufferRAM.h>
 #include <BayEOSLogger.h>
-#include <Wire.h>
 #include <RTClib.h>
-#include <EEPROM.h>
 
 
 #define BAUD_RATE 38400
