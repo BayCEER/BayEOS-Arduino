@@ -2,17 +2,27 @@
 #include <Sleep.h>
 #include <math.h>
 
-
-float NTC_Sensor::getTemp(void){
-	float log_r = log(readResistance() / ntc_type * 10);
+float NTC_Sensor::R2T(float r){
+	float log_r = log(r / ntc_type * 10);
 	return 440.61073 - 75.69303 * log_r + 4.20199 * log_r * log_r
 			- 0.09586 * log_r * log_r * log_r;
-
 }
 
 
-NTC_ADC::NTC_ADC(uint8_t pp,uint8_t ap,float pr,float nt){
+NTC_Sensor::NTC_Sensor(float nt){
 	ntc_type=nt;
+}
+
+float NTC_Sensor::readResistance(void){
+	return ntc_type;
+}
+
+float NTC_Sensor::getTemp(void){
+	return R2T(readResistance());
+}
+
+
+NTC_ADC::NTC_ADC(uint8_t pp,uint8_t ap,float pr,float nt):NTC_Sensor(nt){
 	power_pin=pp;
 	adc_pin=ap;
 	pre_resistor=pr;
@@ -28,11 +38,10 @@ float NTC_ADC::readResistance(void){
 	return pre_resistor * adc / (1023-adc);
 
 }
-NTC_MCP342x::NTC_MCP342x(MCP342x &m, uint8_t pp, uint8_t ch_r, uint8_t ch_n, float pr,float nt){
+NTC_MCP342x::NTC_MCP342x(MCP342x &m, uint8_t pp, uint8_t ch_r, uint8_t ch_n, float pr,float nt):NTC_Sensor(nt){
 	 power_pin=pp;
 	 mcp=&m;
 	 pre_resistor=pr;
-	 ntc_type=nt;
 	 adc_ch_r=ch_r;
 	 adc_ch_ntc=ch_n;
 }
@@ -62,11 +71,10 @@ float NTC_MCP342x::readResistance(void){
 	return mcp->getData(0)/U*pre_resistor;
 }
 
-NTC_HX711::NTC_HX711(HX711Array &hx, uint8_t pp, float pr, float nt, uint8_t n){
+NTC_HX711::NTC_HX711(HX711Array &hx, uint8_t pp, float pr, float nt, uint8_t n):NTC_Sensor(nt){
 	 power_pin=pp;
 	 hx711=&hx;
 	 pre_resistor=pr;
-	 ntc_type=nt;
 	 number=n;
 }
 

@@ -4,6 +4,8 @@
  * expects the following global variables to be defined:
  * radio, client
  */
+#include <Sleep.h>
+
 uint16_t rx_ok, rx1_count, rx1_error;
 
 #ifdef NRF24_2CHANNEL
@@ -51,7 +53,7 @@ ISR(WDT_vect) {
 		wdcount = 0;
 		wdreset = 0;
 	}
-	if (wdcount > 960) { //no action for more than 240 sec.
+	if (wdcount > 5*60*4) { //no action for more than 5 minutes.
 #if SKETCH_DEBUG
 		Serial.println("RESET");
 		delay(100);
@@ -332,9 +334,10 @@ void checkSend(void) {
 		tx_error = 0;
 #if (BOARD == GBoardPro)
 		unsigned long current_time=client.now().get();
-		if(current_time>31536000L){
-			myRTC.adjust(current_time);
-		}
+		unsigned long max_dev=7200;
+		if(myBuffer.available()) max_dev=10;
+		if( current_time-myRTC.now().get()<max_dev || myRTC.now().get()-current_time<max_dev )
+				myRTC.adjust(current_time);
 #endif
 	}
 	tx_blink = tx_res + 1;

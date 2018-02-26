@@ -22,17 +22,8 @@
 #define POWER_AD_PIN A3
 #define POWER_DIVIDER (470.0+100.0)/100.0
 
-#include <EEPROM.h>
-#include <BayEOS.h>
-#include <SPI.h>
-#include <Base64.h>
-#include <BayTCP.h>
 #include <BayTCPSim900.h>
-#include <BayEOSBuffer.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
-#include <Sleep.h>
-#include <SoftwareSerial.h>
 
 #if (BOARD == GBoardPro)
 #include <iBoardRF24.h>

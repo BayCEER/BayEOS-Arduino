@@ -10,6 +10,7 @@
 #ifndef RTClib_H
 #define RTClib_H
 
+#include <Wire.h>
 #include <BayEOSBuffer.h>
 
 

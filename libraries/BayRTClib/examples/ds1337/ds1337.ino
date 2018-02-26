@@ -1,5 +1,3 @@
-#include <Wire.h>
-#include <BayEOSBuffer.h>
 #include <RTClib.h>
 
 DS1337 RTC;

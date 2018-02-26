@@ -6,7 +6,6 @@
 // A library for handling real-time clocks, dates, etc.
 // 2010-02-04 <jc@wippler.nl> http://opensource.org/licenses/mit-license.php
 
-#include <Wire.h>
 #include <avr/pgmspace.h>
 #include "RTClib.h"
 #include <Arduino.h>

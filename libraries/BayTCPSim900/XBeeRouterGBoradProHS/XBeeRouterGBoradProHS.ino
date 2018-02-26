@@ -28,26 +28,13 @@ AND DATA LOSS
 
 #define WITH_RF24_RX 0
 #define WITH_BAYEOS_LOGGER 0
-#include <EEPROM.h>
-#include <XBee.h>
 #include <BayXBee.h>
-#include <BayEOS.h>
-#include <BaySerial.h>
-#include <SPI.h>
-#include <Base64.h>
-#include <BayTCP.h>
 #include <BayTCPSim900.h>
 #include <BayDebug.h>
-#include <BayEOSBuffer.h>
-#include <SdFat.h>
 #include <BayEOSBufferSDFat.h>
 #include <Sleep.h>
-#include <SoftwareSerial.h>
-#include <Arduino.h>
 
 //UTFT-Output
-#include <UTFT.h>
-#include <TFTStream.h>
 #include <BayDebugTFT.h>
 
 

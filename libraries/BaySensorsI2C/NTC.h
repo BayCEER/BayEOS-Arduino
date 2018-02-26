@@ -9,9 +9,12 @@ class NTC_Sensor {
 protected:
 	float ntc_type; //e.g. 3.0 for 3k or 5.0 for 5k....
 public:
-	virtual float readResistance(void)=0;
-	float getTemp(void);
+	NTC_Sensor(float nt);
+	float R2T(float t);
+	float readResistance(void);
+	virtual float getTemp(void);
 };
+
 
 //NTC sensor directly connnected to Arduino ADC
 class NTC_ADC: public NTC_Sensor {

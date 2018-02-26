@@ -2,8 +2,6 @@
 You need to have a 32kHz quarz connected!!!!!
 
 */
-#include <Wire.h>
-#include <BayEOSBuffer.h>
 #include <RTClib.h>
 
 

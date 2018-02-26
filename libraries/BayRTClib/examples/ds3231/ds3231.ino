@@ -1,6 +1,4 @@
 
-#include <Wire.h>
-#include <BayEOSBuffer.h>
 #include <RTClib.h>
 
 DS3231 RTC;
