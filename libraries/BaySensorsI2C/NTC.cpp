@@ -9,16 +9,16 @@ float NTC_Sensor::R2T(float r){
 }
 
 
+float NTC_Sensor::getTemp(void){
+	return R2T(readResistance());
+}
+
 NTC_Sensor::NTC_Sensor(float nt){
 	ntc_type=nt;
 }
 
-float NTC_Sensor::readResistance(void){
+float NTC_Calc::readResistance(void){
 	return ntc_type;
-}
-
-float NTC_Sensor::getTemp(void){
-	return R2T(readResistance());
 }
 
 
@@ -92,5 +92,11 @@ float NTC_HX711::readResistance(void){
 	digitalWrite(power_pin,LOW);
 	pinMode(power_pin,INPUT);
 	return adc/(1-adc)*pre_resistor;
+}
+
+float NTC_HX711::getTemp(uint8_t nr){
+	float adc=hx711->get_single_readings()[nr];
+	adc=adc/32/256/256/256;
+	return R2T(adc/(1-adc)*pre_resistor);
 }
 

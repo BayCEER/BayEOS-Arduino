@@ -36,7 +36,7 @@ void setup(void) {
   Serial.print("Starting...");
   delay(10);
 #if WITH_FLASH
-  myBuffer.init(flash, 10); //This will restore old pointers
+  myBuffer.init(flash); //This will restore old pointers
   //only stores Pointer positions each 10th write!
   //myBuffer.reset(); //This will set all pointers to zero
   client.setBuffer(myBuffer);

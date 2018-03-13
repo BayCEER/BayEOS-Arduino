@@ -115,16 +115,16 @@ long HX711Array::read_average(uint8_t times,uint8_t timeout) {
 
 uint8_t HX711Array::read_average(long* res,uint8_t times,uint8_t timeout) {
 	uint8_t i,j;
-	for(i=0;i<4;i++){
+	for(i=0;i<_length;i++){
 		res[i]=0;
 	}
 	for(j=0;j<times;j++){
 		if(read(timeout)==0xf0000000) return 0;
-		for(i=0;i<4;i++){
+		for(i=0;i<_length;i++){
 			res[i]+=_values[i];
 		}
 	}
-	for(i=0;i<4;i++){
+	for(i=0;i<_length;i++){
 		res[i]/=times;
 	}
 	return 1;
@@ -139,15 +139,15 @@ void HX711Array::power_up() {
 	digitalWrite(_pd_sck, LOW);
 }
 
-HX711_4PointCal::HX711_4PointCal(int o){
+Scale4PointCal::Scale4PointCal(int o){
 	eeprom_offset=o;
 }
-void HX711_4PointCal::setConfPoint(float t,uint8_t t_index,long adc, uint8_t adc_index){
+void Scale4PointCal::setConfPoint(float t,uint8_t t_index,long adc, uint8_t adc_index){
 	t_conf[t_index]=t;
 	adc_conf[t_index+adc_index*2]=adc;
 }
 
-void HX711_4PointCal::setConf(float w,float* t, long* a){
+void Scale4PointCal::setConf(float w,float* t, long* a){
 	scale_weight=w;
 	for(i=0;i<2;i++){
 		t_conf[i]=t[i];
@@ -156,11 +156,15 @@ void HX711_4PointCal::setConf(float w,float* t, long* a){
 		adc_conf[i]=a[i];
 	}
 }
-void HX711_4PointCal::setScaleWeight(float w){
+void Scale4PointCal::setScaleWeight(float w){
 	scale_weight=w;
 }
 
-void HX711_4PointCal::saveConf(void){
+void Scale4PointCal::setTare(long adc,float t){
+	tare_weight=getWeight(adc,t);
+}
+
+void Scale4PointCal::saveConf(void){
 	p = (uint8_t*) & scale_weight;
 	for (i = 0; i < 4; i++) {
 		EEPROM.update(eeprom_offset + i,*p);
@@ -178,7 +182,7 @@ void HX711_4PointCal::saveConf(void){
 	}
 
 }
-void HX711_4PointCal::readConf(void){
+void Scale4PointCal::readConf(void){
 	p = (uint8_t*) & scale_weight;
 	for (i = 0; i < 4; i++) {
 		*p = EEPROM.read(eeprom_offset + i);
@@ -195,7 +199,7 @@ void HX711_4PointCal::readConf(void){
 		p++;
 	}
 }
-void HX711_4PointCal::printConf(void){
+void Scale4PointCal::printConf(void){
 	Serial.println("Temp\tZero\tWeight");
 	for(i=0;i<2;i++){
 		Serial.print(t_conf[i]);
@@ -207,30 +211,33 @@ void HX711_4PointCal::printConf(void){
 	Serial.print("Slope Weight: ");
 	Serial.println(scale_weight);
 }
-void HX711_4PointCal::readADC(uint8_t c){
-	power_up();
-	last_adc=read_average(c);
-	power_down();
-}
-long HX711_4PointCal::getRaw(void){
-	return last_adc;
-}
-float HX711_4PointCal::getWeight(float t){
+
+float Scale4PointCal::getWeight(long adc, float t){
 	long zero=adc_conf[0]+
 			(adc_conf[1]-adc_conf[0])/
 			(t_conf[1]-t_conf[0])*(t-t_conf[0]);
 	long slope=adc_conf[2]+
 			(adc_conf[3]-adc_conf[2])/
 			(t_conf[1]-t_conf[0])*(t-t_conf[0])-zero;
-	return scale_weight*(last_adc-zero)/slope-tare_weight;
+	return scale_weight*(adc-zero)/slope-tare_weight;
 
 
 }
+
+long HX711_4PointCal::getRaw(void){
+	return last_adc;
+}
+
 
 void HX711_4PointCal::tare(float t){
 	readADC();
-	tare_weight=getWeight(t);
+	setTare(last_adc,t);
 }
 
+void HX711_4PointCal::readADC(uint8_t c){
+	power_up();
+	last_adc=read_average(c);
+	power_down();
+}
 
 

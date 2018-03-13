@@ -50,29 +50,35 @@ public:
 	void power_up();
 };
 
-
-class HX711_4PointCal: public HX711Array {
+class Scale4PointCal {
 private:
 	int eeprom_offset;
 	float t_conf[2];
 	long adc_conf[4];
-	long last_adc;
 	float scale_weight, tare_weight;
 	uint8_t i;
 	uint8_t* p;
 public:
-	HX711_4PointCal(int o = 0);
+	Scale4PointCal(int o = 0);
 	void setConfPoint(float t, uint8_t t_index, long adc, uint8_t adc_index);
 	void setConf(float w, float* t, long* a);
 	void setScaleWeight(float w);
+	void setTare(long adc,float t);
 	void saveConf(void);
 	void readConf(void);
 	void printConf(void);
 
-	void readADC(uint8_t c = 20);
+	float getWeight(long adc,float t);
+};
+
+
+class HX711_4PointCal: public HX711Array, public Scale4PointCal{
+private:
+	long last_adc;
+public:
 	long getRaw(void);
-	float getWeight(float t);
 	void tare(float t);
+	void readADC(uint8_t c = 20);
 };
 
 #endif /* HX711Array_h */

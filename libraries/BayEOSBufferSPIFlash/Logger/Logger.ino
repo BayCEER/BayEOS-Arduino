@@ -22,14 +22,14 @@ ISR(TIMER2_OVF_vect){
 }
 
 BaySerial client(Serial); 
-SPIFlash flash(10);
+SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
 
 
 //Add your sensor measurements here!
 void measure(){
-   client.startDataFrame(BayEOS_Int16le);
+   client.startDataFrame();
    client.addChannelValue(millis());
 }
 
@@ -39,7 +39,7 @@ void setup() {
   Sleep.setupTimer2(); //init to 1 sec!!
   pinMode(CONNECTED_PIN, INPUT);
   digitalWrite(CONNECTED_PIN,HIGH);
-  myBuffer.init(flash,10);
+  myBuffer.init(flash);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.setBuffer(myBuffer); 
   //register all in BayEOSLogger

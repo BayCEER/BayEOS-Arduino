@@ -8,8 +8,13 @@
  * [4 byte Time][length][length byte data]...
  * time is either in milliseconds or in seconds - depending on whether a RTC is set!
  *
+ * There are three pointers
+ * 1. write pointer
+ * 2. read pointer
+ * 3. end pointer
  *
- *
+ * Wirte pointer is the position, where next write will start. Read pointer marks the next read position.
+ * End pointer marks the position of the oldest frame.
  *
  */
 
@@ -110,6 +115,10 @@ public:
 	 * reset buffer to zero
 	 */
 	void reset(void);
+	/**
+	 * skips unsent frames and moves read pointer to write pointer
+	 */
+	void skip(void);
 	/**
 	 * Add BayEOS frame packet to buffer
 	 * returns number of bytes written

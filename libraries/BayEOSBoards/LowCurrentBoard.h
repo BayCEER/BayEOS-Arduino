@@ -23,6 +23,10 @@
 #define SAMPLING_INT 16
 #endif
 
+#ifndef WITHRAINGAUGE
+#define WITHRAINGAUGE 0
+#endif
+
 #ifndef LED_PIN
 #define LED_PIN 5
 #endif

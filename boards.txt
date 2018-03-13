@@ -31,16 +31,31 @@ bayeos_atmega328bb.menu.cpu.mega328p_8mhz=ATMega328P (8 MHz, 1.8V BOD)
 bayeos_atmega328bb.menu.cpu.mega328p_8mhz2=ATMega328P (8 MHz, 2.7V BOD)
 bayeos_atmega328bb.menu.cpu.mega328p_8mhz2.bootloader.extended_fuses=0x05
 
+## 8MHz - ATMega328 1.8V BOD
+bayeos_atmega328bb.menu.cpu.mega328_8mhz=ATMega328 (8 MHz, 1.8V BOD)
+bayeos_atmega328bb.menu.cpu.mega328_8mhz.build.mcu=atmega328
+
 ## 8MHz - ATMega328 2.7V BOD
 bayeos_atmega328bb.menu.cpu.mega328_8mhz2=ATMega328 (8 MHz, 2.7V BOD)
 bayeos_atmega328bb.menu.cpu.mega328_8mhz2.bootloader.extended_fuses=0x05
-bayeos_atmega328bb.menu.cpu.mega328p_8mhz2.build.mcu=atmega328
+bayeos_atmega328bb.menu.cpu.mega328_8mhz2.build.mcu=atmega328
+
+
+## 8MHz - ATMega168P 
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz=ATMega168p (8 MHz, 1.8V BOD)
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.build.mcu=atmega168p
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.upload.maximum_size=14336
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.upload.maximum_data_size=1024
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.file=atmega/ATmegaBOOT_168_atmega168_bayeos_8MHz_RTC.hex
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.high_fuses=0xDE
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.extended_fuses=0xf8
 
 ## 8MHz - ATMega168
-bayeos_atmega328bb.menu.cpu.mega168_8mhz=ATMega168 (8 MHz)
-bayeos_atmega328bb.menu.cpu.mega168_8mhz.build.mcu=atmega168
-bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_size=14336
-bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_data_size=1024
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz=ATMega168 (8 MHz)
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz.build.mcu=atmega168
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_size=14336
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_data_size=1024
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz.bootloader.file=atmega/ATmegaBOOT_168_atmega168_bayeos_8MHz_RTC.hex
 
 ## ATMega2560
 ##############################################################

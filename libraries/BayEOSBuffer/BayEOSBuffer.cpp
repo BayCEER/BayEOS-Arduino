@@ -142,6 +142,10 @@ void BayEOSBuffer::reset(void) {
 	resetStorage();
 }
 
+void BayEOSBuffer::skip(void) {
+	_read_pos=_write_pos;
+}
+
 uint8_t BayEOSBuffer::initNextPacket(void) {
 	return initPacket(_read_pos);
 }

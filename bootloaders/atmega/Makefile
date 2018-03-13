@@ -67,6 +67,15 @@ OBJDUMP        = avr-objdump
 all:
 
 
+
+atmega168_bayeos: TARGET = atmega328_bayeos_8MHz
+atmega168_bayeos: MCU_TARGET = atmega168p
+atmega168_bayeos: CFLAGS += '-DMAX_TIME_COUNT=F_CPU>>4' '-DNUM_LED_FLASHES=1' -DBAUD_RATE=57600 -DDOUBLE_SPEED -DOSC_CAL=$(OSC_CAL) -Os
+atmega168_bayeos: AVR_FREQ = 8000000L
+atmega168_bayeos: LDSECTION  = --section-start=.text=0x3800
+atmega168_bayeos: $(PROGRAM)_atmega168_bayeos_8MHz_RTC.hex
+
+
 atmega328_bayeos: TARGET = atmega328_bayeos_8MHz
 atmega328_bayeos: MCU_TARGET = atmega328p
 atmega328_bayeos: CFLAGS += '-DMAX_TIME_COUNT=F_CPU>>4' '-DNUM_LED_FLASHES=1' -DBAUD_RATE=57600 -DDOUBLE_SPEED -DOSC_CAL=$(OSC_CAL) -Os

@@ -4,6 +4,8 @@
 * GPRS-MODEM will get switched off totally by MOSFET
 * Sending occurs only once an hour
 *
+* This is for the old version with EEPROM storage
+*
 *****************************************************/
 
 #include <BayEOSBufferEEPROM.h>

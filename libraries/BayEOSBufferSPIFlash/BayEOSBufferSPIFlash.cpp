@@ -14,11 +14,11 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 	p = (uint8_t*) &_temp;
 	_flush_offset = 0;
 	_flash->readByteArray(_max_length + 16 * _flush_offset, p, 4);
-	while (_temp == 0x0f0f0f0fL && _flush_offset < 255){
+	while (_temp == 0x0f0f0f0fL && _flush_offset < 255) {
 		_flush_offset++;
 		_flash->readByteArray(_max_length + 16 * _flush_offset, p, 4);
 #if SERIAL_DEBUG
-			Serial.println("Restoring pointers...");
+		Serial.println("Restoring pointers...");
 #endif
 	}
 
@@ -34,26 +34,61 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 		if (_temp < _max_length)
 			_end = _temp;
 
-		//We have to erase the current write pointer sector as we do not know whether it has be written something after the pointer
-		checkEraseSector(_write_pos, _write_pos + 4096);
-		//copy current sector from start to write pointer to following sector
-		_pos = _write_pos & 0xfffff000L; //current sector
-		_temp = ((_pos + 4096)>=_max_length?0:_pos+4096); //target sector
-		while (_pos < _write_pos) {
-			_flash->writeByte(_temp, _flash->readByte(_pos),false);
-			_pos++;
-			_temp++;
+		//Move ahead until we find 0xffffffff
+		while (true) {
+			_flash->readByteArray(_write_pos, p, 4);
+			uint8_t l = _flash->readByte(_write_pos + 4);
+			uint8_t move_read_pos = 0;
+
+			if (_temp == 0xffffffff)
+				break;
+			while (!freeSpace(l + 5)) {
+				//Write Pointer überholt END Pointer
+				if (_end == _read_pos) {
+					_framesDiscarded = 1;
+					move_read_pos = 1;
+#if SERIAL_DEBUG
+					Serial.println("Verwerfe Paket");
+#endif
+				}
+				_end += initPacket(_end) + 5;
+				if (_end >= _max_length)
+					_end -= _max_length;
+				if (move_read_pos)
+					_read_pos = _end;
+			}
+
+			_write_pos += l + 5;
+#if SERIAL_DEBUG
+			Serial.print(_write_pos);
+			Serial.print("\t");
+			Serial.println(_end);
+			Serial.flush();
+#endif
 		}
-		_flash->eraseSector(_write_pos);
-		//copy back
-		_pos = _write_pos & 0xfffff000L;
-		_temp = ((_pos + 4096)>=_max_length?0:_pos+4096);
-		while (_pos < _write_pos) {
-			_flash->writeByte(_pos, _flash->readByte(_temp),false);
-			_pos++;
-			_temp++;
-		}
-	} else{
+		/* NO LONGER NEEDED!! WE RESTORED THE OLD POINTER SETTING ABOVE!
+		 //We have to erase the current write pointer sector as we do not know
+		 //whether it has be written something after the pointer
+		 checkEraseSector(_write_pos, _write_pos + 4096);
+		 //copy current sector from start to write pointer to following sector
+		 _pos = _write_pos & 0xfffff000L; //current sector
+		 _temp = ((_pos + 4096)>=_max_length?0:_pos+4096); //target sector
+		 while (_pos < _write_pos) {
+		 _flash->writeByte(_temp, _flash->readByte(_pos),false);
+		 _pos++;
+		 _temp++;
+		 }
+		 _flash->eraseSector(_write_pos);
+		 //copy back
+		 _pos = _write_pos & 0xfffff000L;
+		 _temp = ((_pos + 4096)>=_max_length?0:_pos+4096);
+		 while (_pos < _write_pos) {
+		 _flash->writeByte(_pos, _flash->readByte(_temp),false);
+		 _pos++;
+		 _temp++;
+		 }
+		 */
+	} else {
 		reset();
 	}
 
@@ -67,7 +102,8 @@ void BayEOSBufferSPIFlash::resetStorage(void) {
 void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 		unsigned long end_pos) {
 	if ((start_pos >> 12) != (end_pos >> 12)) {
-		if(end_pos>=_max_length) end_pos=0;
+		if (end_pos >= _max_length)
+			end_pos = 0;
 		while (_read_pos >= end_pos && _read_pos < (end_pos + 4096)) {
 			initNextPacket();
 			next();
@@ -88,7 +124,7 @@ void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
 	if (_pos < _max_length) {
 		checkEraseSector(_pos, _pos + 1);
-		_flash->writeByte(_pos, b,false);
+		_flash->writeByte(_pos, b, false);
 		//_pos++;
 		return 1;
 
@@ -98,7 +134,7 @@ uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
 	if (_pos + length <= _max_length) {
 		checkEraseSector(_pos, _pos + length);
-		_flash->writeByteArray(_pos, b, length,false);
+		_flash->writeByteArray(_pos, b, length, false);
 		//_pos += length;
 		return length;
 	}
@@ -132,12 +168,11 @@ void BayEOSBufferSPIFlash::flush(void) {
 	_flush_count++;
 	if (_flush_count < _flush_skip)
 		return;
-
 	//save the poiters to EEPROM
 	if (_flush_offset == 255) {
 		_flush_offset = 0;
 	}
-	if(_flush_offset == 0 )
+	if (_flush_offset == 0)
 		_flash->eraseSector(_max_length);
 #if SERIAL_DEBUG
 	Serial.print("Flush");
@@ -145,14 +180,14 @@ void BayEOSBufferSPIFlash::flush(void) {
 	_temp = 0x0f0f0f0fL;
 	uint8_t *p;
 	p = (uint8_t*) &_temp;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset, p, 4,false);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset, p, 4, false);
 
 	p = (uint8_t*) &_read_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 4, p, 4,false);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 4, p, 4, false);
 	p = (uint8_t*) &_write_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 8, p, 4,false);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 8, p, 4, false);
 	p = (uint8_t*) &_end;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 12, p, 4,false);
+	_flash->writeByteArray(_max_length + 16 * _flush_offset + 12, p, 4, false);
 	_flush_offset++;
 	_flush_count = 0;
 #if SERIAL_DEBUG

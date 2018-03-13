@@ -19,7 +19,7 @@ public:
 	 * flush_skip > 0 will ignore flush commands until the counter reaches flush_skip
 	 *
 	 */
-	void init(SPIFlash& flash,uint8_t flush_skip=0);
+	void init(SPIFlash& flash,uint8_t flush_skip=20);
 
 
 

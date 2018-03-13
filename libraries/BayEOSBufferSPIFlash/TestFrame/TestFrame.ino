@@ -11,7 +11,7 @@
 
 
 BayDebug client = BayDebug(Serial);
-SPIFlash flash(10);
+SPIFlash flash(8);
 BayEOSBufferSPIFlash myBuffer;
 unsigned long last_data = 10000;
 unsigned long last_buffered_data;
@@ -21,14 +21,15 @@ void setup(void) {
   client.begin(9600, 1);
   Serial.print("Starting...");
   delay(10);
-  start = millis();
-  myBuffer.init(flash, 10); //This will restore old pointers
-  //only stores Pointer positions each 10th write!
+  start = micros();
+  myBuffer.init(flash); //This will restore old pointers
   //myBuffer.reset(); //This will set all pointers to zero
+  myBuffer.skip(); //This will move read pointer to write pointer
+  start=micros()-start;
   client.setBuffer(myBuffer);
   Serial.print(" (");
-  Serial.print(millis() - start);
-  Serial.println("ms)");
+  Serial.print(start);
+  Serial.println("µs)");
 
 }
 
@@ -36,7 +37,6 @@ void loop(void) {
 
   //Resend buffered frames
   //one every second
-  //sending to frequently my make xbee operationable (channel overload)
   if ((millis() - last_buffered_data) > 500) {
     client.sendFromBuffer();
     last_buffered_data = millis();
@@ -62,12 +62,13 @@ void loop(void) {
     Serial.print("Writing DF from ");
     Serial.print(myBuffer.writePos());
     Serial.print(" to ");
-    start = millis();
+    start = micros();
     client.writeToBuffer();
+    start=micros()-start;
     Serial.print(myBuffer.writePos());
     Serial.print(" (");
-    Serial.print(millis() - start);
-    Serial.println("ms)");
+    Serial.print(start);
+    Serial.println("µs)");
 
     //Construct Message
     client.startFrame(BayEOS_Message);
@@ -76,12 +77,13 @@ void loop(void) {
     Serial.print("Writing Message from ");
     Serial.print(myBuffer.writePos());
     Serial.print(" to ");
-    start = millis();
+    start = micros();
     client.writeToBuffer();
+    start=micros()-start;
     Serial.print(myBuffer.writePos());
     Serial.print(" (");
-    Serial.print(millis() - start);
-    Serial.println("ms)");
+    Serial.print(start);
+    Serial.println("µs)");
   }
 
 }

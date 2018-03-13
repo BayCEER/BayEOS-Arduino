@@ -11,8 +11,13 @@ protected:
 public:
 	NTC_Sensor(float nt);
 	float R2T(float t);
+	virtual float readResistance(void)=0;
+	float getTemp(void);
+};
+
+class NTC_Calc: public NTC_Sensor {
+public:
 	float readResistance(void);
-	virtual float getTemp(void);
 };
 
 
@@ -58,6 +63,10 @@ private:
 public:
 	NTC_HX711(HX711Array &hx, uint8_t pp, float pr, float nt, uint8_t n=0 );
 	float readResistance(void);
+	//Note: getTemp(nr) does not run a ADC conversion
+	//call readResistance before!
+	float getTemp(uint8_t nr);
+
 };
 
 

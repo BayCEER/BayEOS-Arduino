@@ -1,10 +1,11 @@
-/*Reads the value from an AD converter MCP342x and displays it in the serial monitor
-*
-*Created at the University Bayreuth
-/Bayceer 
-*
-*
-*/
+/******************************
+
+   Reads the value from an AD converter MCP342x and displays 
+   it in the serial monitor
+
+   Created at the University Bayreuth/Bayceer
+   
+*******************************/
 
 
 
@@ -26,34 +27,34 @@ void setup()
   Serial.begin(9600);
   Serial.print("General Call Reset... ");
   mcp342x.reset();
-  mcp342x.storeConf(rate,gain);
+  mcp342x.storeConf(rate, gain);
   Serial.println("fertig");
-  
+
 }
 
 
 
 void loop()
 {
- 
-// Serial.println("**********************************************");
-  for(uint8_t ch=0; ch<4;ch++){
-    if(ch)
+
+  // Serial.println("**********************************************");
+  for (uint8_t ch = 0; ch < 4; ch++) {
+    if (ch)
       Serial.print("\t");
     Serial.print("C ");
     Serial.print(ch);
     mcp342x.runADC(ch);
     delay(mcp342x.getADCTime());
     span = mcp342x.getData();
-  
+
     //  convert float to char[]
     dtostrf(span, 10, 6, str_buf);
-  
+
     Serial.print(str_buf);
   }
   Serial.println();
 
-   
+
   //  do it every n seconds
   delay(2000);
 }
