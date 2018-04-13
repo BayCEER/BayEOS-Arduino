@@ -62,6 +62,10 @@ uint8_t startup = 10;
 float batLCB;
 RTC_Timer2 myRTC;
 
+#ifdef RTC_SECOND_CORRECT
+volatile long rtc_seconds_correct;
+#endif
+
 /*
  * ISR for timer2
  * increments RTC-Time
@@ -92,8 +96,27 @@ ISR(TIMER2_OVF_vect) {
 	}
 
 	if((ticks % TICKS_PER_SECOND)==0) {
-		myRTC._seconds += 1; //RTC_Timer2.get() and adjust() are interrupt save now!
+		myRTC._seconds ++; //RTC_Timer2.get() and adjust() are interrupt save now!
 		seconds++;
+#ifdef RTC_SECOND_CORRECT
+
+#if RTC_SECOND_CORRECT < 0
+		rtc_seconds_correct--;
+		if(rtc_seconds_correct<=RTC_SECOND_CORRECT){
+			rtc_seconds_correct=0;
+			myRTC._seconds --;
+			seconds--;
+		}
+#else
+		rtc_seconds_correct++;
+		if(rtc_seconds_correct>=RTC_SECOND_CORRECT){
+			rtc_seconds_correct=0;
+			myRTC._seconds ++;
+			seconds++;
+		}
+
+#endif
+#endif
 		uint16_t tick_mod=myRTC._seconds%SAMPLING_INT;
 		if(tick_mod<ACTION_COUNT) {
 			action|=(1<<tick_mod);

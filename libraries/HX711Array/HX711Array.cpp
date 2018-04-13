@@ -161,6 +161,7 @@ void Scale4PointCal::setScaleWeight(float w){
 }
 
 void Scale4PointCal::setTare(long adc,float t){
+	tare_weight=0;
 	tare_weight=getWeight(adc,t);
 }
 

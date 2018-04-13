@@ -50,6 +50,7 @@ public:
 	uint8_t init(void);
 
 
+	void powerDown(long t);
 
 	virtual void i_begin(long baud)=0;
 

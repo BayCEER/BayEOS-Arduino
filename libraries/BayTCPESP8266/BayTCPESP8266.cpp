@@ -1,10 +1,40 @@
+/*
+AT+CIPMUX=0
+
+AT+CIPSTART="TCP","132.180.112.55",80
+
+AT+CIPSENDEX=2048
+
+
+POST /gateway/frame/saveFlat HTTP/1.1
+Authorization: Basic aW1wb3J0OmltcG9ydA==
+Host: 132.180.112.55
+User-Agent: BayTCP
+Content-Type: application/x-www-form-urlencoded
+Connection: close
+Content-Length: 63
+
+sender=TestWLAN&password=import&bayeosframes[]=AQEAAAAAQA%3D%3D
+
++++
+
+*/
+
 #include "BayTCPESP8266.h"
+void BayESP8266Interface::powerDown(long t){
+	printlnP("AT+SLEEP=2");
+	wait_forOK(200);
+	printP("AT+GSLP=");
+	println(t);
+	wait_forOK(200);
+
+}
+
 
 
 uint8_t BayESP8266Interface::init(){
 	i_begin(_baud);
-	printlnP("AT");
-	delay(100);
+	uint8_t res;
 	if(_resetPin>-1){
 		pinMode(_resetPin,OUTPUT);
 		digitalWrite(_resetPin,LOW);
@@ -13,15 +43,15 @@ uint8_t BayESP8266Interface::init(){
 	} else {
 		printlnP("AT+RST");
 	}
-	wait_for("ready",3000);
-
-	printP("AT+CIOBAUD=");
-	println(_baud);
-	wait_forOK(200);
+	wait_for("ready",30000);
 
 	printlnP("ATE0"); //Command echo off
-	if(! wait_forOK(200)){
+	res=wait_forOK(2000);
+
+	if(! res){
 		//communication ok!
+		printlnP("AT+CIPSSLSIZE=4096");
+		wait_forOK(200);
 		printlnP("AT+CWMODE=1");
 		wait_forOK(400);
 
@@ -34,17 +64,21 @@ uint8_t BayESP8266Interface::init(){
 		print(_prov_pw);
 		printlnP("\"");
 		if(! wait_forOK(30000)) return 0;
+		else return 3;
 	}
 
-    return 1;
+    return res;
 }
 
 void BayESP8266Interface::flushMTU(void){
+	printP("\\0");
+	printlnP("AT+CIPSENDEX=2048");
+	wait_for(">",200);
 }
 
 void BayESP8266Interface::finishTransmissionMode(void){
-	delay(500);
-	printP("+++");
+//	delay(50);
+	printP("\\0");
 }
 
 uint8_t BayESP8266Interface::connect(void){
@@ -58,25 +92,20 @@ uint8_t BayESP8266Interface::connect(void){
 		//has IP
 		printlnP("AT+CIPMUX=0");
 		wait_forOK(2000);
-		printP("AT+CIPSTART=\"TCP\",\"");
+		printP("AT+CIPSTART=\"");
+		if(atoi(_port)==443) printP("SSL");
+		else printP("TCP");
+		printP("\",\"");
 		print(_server);
 		printP("\",");
 		println(_port);
-		wait_for("Linked",200);
+		if(wait_for("CONNECT",5000)) return 1;
+		wait_forOK(200);
 		uint8_t i;
-		for(i=0;i<10;i++){
-			printlnP("AT+CIPSTATUS");
-			wait_forPGM(PSTR("STATUS:"),1000,1,_rxBuffer);
-			if(_rxBuffer[0]=='3'){
-				break;
-			}
-			delay(500);
-		}
-		if(i==10) return 1;
-		printlnP("AT+CIPMODE=1");
+		printlnP("AT+CIPMODE=0");
 		wait_forOK(200);
 
-		printlnP("AT+CIPSEND");
+		printlnP("AT+CIPSENDEX=2048");
 		if(wait_for(">",200)) return 1;
 		return 0;
 	}
@@ -86,13 +115,9 @@ uint8_t BayESP8266Interface::connect(void){
 }
 
 void BayESP8266Interface::disconnect(void){
-	wait_for("Unlink",1000);
-	printlnP("AT+CIPSTATUS");
-	wait_forPGM(PSTR("STATUS:"),1000,1,_rxBuffer);
-	if(_rxBuffer[0]!='4'){
-		printlnP("AT+CIPCLOSE");
-		wait_forOK(100);
-	}
+//	wait_for("Unlink",1000);
+//		printlnP("AT+CIPCLOSE=5");
+//		wait_forOK(100);
 
 }
 
@@ -107,6 +132,7 @@ uint8_t BayESP8266Interface::sendATE0(void){
 BayESP8266::BayESP8266(HardwareSerial &serial,int8_t resetPin):_serial(serial){
 	_urlencode=1;
 	_resetPin=resetPin;
+	_mtu=1500;
 }
 
 uint8_t BayESP8266::begin(long baud){
@@ -117,6 +143,7 @@ uint8_t BayESP8266::begin(long baud){
 BayESP8266softserial::BayESP8266softserial(uint8_t rxPin, uint8_t txPin,int8_t resetPin):SoftwareSerial(rxPin,txPin){
 	_urlencode=1;
 	_resetPin=resetPin;
+	_mtu=1500;
 }
 
 uint8_t BayESP8266softserial::begin(long baud){
