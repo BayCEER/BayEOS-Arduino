@@ -16,19 +16,21 @@
 
 //We use routed origin frames in this sketch
 //so RF24ADDRESS can stay unchanged for all scales
-//Change W0NAME and W1NAME
+//Change boxname
 //Do not use long names!! RF24 is limited to 32 byte!!!
 //e.g: [DF][long][CF][RO][l][NAME][DF][T][temp][adc][weight][cs]
 //      1    4    1   1   1   3    1   1   4     4    4      2 = 27
-#define W0NAME "W03"
-#define W1NAME "W04"
+const char boxname[]="W0";
 #define RF24CHANNEL 0x37
 #define RF24ADDRESS 0x45c431ae12LL
+
+#define BAT_MULTIPLIER 3.3*200.0/100.0/1023
 
 uint8_t dout[] = {6, 4};
 uint8_t sck = 3;
 long adc[2];
 float temp0, temp1;
+char origin[6];
 
 HX711Array scale;
 NTC_HX711 ntc(scale, A3, 440000, 3.0);
@@ -50,6 +52,7 @@ void isr_int0(void) {
 #include <LowCurrentBoard.h>
 
 void setup(void) {
+  pinMode(POWER_PIN,OUTPUT);
   client.init(RF24ADDRESS, RF24CHANNEL);
   myBuffer.init(flash); //This will restore old pointers
   myBuffer.skip(); //This will skip unsent frames
@@ -63,6 +66,7 @@ void setup(void) {
   cal0.readConf();
   cal1.readConf();
   int0_flag = 0;
+  strcpy(origin,boxname);
   startLCB();
 
 }
@@ -94,15 +98,27 @@ void loop(void) {
 
     scale.power_up();
     scale.read_average(adc);
+    digitalWrite(POWER_PIN,HIGH);
+    origin[strlen(boxname)]=0;
+    client.startDataFrameWithOrigin(BayEOS_WithoutOffsetFloat32le, origin, 1, 1); //with Checksum and routed!
+    client.addChannelValue(millis());
+    client.addChannelValue(BAT_MULTIPLIER*analogRead(A7));
+    client.addChecksum();
+    digitalWrite(POWER_PIN,LOW);
     scale.power_down();
-    client.startDataFrameWithOrigin(BayEOS_WithoutOffsetFloat32le, W0NAME, 1, 1); //with Checksum and routed!
+    sendOrBufferLCB();
+
+    
+    origin[strlen(boxname)]='a';
+    client.startDataFrameWithOrigin(BayEOS_WithoutOffsetFloat32le, origin, 1, 1); //with Checksum and routed!
     client.addChannelValue(temp0);
     client.addChannelValue(adc[0]);
     client.addChannelValue(cal0.getWeight(adc[0], temp0));
     client.addChecksum();
-    sendOrBufferLCB();
-
-    client.startDataFrameWithOrigin(BayEOS_WithoutOffsetFloat32le, W1NAME, 1, 1); //with Checksum and routed!
+    client.sendOrBuffer();
+ 
+    origin[strlen(boxname)]='b';
+    client.startDataFrameWithOrigin(BayEOS_WithoutOffsetFloat32le, origin, 1, 1); //with Checksum and routed!
     client.addChannelValue(temp1);
     client.addChannelValue(adc[1]);
     client.addChannelValue(cal1.getWeight(adc[1], temp1));

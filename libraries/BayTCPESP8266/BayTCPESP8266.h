@@ -50,7 +50,14 @@ public:
 	uint8_t init(void);
 
 
-	void powerDown(long t);
+	/**
+	 * Power down modem for t ms
+	 *
+	 * Modem enters deep sleep - wakeup only works with RST
+	 * powerDown time is limited to 70 min
+	 */
+	void powerDown();
+	void powerUp();
 
 	virtual void i_begin(long baud)=0;
 
@@ -65,7 +72,7 @@ public:
     void finishTransmissionMode(void);
 
 	long _baud;
-    int8_t _resetPin;
+    int8_t _ch_pdPin;
     char _rxBuffer[2];
 
 };
@@ -75,7 +82,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayESP8266(HardwareSerial &serial=Serial,int8_t resetPin=-1);
+	BayESP8266(HardwareSerial &serial=Serial,int8_t ch_pdPin=-1);
 	uint8_t begin(long baud);
 private:
 	HardwareSerial& _serial; //Reference to existing serial object!!
@@ -108,7 +115,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BayESP8266softserial(uint8_t rxPin, uint8_t txPin, int8_t resetPin);
+	BayESP8266softserial(uint8_t rxPin, uint8_t txPin, int8_t ch_pdPin);
 	uint8_t begin(long baud);
 private:
 	int available(void){return SoftwareSerial::available();}

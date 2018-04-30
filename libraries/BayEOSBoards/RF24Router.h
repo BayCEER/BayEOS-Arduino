@@ -44,6 +44,7 @@ volatile uint8_t rx_blink = 0;
 unsigned long last_alive, last_send, last_try;
 uint16_t tx_error;
 uint8_t tx_res;
+uint8_t gprs_sendmode=0;
 
 ISR(WDT_vect) {
 	wdcount++;
@@ -311,14 +312,15 @@ void checkAlive(void) {
 }
 
 void checkSend(void) {
-	if (!myBuffer.available())
+	if (!myBuffer.available()){
 		return;
-	if ((millis() - last_send) < SENDING_INTERVAL
+	}
+	if (!gprs_sendmode && (millis() - last_send) < SENDING_INTERVAL
 			&& myBuffer.available() < MAX_BUFFER_AVAILABLE)
 		return;
-	if (tx_error && (millis() - last_try) < NEXT_TRY_INTERVAL)
+	if (tx_error>1 && (millis() - last_try) < NEXT_TRY_INTERVAL){
 		return;
-
+	}
 #if SKETCH_DEBUG
 	Serial.print("Send: ");
 	Serial.print(millis());
@@ -327,6 +329,7 @@ void checkSend(void) {
 #endif
 	last_send = millis();
 	last_try = millis();
+	gprs_sendmode=1;
 
 	if (tx_res = client.sendMultiFromBuffer(MAX_BUFFER_AVAILABLE)) {
 		tx_error++;
@@ -336,6 +339,8 @@ void checkSend(void) {
 		unsigned long current_time=client.now().get();
 		unsigned long max_dev=7200;
 		if(myBuffer.available()) max_dev=10;
+		else gprs_sendmode=0;
+
 		if( current_time-myRTC.now().get()<max_dev || myRTC.now().get()-current_time<max_dev )
 				myRTC.adjust(current_time);
 #endif
@@ -348,7 +353,7 @@ void checkSend(void) {
 	Serial.print(" ");
 	Serial.println(tx_error);
 #endif
-	if (tx_error % 5 == 4) {
+	if (tx_error % 8 == 7) {
 		client.softSwitch();
 		client.startFrame(BayEOS_Message);
 		client.addToPayload("TX-ERROR SoftSwitch");

@@ -69,8 +69,8 @@ uint8_t BayGPRSInterface::init(uint8_t unlock_only){
 			i++;
 			if(i>2) return 6;
 		}
-		if(_base64buffer[5]=='U') return 3; //SIM: PUK
-		if(_base64buffer[5]=='I'){ //SIM: PIN
+		if(_base64buffer[5]=='U') return 3; //SIM PUK
+		if(_base64buffer[5]=='I'){ //SIM PIN
 			printlnP("AT");
 			wait_forOK(200);
 			printP("AT+CPIN=\"");
@@ -114,6 +114,7 @@ uint8_t BayGPRSInterface::init(uint8_t unlock_only){
 }
 
 void BayGPRSInterface::softSwitch(void){
+	if(!_powerPin) return;
 #if SIM900_DEBUG
 	Serial.println("softSwitch");
 #endif
