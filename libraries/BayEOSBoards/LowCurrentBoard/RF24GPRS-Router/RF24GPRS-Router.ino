@@ -4,7 +4,8 @@
   The board should run with 3.3 V
   GPRS is directly powered from LIPO (3.7-4.2V)
   A mosfet switch will power down GPRS when
-  LIPO voltage drops below a threshold
+  LIPO voltage drops below a threshold (3.7V) and
+  RF24-Moduls are powered down
 
 *****************************************************/
 
@@ -19,8 +20,8 @@
 #endif
 #include <BayTCPSim900.h>
 
-#define NRF24_CHANNEL 0x83
-//#define NRF24_2CHANNEL 0x47
+#define NRF24_CHANNEL 0x13
+#define NRF24_2CHANNEL 0x17
 #define WITH_RF24_CHECKSUM 1
 
 
@@ -47,7 +48,6 @@ BayEOSBufferMultiEEPROM myBuffer;
 #endif
 
 #define SAMPLING_INT 64
-// we will collect 120 measurements before we try to send
 #define BAT_MULTIPLIER 3.3*320/100/1023
 #define ACTION_COUNT 2
 #define LED_PIN 5
@@ -65,6 +65,8 @@ const uint8_t rate = 2; //0-3: 12bit ... 18bit
 const uint8_t gain = 0; //max Voltage: 0,512 Volt
 #endif
 
+uint8_t gprs_status; //1 = 0n, 0 = Off
+
 void setup()
 {
   initLCB();
@@ -78,7 +80,7 @@ void setup()
 
 #if FLASHSTORAGE
 
-  myBuffer.init(flash, 10); //This will restore old pointers
+  myBuffer.init(flash); //This will restore old pointers
 #else
   Wire.begin();
   myBuffer.init(4, i2c_addresses, 65536L, 0); //No flush
@@ -121,25 +123,31 @@ void setup()
      5 == gprs modem timeout
   */
   if (myRTC.now().get() < 2000) myBuffer.skip(); //got no time! skip the unread frames in Buffer!!
-
+  gprs_status = 1;
   startLCB();
 }
 
 
 void loop()
 {
-  handleRF24();
+  if (gprs_status)
+    handleRF24();
 
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
-    adjust_OSCCAL();
+    digitalWrite(POWER_PIN, HIGH);
     analogReference (DEFAULT);
     batLCB = BAT_MULTIPLIER * analogRead(A7);
+
+    adjust_OSCCAL();
     client.startDataFrame();
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
     client.addChannelValue(myBuffer.readPos());
-    client.addChannelValue(client.getRSSI());
+    if (gprs_status)
+      client.addChannelValue(client.getRSSI());
+    else
+      client.addChannelValue(0);
     client.addChannelValue(batLCB);
     client.addChannelValue(tx_error);
     client.addChannelValue(tx_res);
@@ -147,22 +155,42 @@ void loop()
     client.addChannelValue(rx1_error);
     rx1_count = 0;
     rx1_error = 0;
+    client.addChannelValue(OSCCAL);
 #ifdef NRF24_2CHANNEL
     client.addChannelValue(rx2_count);
     client.addChannelValue(rx2_error);
     rx2_count = 0;
     rx2_error = 0;
 #endif
-    client.addChannelValue(OSCCAL);
     client.writeToBuffer();
-    tx_res = client.sendMultiFromBuffer(1000);
-    blinkLED(tx_res + 1);
 
-    while (! tx_res && myBuffer.available()) {
-      handleRF24();
+    if (! gprs_status && batLCB > 3.9) {
+      client.begin(38400);
+      initRF24();
+      gprs_status = 1;
+    }
+    if (batLCB < 3.7) {
+      if (gprs_status) {
+        radio.powerDown();
+#ifdef NRF24_2CHANNEL
+        radio2.powerDown();
+#endif
+        gprs_status = 0;
+      }
+    }
+
+    if (gprs_status) {
       tx_res = client.sendMultiFromBuffer(1000);
       blinkLED(tx_res + 1);
-    }
+
+      while (! tx_res && myBuffer.available()) {
+        handleRF24();
+        tx_res = client.sendMultiFromBuffer(1000);
+        blinkLED(tx_res + 1);
+      }
+    } else
+      digitalWrite(POWER_PIN, LOW);
+
   }
 
   sleepLCB();

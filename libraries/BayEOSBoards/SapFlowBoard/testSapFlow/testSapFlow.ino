@@ -13,7 +13,10 @@
 // Resistance of heating coil
 #define HEAT_RESISTANCE 63.67
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
-#define NTC10FACTOR 0.5
+#define NTC10FACTOR_REF 0.5
+#define NTC10FACTOR_HEAT 1
+// Divider resistors for battery voltage
+#define BAT_DIVIDER (470.0+100.0)/100.0
 //Some constants for reguation
 //decrease if regulation reacts to fast
 const float Kp = 80; // Einheit: 255/C
@@ -22,6 +25,10 @@ const float Kd = 100; // Einheit: 255/C/s
 //Configure your resistors on the board!
 const uint16_t R[] = { 14300, 14300 };
 const float t1_t2_offset = 0;
+
+//resolution ADC for temperature measurement
+const uint8_t rate = 2; //0-3: 12bit ... 18bit
+
 //END user configruation
 //**********************************************
 
@@ -34,13 +41,12 @@ const float t1_t2_offset = 0;
 
 const byte addr = 0;
 const uint8_t gain = 0; //0-3: x1, x2, x4, x8
-const uint8_t rate = 2; //0-3: 12bit ... 18bit
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 
 #define MCP_POWER_PIN A3
 #define HEAT_PIN 6
 
-MCP342x mcp342x = MCP342x();
+MCP342x mcp342x(addr);
 
 BayDebug client(Serial);
 float ntc10_R2T(float r) {
@@ -62,21 +68,23 @@ void measure(void) {
   last_reg = myRTC.now().get();
   digitalWrite(MCP_POWER_PIN, HIGH);
   delay(2);
-  mcp342x.setConf(addr, 1, 0, mode, rate, gain);
-  delayLCB(100);
-  float I = mcp342x.getData(addr) / (float) R[0];
-  mcp342x.setConf(addr, 1, 1, mode, rate, gain);
-  delayLCB(100);
-  float R_mess = mcp342x.getData(addr) / I;
-  t_ref = ntc10_R2T(R_mess/NTC10FACTOR);
+  mcp342x.runADC(0);
+  delay(mcp342x.getADCTime());
+  float I = mcp342x.getData() / (float) R[0];
+  
+  mcp342x.runADC(1);
+  delay(mcp342x.getADCTime());
+  float R_mess = mcp342x.getData() / I;
+  t_ref = ntc10_R2T(R_mess/NTC10FACTOR_REF);
 
-  mcp342x.setConf(addr, 1, 2, mode, rate, gain);
-  delayLCB(100);
-  I = mcp342x.getData(addr) / (float) R[1];
-  mcp342x.setConf(addr, 1, 3, mode, rate, gain);
-  delayLCB(100);
-  R_mess = mcp342x.getData(addr) / I;
-  t_heat = ntc10_R2T(R_mess/NTC10FACTOR);
+  mcp342x.runADC(2);
+  delay(mcp342x.getADCTime());
+  I = mcp342x.getData() / (float) R[1];
+  
+  mcp342x.runADC(3);
+  delay(mcp342x.getADCTime());
+  R_mess = mcp342x.getData() / I;
+  t_heat = ntc10_R2T(R_mess/NTC10FACTOR_HEAT);
   digitalWrite(MCP_POWER_PIN, LOW);
 
   //PID-regulation
@@ -92,8 +100,12 @@ void measure(void) {
   if (heat_rate > 255) heat_rate = 255;
   if (heat_rate < 0) heat_rate = 0;
   analogWrite(HEAT_PIN, heat_rate);
-  
-  float vbat=3.3 * 5.7 / 1023 * analogRead(A1);
+
+  pinMode(POWER_PIN,OUTPUT);
+  digitalWrite(POWER_PIN,HIGH);
+  float vbat=3.3 * BAT_DIVIDER / 1023 * analogRead(A7);
+  digitalWrite(POWER_PIN,LOW);
+
   Serial.print(vbat);
   Serial.print("\t");
   Serial.print(t_ref);
@@ -119,6 +131,8 @@ void setup()
   initLCB();
   client.begin(9600);
   Wire.begin();
+  mcp342x.reset();
+  mcp342x.storeConf(rate, gain);
   pinMode(MCP_POWER_PIN, OUTPUT);
   pinMode(5, OUTPUT);
   pinMode(HEAT_PIN, OUTPUT);

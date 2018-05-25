@@ -30,7 +30,7 @@ const uint8_t gain = 0; //max Voltage: 0,512 Volt
 #define GPRS_SEND_COUNT 60
 
 uint16_t gprs_counter = 0;
-uint8_t tx_error, res, gprs_status;
+uint8_t tx_error, res, gprs_status, low_bat = 0;
 float bat, tmp_float;
 unsigned long last_measurement;
 
@@ -82,6 +82,10 @@ void setup(void) {
   analogReference(DEFAULT);
   bat = BAT_MULTIPLIER * analogRead(ADC_BATPIN);
   digitalWrite(GPRS_POWER_PIN, LOW);
+
+  if (bat < 3.7) low_bat = 1;
+  else low_bat = 0;
+
   delay(2000);
 
 
@@ -148,10 +152,24 @@ void loop()
       switch (gprs_status) {
         case 0:
           digitalWrite(GPRS_POWER_PIN, HIGH);
-          adjust_OSCCAL();
-          client.begin(38400, 1);
-          gprs_status = 1;
-          tx_error = 0;
+          if (low_bat) {
+            analogReference(DEFAULT);
+            bat = BAT_MULTIPLIER * analogRead(ADC_BATPIN);
+            if (bat > 4.0) low_bat = 0;
+            else {
+              client.startFrame(BayEOS_ErrorMessage);
+              client.addToPayload("Low bat");
+              client.writeToBuffer();
+              gprs_counter = 0;
+              digitalWrite(GPRS_POWER_PIN, LOW);
+            }
+          }
+          if(! low_bat){
+            adjust_OSCCAL();
+            client.begin(38400, 1);
+            gprs_status = 1;
+            tx_error = 0;
+          }
           break;
         case 1:
           if (client.isRegistered()) {
@@ -177,11 +195,6 @@ void loop()
       bat = BAT_MULTIPLIER * analogRead(ADC_BATPIN);
       //We got to many errors or buffer is empty or low bat
       if (tx_error > 100 || ! myBuffer.available() || bat < 3.7) {
-        if (bat < 3.7) {
-          client.startFrame(BayEOS_ErrorMessage);
-          client.addToPayload("Low bat");
-          client.writeToBuffer();
-        }
         if (tx_error) {
           client.startFrame(BayEOS_ErrorMessage);
           client.addToPayload("TX-Error:");
@@ -193,6 +206,7 @@ void loop()
         gprs_counter = 0;
         gprs_status = 0;
         tx_error = 0;
+        if(bat<3.7) low_bat=1;
         digitalWrite(GPRS_POWER_PIN, LOW);
         Serial.end();
         pinMode(1, INPUT);

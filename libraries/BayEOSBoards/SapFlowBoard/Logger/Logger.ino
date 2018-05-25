@@ -16,7 +16,10 @@
 // Resistance of heating coil
 #define HEAT_RESISTANCE 63.67
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
-#define NTC10FACTOR 0.5
+#define NTC10FACTOR_REF 0.5
+#define NTC10FACTOR_HEAT 1
+// Divider resistors for battery voltage
+#define BAT_DIVIDER (470.0+100.0)/100.0
 //Some constants for reguation
 //decrease if regulation reacts to fast
 const float Kp = 80; // Einheit: 255/C
@@ -26,8 +29,8 @@ const float Kd = 100; // Einheit: 255/C/s
 const uint16_t R[] = { 14300, 14300 };
 const float t1_t2_offset = 0;
 
-// 470k - 100k Divider + Default Reference
-#define BAT_MULTIPLIER 3.3*570/100/1023
+//resolution ADC for temperature measurement
+const uint8_t rate = 2; //0-3: 12bit ... 18bit
 
 //END user configruation
 //**********************************************
@@ -55,7 +58,6 @@ uint8_t connected = 0;
 //Configuration
 const byte addr = 0;
 const uint8_t gain = 0; //0-3: x1, x2, x4, x8
-const uint8_t rate = 2; //0-3: 12bit ... 18bit
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 #define MCP_POWER_PIN A3
 #define HEAT_PIN 6
@@ -74,7 +76,7 @@ float ntc10_R2T(float r) {
 #include <LowCurrentBoard.h>
 
 
-float t_ref, t_heat;
+float t_ref, t_heat, bat_voltage;
 int heat_rate;
 float iTerm, pTerm, dTerm, error, last_error;
 unsigned long last_reg;
@@ -83,7 +85,7 @@ float values[9];
 int count;
 
 void measure(void) {
-  int dt = myRTC.now().get() - last_reg;
+  unsigned long dt = myRTC.now().get() - last_reg;
   if (dt < DELTA_T) return;
   last_reg = myRTC.now().get();
   digitalWrite(MCP_POWER_PIN, HIGH);
@@ -94,21 +96,24 @@ void measure(void) {
     }
   }
   count++;
-  mcp342x.setConf(addr, 1, 0, mode, rate, gain);
-  delay(100);
-  float I = mcp342x.getData(addr) / (float) R[0];
-  mcp342x.setConf(addr, 1, 1, mode, rate, gain);
-  delay(100);
-  float R_mess = mcp342x.getData(addr) / I;
-  t_ref = ntc10_R2T(R_mess / NTC10FACTOR);
+  mcp342x.runADC(0);
+  delay(mcp342x.getADCTime());
+  float I = mcp342x.getData() / (float) R[0];
 
-  mcp342x.setConf(addr, 1, 2, mode, rate, gain);
-  delay(100);
-  I = mcp342x.getData(addr) / (float) R[1];
-  mcp342x.setConf(addr, 1, 3, mode, rate, gain);
-  delay(100);
-  R_mess = mcp342x.getData(addr) / I;
-  t_heat = ntc10_R2T(R_mess / NTC10FACTOR) - t1_t2_offset;
+  mcp342x.runADC(1);
+  delay(mcp342x.getADCTime());
+  float R_mess = mcp342x.getData() / I;
+  t_ref = ntc10_R2T(R_mess / NTC10FACTOR_REF);
+
+  mcp342x.runADC(2);
+  delay(mcp342x.getADCTime());
+  I = mcp342x.getData() / (float) R[1];
+
+  mcp342x.runADC(3);
+  delay(mcp342x.getADCTime());
+  R_mess = mcp342x.getData() / I;
+
+  t_heat = ntc10_R2T(R_mess / NTC10FACTOR_HEAT) - t1_t2_offset;
   digitalWrite(MCP_POWER_PIN, LOW);
 
   //PID-regulation
@@ -132,45 +137,47 @@ void measure(void) {
 
   digitalWrite(POWER_PIN, HIGH);
   analogReference(DEFAULT);
-  values[0] += BAT_MULTIPLIER * analogRead(A7);
+  bat_voltage = 3.3 * BAT_DIVIDER / 1023 * analogRead(A7);
+  myLogger._bat = bat_voltage * 1000;
   digitalWrite(POWER_PIN, LOW);
+  values[0] += bat_voltage;
   values[1] += t_ref;
   values[2] += t_heat;
   values[3] += error;
   values[4] += heat_rate;
-  values[5] += values[0] / 1000 / count * values[0] / 1000 / count / HEAT_RESISTANCE * values[4] / 255.0 / count;
+  values[5] += bat_voltage * bat_voltage / HEAT_RESISTANCE * heat_rate / 255.0 ;
   values[6] += pTerm;
   values[7] += iTerm;
   values[8] += dTerm;
 
-  client.startDataFrame();
-  client.addChannelValue(values[0] / count);
-  client.addChannelValue(values[1] / count * 100);
-  client.addChannelValue(values[2] / count * 100);
-  client.addChannelValue(values[3] / count * 1000); //error
-  client.addChannelValue(values[4] / count * 100); //heat rate
-  client.addChannelValue(values[5] / count * 1000); //heat rate in W
-  client.addChannelValue(values[6] / count * 100);
-  client.addChannelValue(values[7] / count * 100);
-  client.addChannelValue(values[8] / count * 100);
+  client.startDataFrame(0x41);
+  client.addChannelValue(values[0] / count, 1);
+  client.addChannelValue(values[1] / count, 2);
+  client.addChannelValue(values[2] / count, 3);
+  client.addChannelValue(values[3] / count, 4); //error
+  client.addChannelValue(values[4] / count / 255 * 100, 5); //heat rate
+  client.addChannelValue(values[5] / count * 1000, 6); //heat rate in mW
+  client.addChannelValue(values[6] / count, 7);
+  client.addChannelValue(values[7] / count, 8);
+  client.addChannelValue(values[8] / count, 9);
 }
 
 void setup()
 {
   initLCB();
-  Wire.begin();
   pinMode(POWER_PIN, OUTPUT);
   pinMode(MCP_POWER_PIN, OUTPUT);
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(HEAT_PIN, OUTPUT);
-  startLCB();
+  Wire.begin();
+  mcp342x.reset();
+  mcp342x.storeConf(rate, gain);
   client.begin(BAUD_RATE);
-  myBuffer.init(flash, 10); //This will restore old pointers
+  myBuffer.init(flash); //This will restore old pointers
   myBuffer.setRTC(myRTC, 1); //Nutze RTC absolut!
   client.setBuffer(myBuffer);
-  myLogger.init(client, myBuffer, myRTC, 30, 2500); //min sampling 30, battery warning 2500 mV
-  pinMode(CONNECTED_PIN, INPUT);
-  digitalWrite(CONNECTED_PIN, HIGH);
+  myLogger.init(client, myBuffer, myRTC, 30, 3500); //min sampling 30, battery warning 2500 mV
+  pinMode(CONNECTED_PIN, INPUT_PULLUP);
   myLogger._logging_disabled = 1;
 }
 

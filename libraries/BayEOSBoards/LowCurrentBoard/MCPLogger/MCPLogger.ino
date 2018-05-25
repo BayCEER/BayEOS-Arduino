@@ -10,12 +10,12 @@
  ***************************************************************/
 //Change 1 to 0 to disable channel
 #define WITH_ADC0 1
-#define WITH_ADC1 1
+#define WITH_ADC1 0
 #define WITH_ADC2 0
 #define WITH_ADC3 0
 #define WITH_COUNT0 0
 #define WITH_COUNT1 0
-#define WITH_BAT 1
+#define WITH_BAT 0
 
 //ADC Configuration
 const uint8_t gain0 = 3; //0-3: x1, x2, x4, x8
@@ -154,7 +154,6 @@ void measure() {
 #if WITH_COUNT1
   client.addChannelValue(int1_count);
 #endif
-#if WITH_BAT
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
   analogReference(INTERNAL);
@@ -164,6 +163,7 @@ void measure() {
   analogReference(DEFAULT);
   digitalWrite(POWER_PIN, LOW);
   pinMode(POWER_PIN, INPUT);
+#if WITH_BAT
   client.addChannelValue(values[0] / count);
 #endif
 
@@ -221,6 +221,15 @@ void loop()
     measure();
   }
   myLogger.run();
+
+  if (! connected && myLogger._logging_disabled) {
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, HIGH);
+    delayLCB(200);
+    digitalWrite(LED_BUILTIN, LOW);
+    delayLCB(800);
+    pinMode(LED_BUILTIN, INPUT);
+  }
 
 
   //sleep until timer2 will wake us up...

@@ -6,7 +6,7 @@ uint8_t sck = 3;
 long adc[2];
 
 HX711Array scale;
-NTC_HX711 ntc(scale, A3, 200000, 3.0);
+NTC_HX711 ntc(scale, A3, 2*470000, 3.0); //Adjust resistor values
 
 volatile uint8_t tics;
 ISR(TIMER2_OVF_vect) {

@@ -17,20 +17,21 @@ const uint8_t gain = 0; //0-3: x1, x2, x4, x8
 const uint8_t rate = 3; //0-3: 12bit ... 18bit
 const uint8_t mode = 0; //0 == one-shot mode - 1 == continuos mode
 //  create an objcet of the class MCP342x
-MCP342x mcp342x = MCP342x();
+MCP342x mcp342x(addr);
 
 float span = 0.0;
 char str_buf[50] = "                            ";
 
 
-#define POWER_PIN 6
+#define MCPPOWER_PIN 6
 
 void setup()
 {
   Serial.begin(9600);
-  //  General Call Reset as per Datasheet of the mcp3422/4 
-  pinMode(POWER_PIN,OUTPUT);
-  digitalWrite(POWER_PIN,HIGH);
+  mcp342x.reset();
+  mcp342x.storeConf(rate, gain);
+  pinMode(MCPPOWER_PIN,OUTPUT);
+  digitalWrite(MCPPOWER_PIN,HIGH);
   pinMode(A1,OUTPUT);
   pinMode(A2,OUTPUT);
   pinMode(A3,OUTPUT);
@@ -46,9 +47,9 @@ void loop()
     digitalWrite(A3,ch & 0x1);
     Serial.print(ch);
     Serial.print("\t");
-    mcp342x.setConf(addr, 1, 0, mode, rate, gain);
-    delay(300);
-    span = mcp342x.getData(addr);
+    mcp342x.runADC(0);
+    delay(mcp342x.getADCTime());
+    span = mcp342x.getData();
     float strom=span/PRERESISTOR*1000; //current in mA
     dtostrf(span, 10, 6, str_buf);
     Serial.print(str_buf);
@@ -56,9 +57,9 @@ void loop()
     dtostrf(strom, 10, 6, str_buf);
     Serial.print(str_buf);
     Serial.print("\t");
-    mcp342x.setConf(addr, 1, 1, mode, rate, gain);
-    delay(300);
-    span = mcp342x.getData(addr);
+     mcp342x.runADC(1);
+    delay(mcp342x.getADCTime());
+    span = mcp342x.getData();
     dtostrf(span, 10, 6, str_buf);
     Serial.print(str_buf);
     Serial.print("\t");

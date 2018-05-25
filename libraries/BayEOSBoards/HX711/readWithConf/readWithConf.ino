@@ -7,7 +7,7 @@ long adc[2];
 float temp0, temp1;
 
 HX711Array scale;
-NTC_HX711 ntc(scale, A3, 440000, 3.0);
+NTC_HX711 ntc(scale, A3, 2*470000, 3.0); //Adjust resistor values 
 Scale4PointCal cal0;
 Scale4PointCal cal1(28);
 
@@ -19,7 +19,8 @@ ISR(TIMER2_OVF_vect) {
 #define INIT_CAL 1
 #if INIT_CAL
 // only for first run
-float sw = 1467.0; //Calibration weight in gramm
+float sw0 = 1467.0; //Calibration weight of first weight cell in gramm
+float sw1 = 1463.0; //Calibration weight of second weight in gramm
 float t[] = {10.0, 20.0}; //Calibration temperatures
 long adc0[] = {331519L, 332595L, 1255903L, 1255912L}; //Calibration Values: adc[zero,t0], adc[zero,t1], ...
 long adc1[] = {331519L, 332595L, 1255903L, 1255912L}; //Calibration Values: adc[zero,t0], adc[zero,t1], ...
@@ -40,8 +41,8 @@ void setup(void) {
   Serial.flush();
   scale.begin(dout, 2, sck); //start HX711Array with 1 ADCs
 #if INIT_CAL
-  cal0.setConf(sw, t, adc0);
-  cal1.setConf(sw, t, adc1);
+  cal0.setConf(sw0, t, adc0);
+  cal1.setConf(sw1, t, adc1);
   cal0.saveConf();
   cal1.saveConf();
 #endif

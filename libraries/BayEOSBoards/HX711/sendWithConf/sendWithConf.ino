@@ -33,7 +33,7 @@ float temp0, temp1;
 char origin[6];
 
 HX711Array scale;
-NTC_HX711 ntc(scale, A3, 440000, 3.0);
+NTC_HX711 ntc(scale, A3, 2*470000, 3.0); //adjust resistor values
 Scale4PointCal cal0;
 Scale4PointCal cal1(28); //One Config needs 28 Byte in EEPROM - so second has a offest of 28
 
