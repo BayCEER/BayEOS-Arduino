@@ -46,6 +46,11 @@
 #define CHECKSUM_FRAMES 0
 #endif
 
+#ifndef RESET_COUNT
+#define RESET_COUNT 0
+#endif
+
+
 #if TICKS_PER_SECOND>3
 #define LED_TICK_DIV (TICKS_PER_SECOND/4)
 #else
@@ -54,6 +59,11 @@
 
 volatile uint16_t ticks;
 volatile uint8_t action;
+
+#if RESET_COUNT
+volatile uint8_t action0_pending_count=0;
+#endif
+
 volatile uint8_t seconds;
 volatile unsigned long current_micros, last_micros;
 volatile uint8_t adjust_osccal_flag;
@@ -119,6 +129,18 @@ ISR(TIMER2_OVF_vect) {
 #endif
 		uint16_t tick_mod=myRTC._seconds%SAMPLING_INT;
 		if(tick_mod<ACTION_COUNT) {
+#if RESET_COUNT
+			if(tick_mod==0){
+				if(ISSET_ACTION(0))
+					action0_pending_count++;
+
+				else
+					action0_pending_count=0;
+				if(action0_pending_count>RESET_COUNT)
+					asm volatile (" jmp 0"); //restart programm
+
+			}
+#endif
 			action|=(1<<tick_mod);
 		} else {
 			action|=(1<<7);

@@ -49,6 +49,8 @@ void isr_int0(void) {
 
 #define ACTION_COUNT 1
 #define SAMPLING_INT 64
+
+#define RESET_COUNT 1
 #include <LowCurrentBoard.h>
 
 void setup(void) {
