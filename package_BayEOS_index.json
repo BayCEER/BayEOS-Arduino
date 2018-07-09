@@ -12,24 +12,6 @@
 				{
 					"name": "BayEOS AVR Boards",
 					"architecture": "avr",
-					"version": "0.0.4",
-					"category": "BayEOS Arduino",
-					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/v0.0.4.zip",
-					"checksum": "SHA-256:281bd32934e1c56314b4b4bfe4a74521cb91a5c71167e8e002ec078dff079c5f",
-					"help": {
-						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
-					},
-					"archiveFileName": "BayEOS-Arduino-0.0.4.zip",
-					"boards": [
-						{
-							"name": "BayEOS Low Power Board"
-						}
-					],
-					"size": "3680429"
-				},
-				{
-					"name": "BayEOS AVR Boards",
-					"architecture": "avr",
 					"version": "0.0.5",
 					"category": "BayEOS Arduino",
 					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/v0.0.5.zip",
@@ -80,6 +62,24 @@
 						}
 					],
 					"size": "3712199"
+				},
+				{
+					"name": "BayEOS AVR Boards",
+					"architecture": "avr",
+					"version": "0.1.0",
+					"category": "BayEOS Arduino",
+					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/v0.1.0.zip",
+					"checksum": "SHA-256:dd00e9d134ec844d7a9d32371fed1eb5ac1529b56b6c1f87e8e7c94445dcff6d",
+					"help": {
+						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
+					},
+					"archiveFileName": "BayEOS-Arduino-0.1.0.zip",
+					"boards": [
+						{
+							"name": "BayEOS Low Power Board"
+						}
+					],
+					"size": "3723524"
 				}
 			],
 			"toolsDependencies": [
