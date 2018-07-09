@@ -36,6 +36,8 @@
 #define BayTCP_DEBUG_OUTPUT 0
 #define BayTCP_DEBUG_INPUT 0
 
+#define BayTCP_DEBUG_INTERFACE Serial
+
 #define printP(x) printPGM(PSTR(x))
 #define printlnP(x) printlnPGM(PSTR(x))
 #define wait_for(x,y) wait_forPGM(PSTR(x),y)

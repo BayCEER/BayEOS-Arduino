@@ -1,8 +1,6 @@
 #ifndef BayTCPESP8266_h
 #define BayTCPESP8266_h
 
-#define ESP8266_DEBUG 0
-
 
 #include <HardwareSerial.h>
 #include <SoftwareSerial.h>
@@ -40,6 +38,25 @@ public:
 	 * 1 == Error
 	 */
 	uint8_t sendATE0(void);
+
+	/**
+	 * Checks status of Modem
+	 * 0 == no response
+	 * 5 == not connected to AP
+	 * 2 == Got IP
+     * 3 == TCP Connected
+     * 4 == TCP Disconnected
+	 *
+	 */
+	uint8_t status(void);
+
+	/**
+	 * Connect to AP
+	 * 0 == OK
+	 * 1 == Not connected
+	 *
+	 */
+	uint8_t connectToAP(void);
 
 	/**
 	 * Switch on GPRS-Modem
@@ -87,24 +104,10 @@ public:
 private:
 	HardwareSerial& _serial; //Reference to existing serial object!!
 	int available(void){return _serial.available();}
-	int read(void){
-#if ESP8266_DEBUG
-		int c=_serial.read();
-		if(c!=-1) Serial.write(c);
-		return c;
-#else
-		return _serial.read();
-#endif
-
-	}
-	void i_begin(long b){ _serial.begin(b);}
+	int read(void);
+	void i_begin(long b);
 	int i_available(void){return _serial.available();}
-	size_t write(uint8_t b){
-#if ESP8266_DEBUG
-		Serial.write(b);
-#endif
-		return _serial.write(b);
-	}
+	size_t write(uint8_t b);
     int peek(void){return _serial.peek();};
     void flush(void){_serial.flush();};
 };

@@ -77,11 +77,19 @@ NTC_HX711::NTC_HX711(HX711Array &hx, uint8_t pp, float pr, float nt, uint8_t n):
 	 pre_resistor=pr;
 	 number=n;
 }
+NTC_HX711::NTC_HX711(HX711Array &hx, float pr, float nt, uint8_t n):NTC_Sensor(nt){
+	 power_pin=0;
+	 hx711=&hx;
+	 pre_resistor=pr;
+	 number=n;
+}
 
 float NTC_HX711::readResistance(void){
-	pinMode(power_pin,OUTPUT);
-	digitalWrite(power_pin,HIGH);
-	delay(1);
+	if(power_pin){
+		pinMode(power_pin,OUTPUT);
+		digitalWrite(power_pin,HIGH);
+		delay(1);
+	}
 	hx711->power_up();
 	hx711->set_gain(32);
 	hx711->read();
@@ -89,8 +97,10 @@ float NTC_HX711::readResistance(void){
 	adc=adc/32/256/256/256;
 	hx711->set_gain(128);
 	hx711->power_down();
-	digitalWrite(power_pin,LOW);
-	pinMode(power_pin,INPUT);
+	if(power_pin){
+		digitalWrite(power_pin,LOW);
+		pinMode(power_pin,INPUT);
+	}
 	return adc/(1-adc)*pre_resistor;
 }
 

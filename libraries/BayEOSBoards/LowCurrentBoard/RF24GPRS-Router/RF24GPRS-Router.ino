@@ -21,7 +21,7 @@
 #include <BayTCPSim900.h>
 
 #define NRF24_CHANNEL 0x13
-#define NRF24_2CHANNEL 0x17
+//#define NRF24_2CHANNEL 0x17
 #define WITH_RF24_CHECKSUM 1
 
 
@@ -137,9 +137,10 @@ void loop()
     UNSET_ACTION(0);
     digitalWrite(POWER_PIN, HIGH);
     analogReference (DEFAULT);
+    if(! gprs_status) delayLCB(1000);
+    adjust_OSCCAL();
     batLCB = BAT_MULTIPLIER * analogRead(A7);
 
-    adjust_OSCCAL();
     client.startDataFrame();
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());

@@ -15,6 +15,11 @@
 #define LCB_BAT_MULTIPLIER 1.1*320/100/1023
 #endif
 
+#ifndef LCB_BAT_ADCPIN
+#define LCB_BAT_ADCPIN A0
+#endif
+
+
 #ifndef TICKS_PER_SECOND
 #define TICKS_PER_SECOND 16
 #endif
@@ -35,8 +40,8 @@
 #define POWER_PIN 7
 #endif
 
-#define ISSET_ACTION(nr) (1<<nr)&action
-#define UNSET_ACTION(nr) action&= ~(1<<nr)
+#define ISSET_ACTION(nr) ((1<<nr)&action)
+#define UNSET_ACTION(nr) (action&= ~(1<<nr))
 
 #ifndef ACTION_COUNT
 #define ACTION_COUNT 7
@@ -385,7 +390,7 @@ void readBatLCB() {
 	analogReference (INTERNAL);
 	pinMode(POWER_PIN, OUTPUT);
 	digitalWrite(POWER_PIN, HIGH);
-	batLCB = LCB_BAT_MULTIPLIER * analogRead(A0);
+	batLCB = LCB_BAT_MULTIPLIER * analogRead(LCB_BAT_ADCPIN);
 	digitalWrite(POWER_PIN, LOW);
 	pinMode(POWER_PIN, INPUT);
 	analogReference (DEFAULT);

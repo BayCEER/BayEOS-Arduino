@@ -61,7 +61,7 @@ void BayTCPInterface::printPGM(const char *str) {
 		if (!c)
 			break;
 #if BayTCP_DEBUG_INPUT
-		Serial.write(c);
+		BayTCP_DEBUG_INTERFACE.write(c);
 #endif
 
 		write(c);
@@ -72,7 +72,7 @@ void BayTCPInterface::printlnPGM(const char *str) {
 	printPGM(str);
 	println();
 #if BayTCP_DEBUG_INPUT
-	Serial.println();
+	BayTCP_DEBUG_INTERFACE.println();
 #endif
 }
 
@@ -80,7 +80,7 @@ void BayTCPInterface::skipChars(void) {
 	do {
 		while (i_available()) {
 #if BayTCP_DEBUG_OUTPUT
-			Serial.print((char) read());
+			BayTCP_DEBUG_INTERFACE.print((char) read());
 #else
 			read();
 #endif
@@ -110,21 +110,21 @@ void BayTCPInterface::printURLencoded(const char *str) {
 	if (!_urlencode) {
 		print(str);
 #if BayTCP_DEBUG_INPUT
-		Serial.print(str);
+		BayTCP_DEBUG_INTERFACE.print(str);
 #endif
 		return;
 	}
 	while (*str) {
 		if (strchr(_urlencodedChars, *str)) {
 #if BayTCP_DEBUG_INPUT
-			Serial.print('%');
-			Serial.print(*str,HEX);
+			BayTCP_DEBUG_INTERFACE.print('%');
+			BayTCP_DEBUG_INTERFACE.print(*str,HEX);
 #endif
 			print('%');
 			print(*str, HEX);
 		} else {
 #if BayTCP_DEBUG_INPUT
-			Serial.print(*str);
+			BayTCP_DEBUG_INTERFACE.print(*str);
 #endif
 			print(*str);
 		}
@@ -136,7 +136,7 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 	printP("POST /");
 	print(_path);
 #if BayTCP_DEBUG_INPUT
-	Serial.print(_path);
+	BayTCP_DEBUG_INTERFACE.print(_path);
 #endif
 	printlnP(" HTTP/1.1");
 	printP("Authorization: Basic ");
@@ -147,11 +147,11 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 	_base64buffer[base64_enc_len(strlen(_pgm_buffer))] = 0;
 	println(_base64buffer); //BASE64
 #if BayTCP_DEBUG_INPUT
-	Serial.println(_base64buffer);
+	BayTCP_DEBUG_INTERFACE.println(_base64buffer);
 #endif
 	printP("Host: ");
 #if BayTCP_DEBUG_INPUT
-	Serial.println(_server);
+	BayTCP_DEBUG_INTERFACE.println(_server);
 #endif
 	println(_server);
 	printlnP("User-Agent: BayTCP");
@@ -160,7 +160,7 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 	printP("Content-Length: ");
 	println(size);
 #if BayTCP_DEBUG_INPUT
-	Serial.println(size);
+	BayTCP_DEBUG_INTERFACE.println(size);
 #endif
 	println();
 }
@@ -259,7 +259,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize) {
 
 uint8_t BayTCPInterface::sendPayload(void) {
 #if BayTCP_DEBUG_OUTPUT
-	Serial.println("sendPayload");
+	BayTCP_DEBUG_INTERFACE.println("sendPayload");
 #endif
 	uint8_t res;
 	res = connect();
@@ -317,7 +317,7 @@ void BayTCPInterface::readConfigFromFile(const char *file) {
 	uint8_t i = 0;
 	int c;
 	while ((i < BayTCP_CONFIG_SIZE) && ((c = _f.read()) != -1)) {
-//		Serial.print((char) c);
+//		BayTCP_DEBUG_INTERFACE.print((char) c);
 		if (c == '|')
 			c = 0;
 		_config_buffer[i] = (char) c;
@@ -336,7 +336,7 @@ void BayTCPInterface::readConfigFromStringPGM(const char *string) {
 		if (_config_buffer[offset] == '|')
 			_config_buffer[offset] = 0;
 #if BayTCP_DEBUG_INPUT
-		Serial.write(_config_buffer[offset]);
+		BayTCP_DEBUG_INTERFACE.write(_config_buffer[offset]);
 #endif
 		offset++;
 		string++;
@@ -467,7 +467,7 @@ uint8_t BayTCPInterface::wait_forPGM(const char* str, uint16_t timeout,
 			return 2;
 		c = read();
 #if BayTCP_DEBUG_OUTPUT
-		Serial.print(c);
+		BayTCP_DEBUG_INTERFACE.print(c);
 #endif
 
 		if (offset < length) {

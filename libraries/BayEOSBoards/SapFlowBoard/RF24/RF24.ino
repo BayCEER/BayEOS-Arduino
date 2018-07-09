@@ -10,7 +10,7 @@
 // User Configruation
 //
 // T-Difference between heated and non-heated [°C]
-#define TARGET_DT 3.0
+#define TARGET_DT 2.0
 // Regulation time step [s]
 #define DELTA_T 3
 // Resistance of heating coil
@@ -19,7 +19,7 @@
 #define NTC10FACTOR_REF 0.5
 #define NTC10FACTOR_HEAT 1
 // Divider resistors for battery voltage
-#define BAT_DIVIDER (470.0+100.0)/100.0
+#define BAT_DIVIDER (100.0+100.0)/100.0
 //Some constants for reguation
 //decrease if regulation reacts to fast
 const float Kp = 80; // Einheit: 255/C
@@ -35,8 +35,8 @@ const uint8_t rate = 2; //0-3: 12bit ... 18bit
 
 
 //RF24 configuration
-#define RF24ADDRESS 0x172af39a12LL
-#define RF24CHANNEL 0x4c
+#define RF24ADDRESS 0x45c431ae24LL
+#define RF24CHANNEL 0x13
 #define CHECKSUM_FRAMES 1
 #define SAMPLING_INT 32
 

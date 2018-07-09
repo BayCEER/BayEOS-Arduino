@@ -62,6 +62,7 @@ private:
 
 public:
 	NTC_HX711(HX711Array &hx, uint8_t pp, float pr, float nt, uint8_t n=0 );
+	NTC_HX711(HX711Array &hx, float pr, float nt, uint8_t n=0 );
 	float readResistance(void);
 	//Note: getTemp(nr) does not run a ADC conversion
 	//call readResistance before!

@@ -21,6 +21,19 @@
  */
 
 #include "BayTCPESP8266.h"
+
+#define ESP8266_DEBUG 0
+
+#if ESP8266_DEBUG
+#include <SoftwareSerial.h>
+const uint8_t rxPin = 2;
+const uint8_t txPin = 3;
+
+// set up a new serial object
+SoftwareSerial mySerial(rxPin, txPin);
+#define ESP8266_DEBUG_INTERFACE mySerial
+#endif
+
 void BayESP8266Interface::powerDown() {
 	printlnP("AT+SLEEP=2");
 	wait_forOK(200);
@@ -39,6 +52,24 @@ void BayESP8266Interface::powerUp() {
 	}
 }
 
+uint8_t BayESP8266Interface::status(){
+	printlnP("AT+CIPSTATUS");
+	if (!wait_forPGM(PSTR("STATUS:"), 3000, 2, _base64buffer)) {
+		return atoi(_base64buffer);
+	}
+	return 0;
+}
+
+uint8_t BayESP8266Interface::connectToAP(){
+	printP("AT+CWJAP=\"");
+	print(_apn);
+	printP("\",\"");
+	print(_prov_pw);
+	printlnP("\"");
+	if (wait_forOK(30000)) return 1;
+    return 0;
+}
+
 uint8_t BayESP8266Interface::init() {
 	i_begin(_baud);
 	uint8_t res;
@@ -50,58 +81,65 @@ uint8_t BayESP8266Interface::init() {
 	} else {
 		printlnP("AT+RST");
 	}
-	wait_for("ready", 30000);
+	wait_forPGM(PSTR("ready"), 3000);
 
-	printlnP("ATE0"); //Command echo off
-	res = wait_forOK(2000);
 
-	if (!res) {
-		//communication ok!
-		printlnP("AT+CIPSSLSIZE=4096");
-		wait_forOK(200);
-		printlnP("AT+CWMODE=1");
-		wait_forOK(400);
-
-		printlnP("AT+CIPMUX=0");
-		wait_forOK(400);
-
-		printP("AT+CWJAP=\"");
-		print(_apn);
-		printP("\",\"");
-		print(_prov_pw);
-		printlnP("\"");
-		if (!wait_forOK(30000))
-			return 0;
-		else
-			return 3;
+	res=status();
+	if(! res) return 1;//no communication
+	if (res == 5) {
+		res=connectToAP();
+		if(res) return 3;
 	}
+	printlnP("AT+CIPSSLSIZE=4096");
+	wait_forOK(200);
+	printlnP("AT+CWMODE=1");
+	wait_forOK(400);
+	printlnP("AT+CIPMUX=0");
+	wait_forOK(400);
 
-	return res;
+	return 0;
+
 }
 
 void BayESP8266Interface::flushMTU(void) {
-	printP("\\0");
-	printlnP("AT+CIPSENDEX=2048");
-	wait_for(">", 200);
+//	printP("\\0");
+//	write((uint8_t) 0);
+//	printlnP("AT+CIPSENDEX=2048");
+//	wait_for(">", 200);
+	flush();
+	delay(25);
 }
 
 void BayESP8266Interface::finishTransmissionMode(void) {
 //	delay(50);
-	printP("\\0");
+//	printP("\\0");
+	flush();
+	delay(25);
+	printP("+++");
+//	write((uint8_t) 0);
 }
 
 uint8_t BayESP8266Interface::connect(void) {
-	uint8_t res;
-	if (res = sendATE0()) {
-		if (init())
-			return res;
+	if (_ch_pdPin > -1 && ! digitalRead(_ch_pdPin)) {
+		powerUp();
+		wait_forPGM(PSTR("ready"), 3000);
 	}
 
-	printlnP("AT+CIFSR");
-	if (wait_for("ERROR", 200)) {
-		//has IP
-		printlnP("AT+CIPMUX=0");
-		wait_forOK(2000);
+	uint8_t res;
+	res=status(); //No communication - run init
+	if(! res){
+		if (init())
+			return 1;
+	}
+	if(res==5){
+		if(connectToAP()) return 3;
+		else res=status();
+	}
+
+	printlnP("AT+CIPMUX=0");
+	wait_forOK(2000);
+
+	if(res!=3) {
 		printP("AT+CIPSTART=\"");
 		if (atoi(_port) == 443)
 			printP("SSL");
@@ -112,25 +150,29 @@ uint8_t BayESP8266Interface::connect(void) {
 		printP("\",");
 		println(_port);
 		if (wait_for("CONNECT", 5000))
-			return 1;
+			return 4;
 		wait_forOK(200);
-		uint8_t i;
-		printlnP("AT+CIPMODE=0");
+		printlnP("AT+CIPMODE=1");
 		wait_forOK(200);
-
-		printlnP("AT+CIPSENDEX=2048");
-		if (wait_for(">", 200))
-			return 1;
-		return 0;
 	}
-	return 1;
+
+//	printlnP("AT+CIFSR");
+//	if (wait_for("ERROR", 200)) {
+
+//		printlnP("AT+CIPSENDEX=2048");
+	printlnP("AT+CIPSEND");
+	if (wait_for(">", 200))
+		return 5;
+
+	return 0;
+
 
 }
 
 void BayESP8266Interface::disconnect(void) {
 //	wait_for("Unlink",1000);
-//		printlnP("AT+CIPCLOSE=5");
-//		wait_forOK(100);
+//	printlnP("AT+CIPCLOSE=5");
+//	wait_forOK(100);
 
 }
 
@@ -152,6 +194,32 @@ BayESP8266::BayESP8266(HardwareSerial &serial, int8_t ch_pdPin) :
 uint8_t BayESP8266::begin(long baud) {
 	_baud = baud;
 	return init();
+}
+
+int BayESP8266::read(void) {
+#if ESP8266_DEBUG
+	int c = _serial.read();
+	if (c != -1)
+		ESP8266_DEBUG_INTERFACE.write(c);
+	return c;
+#else
+	return _serial.read();
+#endif
+
+}
+
+size_t BayESP8266::write(uint8_t b) {
+#if ESP8266_DEBUG
+	ESP8266_DEBUG_INTERFACE.write(b);
+#endif
+	return _serial.write(b);
+}
+
+void BayESP8266::i_begin(long b) {
+#if ESP8266_DEBUG
+	ESP8266_DEBUG_INTERFACE.begin(9600);
+#endif
+	_serial.begin(b);
 }
 
 BayESP8266softserial::BayESP8266softserial(uint8_t rxPin, uint8_t txPin,

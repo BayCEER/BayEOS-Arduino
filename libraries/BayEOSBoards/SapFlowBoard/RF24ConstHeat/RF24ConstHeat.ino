@@ -21,15 +21,15 @@
 //Configure your resistors on the board!
 const uint16_t R[] = { 14300, 14300 };
 
-// 470k - 100k Divider + Default Reference
-#define BAT_DIVIDER (470.0+100.0)/100.0
+// 100k - 100k Divider + Default Reference
+#define BAT_DIVIDER (100.0+100.0)/100.0
 
 //resolution ADC for temperature measurement
 const uint8_t rate = 2; //0-3: 12bit ... 18bit
 
 
-#define RF24ADDRESS 0x172af39a24LL
-#define RF24CHANNEL 0x4c
+#define RF24ADDRESS 0x45c431ae12LL
+#define RF24CHANNEL 0x13
 #define CHECKSUM_FRAMES 1
 #define SAMPLING_INT 32
 

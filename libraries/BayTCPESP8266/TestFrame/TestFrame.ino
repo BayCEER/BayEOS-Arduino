@@ -1,7 +1,7 @@
 #include <BayTCPESP8266.h>
 
 
-BayESP8266 client=BayESP8266(Serial);
+BayESP8266 client=BayESP8266(Serial,7);
 
 void setup(void){
   Serial.begin(9600);
