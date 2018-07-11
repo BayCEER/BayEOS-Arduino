@@ -366,7 +366,11 @@ uint8_t BayGPRSsoftserial::begin(long baud,uint8_t unlock_only){
 	BayGPRSInterface::begin(baud,unlock_only);
 }
 
-int BayGPRSsoftserial::available(void){return SoftwareSerial::available();}
+
+
+int BayGPRSsoftserial::available(void){
+	return SoftwareSerial::available();
+}
 int BayGPRSsoftserial::read(void){
 #if SIM900_DEBUG
 	int c=SoftwareSerial::read();

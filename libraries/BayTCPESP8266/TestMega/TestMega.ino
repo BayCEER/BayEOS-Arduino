@@ -1,7 +1,7 @@
 #include <BayTCPESP8266.h>
 
 
-BayESP8266 client=BayESP8266(Serial1,A15);
+BayESP8266 client(Serial1,A15);
 
 void setup(void){
   Serial.begin(115200);
@@ -13,11 +13,18 @@ void setup(void){
 }
 
 void loop(void){
-   client.powerUp();
   //Construct DataFrame
    client.startDataFrame();
-   client.addChannelValue(millis()/1000);     
-   client.sendPayload();
+   client.addChannelValue(millis()/1000);
+   Serial.print("Sending ...");     
+   uint8_t res=client.sendPayload();
+   if(res){
+    Serial.println("failed");
+    Serial.print("Error code: ");
+    Serial.println(res);
+   } else {
+    Serial.println("ok");
+   }
    client.powerDown();
    delay(20000);  
 }
