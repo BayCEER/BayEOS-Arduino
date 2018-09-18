@@ -24,7 +24,7 @@
 */
 
 /* Memory Map */
-#define CONFIG      0x00
+#define NRF_CONFIG      0x00
 #define EN_AA       0x01
 #define EN_RXADDR   0x02
 #define SETUP_AW    0x03
@@ -111,7 +111,7 @@
 #define FLUSH_TX      0xE1
 #define FLUSH_RX      0xE2
 #define REUSE_TX_PL   0xE3
-#define NOP           0xFF
+#define RF24_NOP      0xFF
 
 /* Non-P omissions */
 #define LNA_HCURR   0

@@ -1,3 +1,10 @@
+#############################################################
+#
+# Use this file to replace your boards.txt in order to burn
+# bootloaders on the device. Bootloader will always report
+# atmega328p regardless whether ist is a atmega328, 
+# atmega328p or atmega328pb
+#
 ##############################################################
 menu.cpu=Processor
 
@@ -40,6 +47,15 @@ bayeos_atmega328bb.menu.cpu.mega328_8mhz2=ATMega328 (8 MHz, 2.7V BOD)
 bayeos_atmega328bb.menu.cpu.mega328_8mhz2.bootloader.extended_fuses=0x05
 bayeos_atmega328bb.menu.cpu.mega328_8mhz2.build.mcu=atmega328
 
+## 8MHz - ATMega328PB 1.8V BOD
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz=ATMega328PB (8 MHz, 1.8V BOD)
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz.build.mcu=atmega328
+
+## 8MHz - ATMega328PB 2.7V BOD
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2=ATMega328PB (8 MHz, 2.7V BOD)
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2.bootloader.extended_fuses=0x05
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2.build.mcu=atmega328pb
+
 
 ## 8MHz - ATMega168P 
 bayeos_atmega328bb.menu.cpu.mega168p_8mhz=ATMega168p (8 MHz, 1.8V BOD)
@@ -52,7 +68,7 @@ bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.extended_fuses=0xf8
 
 ## 8MHz - ATMega168
 #bayeos_atmega328bb.menu.cpu.mega168_8mhz=ATMega168 (8 MHz)
-#bayeos_atmega328bb.menu.cpu.mega168_8mhz.build.mcu=atmega168
+#bayeos_atmega328bb.menu.cpu.mega168_8mhz.build.mcu=atmega168p
 #bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_size=14336
 #bayeos_atmega328bb.menu.cpu.mega168_8mhz.upload.maximum_data_size=1024
 #bayeos_atmega328bb.menu.cpu.mega168_8mhz.bootloader.file=atmega/ATmegaBOOT_168_atmega168_bayeos_8MHz_RTC.hex

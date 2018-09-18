@@ -117,7 +117,7 @@ volatile long rtc_seconds_correct;
 BayGPRS client(Serial, 0); //No Power Pin
 #else
 #include <BayTCPESP8266.h>
-BayESP8266 client(Serial, POWER_PIN); //No Power Pin
+BayESP8266 client(Serial, POWER_PIN);
 #endif
 
 
@@ -241,11 +241,11 @@ void sleepLCB() {
 void delayLCB(uint16_t _millis) {
 	_millis /= (1000 / TICKS_PER_SECOND);
 	noInterrupts();
-	uint16_t end_ticks = ticks + _millis + 1;
+	uint16_t end_ticks = ticks + _millis + 2;
 	interrupts();
 	do {
 		sleepLCB();
-	} while ((ticks < end_ticks));
+	} while ((ticks != end_ticks));
 }
 
 /*
@@ -387,7 +387,7 @@ uint8_t handleRF24(void) {
 #ifdef RF24_P1_LETTER
 	origin[0]=RF24_P1_LETTER;
 #endif
-	uint8_t count;
+	uint8_t count=0;
 	uint8_t rx = 0;
 	while (radio.available(&pipe_num)) {
 		count++;
@@ -508,7 +508,7 @@ uint8_t handleRF24(void) {
 	if (count > 10)
 		initRF24();
 
-	delay(1);
+	delay(2);
 	return rx;
 }
 
@@ -578,7 +578,16 @@ void checkAction0(void){
 
     if (gprs_status) {
       tx_res = client.sendMultiFromBuffer(1000);
+      if(tx_res) tx_error++;
+      else tx_error=0;
       blinkLED(tx_res + 1);
+
+      if(tx_error>5 && (tx_error % 5)==0){
+    	    digitalWrite(POWER_PIN, LOW);
+    	    delay(1000);
+    	    digitalWrite(POWER_PIN, HIGH);
+    	    client.begin(38400);
+      }
 
       while (! tx_res && myBuffer.available() && ! ISSET_ACTION(0)) {
         handleRF24();

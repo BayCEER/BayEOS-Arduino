@@ -23,9 +23,9 @@ const uint8_t gain1 = 3; //0-3: x1, x2, x4, x8
 const uint8_t gain2 = 3; //0-3: x1, x2, x4, x8
 const uint8_t gain3 = 3; //0-3: x1, x2, x4, x8
 /*
- * Note - setting gainl will result in the following maximum Voltages
- * 2,048 - 1,024 - 0,512 - 0,256
- */
+   Note - setting gainl will result in the following maximum Voltages
+   2,048 - 1,024 - 0,512 - 0,256
+*/
 
 
 //Advanced Configuration
@@ -45,6 +45,7 @@ const uint8_t gain3 = 3; //0-3: x1, x2, x4, x8
 #include <BayEOSLogger.h>
 #include <MCP342x.h>
 
+#define ACTION_COUNT 0
 #define CONNECTED_PIN 9
 #define POWER_PIN 7
 uint8_t connected = 0;
@@ -172,10 +173,9 @@ void measure() {
 
 void setup()
 {
-  initLCB(); //init time2   
-  pinMode(CONNECTED_PIN, INPUT);
-  digitalWrite(CONNECTED_PIN, HIGH);
-    pinMode(POWER_PIN,OUTPUT);
+  initLCB(); //init time2
+  pinMode(CONNECTED_PIN, INPUT_PULLUP);
+  pinMode(POWER_PIN, OUTPUT);
 
 #if WITH_COUNT0
   digitalWrite(2, HIGH); //Enable Pullup on Pin 2 == INT0
@@ -202,11 +202,6 @@ void setup()
 
 void loop()
 {
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
-
 #if WITH_INT0
   handleINT0Event();
 #endif
@@ -214,46 +209,55 @@ void loop()
   handleINT1Event();
 #endif
 
-
-  if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
-                                       (myRTC._seconds - last_measurement) >= SAMPLING_INT)) {
-    last_measurement = myRTC._seconds;
-    measure();
-  }
-  myLogger.run();
-
-  if (! connected && myLogger._logging_disabled) {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayLCB(200);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayLCB(800);
-    pinMode(LED_BUILTIN, INPUT);
-  }
+  if (ISSET_ACTION(7) || connected) {
+    UNSET_ACTION(7);
+    //Enable logging if RTC give a time later than 2010-01-01
+    if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
+      myLogger._logging_disabled = 0;
 
 
-  //sleep until timer2 will wake us up...
-  if (! connected) {
-    myLogger._mode = 0;
-    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-  }
 
-  //check if still connected
-  if (connected && digitalRead(CONNECTED_PIN)) {
-    connected++;
-    if (connected > 5) {
-      client.flush();
-      client.end();
-      connected = 0;
+
+    if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
+                                         (myRTC._seconds - last_measurement) >= SAMPLING_INT)) {
+      last_measurement = myRTC._seconds;
+      measure();
+    }
+    myLogger.run();
+
+    if (! connected && myLogger._logging_disabled) {
+      pinMode(LED_BUILTIN, OUTPUT);
+      digitalWrite(LED_BUILTIN, HIGH);
+      delayLCB(200);
+      digitalWrite(LED_BUILTIN, LOW);
+      delayLCB(800);
+      pinMode(LED_BUILTIN, INPUT);
+    }
+    //check if still connected
+    if (connected && digitalRead(CONNECTED_PIN)) {
+      connected++;
+      if (connected > 5) {
+        client.flush();
+        client.end();
+        connected = 0;
+        myLogger._mode = 0;
+      }
+    }
+
+    //Connected pin is pulled to GND
+    if (!connected && ! digitalRead(CONNECTED_PIN)) {
+      connected = 1;
+      adjust_OSCCAL();
+      client.begin(38400);
     }
   }
 
-  //Connected pin is pulled to GND
-  if (!connected && ! digitalRead(CONNECTED_PIN)) {
-    connected = 1;
-    adjust_OSCCAL();
-    client.begin(38400);
+  //sleep until timer2 will wake us up...
+  if (! connected) {
+    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
   }
+
+
 }
 
 

@@ -151,7 +151,7 @@ uint8_t handleRF24(void) {
 #ifdef RF24_P1_LETTER
 	origin[0]=RF24_P1_LETTER;
 #endif
-	uint8_t count;
+	uint8_t count=0;
 	uint8_t rx = 0;
 	while (radio.available(&pipe_num)) {
 		count++;
@@ -231,7 +231,7 @@ uint8_t handleRF24(void) {
 	if (count > 10)
 		initRF24();
 
-	delay(1);
+	delay(2); //Do not query RF24 to often...
 	return rx;
 }
 

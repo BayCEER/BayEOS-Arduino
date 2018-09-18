@@ -17,10 +17,8 @@
 
 #include "RF24_config.h"
 
-#if defined (RF24_LINUX)
+#if defined (RF24_LINUX) || defined (LITTLEWIRE)
   #include "utility/includes.h"
-#elif LITTLEWIRE
-  #include <LittleWireSPI/LittleWireSPI.h>
 #elif defined SOFTSPI
   #include <DigitalIO.h>
 #endif
@@ -59,17 +57,17 @@ private:
   SPIUARTClass uspi;
 #endif
 
-#if defined (RF24_LINUX)
+#if defined (RF24_LINUX) || defined (XMEGA_D3) /* XMEGA can use SPI class */
   SPI spi;
 #endif
 #if defined (MRAA)
   GPIO gpio;
 #endif
 
-  uint8_t ce_pin; /**< "Chip Enable" pin, activates the RX or TX role */
-  uint8_t csn_pin; /**< SPI Chip select */
+  uint16_t ce_pin; /**< "Chip Enable" pin, activates the RX or TX role */
+  uint16_t csn_pin; /**< SPI Chip select */
   uint16_t spi_speed; /**< SPI Bus Speed */
-#if defined (RF24_LINUX)
+#if defined (RF24_LINUX) || defined (XMEGA_D3)
   uint8_t spi_rxbuff[32+1] ; //SPI receive buffer (payload max 32 bytes)
   uint8_t spi_txbuff[32+1] ; //SPI transmit buffer (payload max 32 bytes + 1 byte for the command)
 #endif  
@@ -78,7 +76,6 @@ private:
   bool dynamic_payloads_enabled; /**< Whether dynamic payloads are enabled. */
   uint8_t pipe0_reading_address[5]; /**< Last address set on pipe 0 for reading. */
   uint8_t addr_width; /**< The address width to use - 3,4 or 5 bytes. */
-  uint32_t txRxDelay; /**< Var for adjusting delays depending on datarate */
   
 
 protected:
@@ -110,11 +107,11 @@ public:
    * @param _cepin The pin attached to Chip Enable on the RF module
    * @param _cspin The pin attached to Chip Select
    */
-  RF24(uint8_t _cepin, uint8_t _cspin);
+  RF24(uint16_t _cepin, uint16_t _cspin);
   //#if defined (RF24_LINUX)
   
     /**
-  * Optional Raspberry Pi Constructor
+  * Optional Linux Constructor
   *
   * Creates a new instance of this driver.  Before using, you create an instance
   * and send in the unique pins that this chip is connected to.
@@ -124,7 +121,7 @@ public:
   * @param spispeed For RPi, the SPI speed in MHZ ie: BCM2835_SPI_SPEED_8MHZ
   */
   
-  RF24(uint8_t _cepin, uint8_t _cspin, uint32_t spispeed );
+  RF24(uint16_t _cepin, uint16_t _cspin, uint32_t spispeed );
   //#endif
 
   #if defined (RF24_LINUX)
@@ -138,6 +135,11 @@ public:
    * @code radio.begin() @endcode
    */
   bool begin(void);
+
+  /**
+   * Checks if the chip is connected to the SPI bus
+   */
+  bool isChipConnected();
 
   /**
    * Start listening on the pipes opened for reading.
@@ -785,6 +787,17 @@ s   *
   void enableDynamicPayloads(void);
   
   /**
+   * Disable dynamically-sized payloads
+   *
+   * This disables dynamic payloads on ALL pipes. Since Ack Payloads
+   * requires Dynamic Payloads, Ack Payloads are also disabled.
+   * If dynamic payloads are later re-enabled and ack payloads are desired
+   * then enableAckPayload() must be called again as well.
+   *
+   */
+  void disableDynamicPayloads(void);
+  
+  /**
    * Enable dynamic ACKs (single write multicast or unicast) for chosen messages
    *
    * @note To enable full multicast or per-pipe multicast, use setAutoAck()
@@ -879,7 +892,7 @@ s   *
   /**
    * Get the CRC length
    * <br>CRC checking cannot be disabled if auto-ack is enabled
-   * @return RF24_DISABLED if disabled or RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
+   * @return RF24_CRC_DISABLED if disabled or RF24_CRC_8 for 8-bit or RF24_CRC_16 for 16-bit
    */
   rf24_crclength_e getCRCLength(void);
 
@@ -907,6 +920,31 @@ s   *
   * @param rx_ready Mask payload received interrupts
   */
   void maskIRQ(bool tx_ok,bool tx_fail,bool rx_ready);
+  
+  /**
+  * 
+  * The driver will delay for this duration when stopListening() is called
+  * 
+  * When responding to payloads, faster devices like ARM(RPi) are much faster than Arduino:
+  * 1. Arduino sends data to RPi, switches to RX mode
+  * 2. The RPi receives the data, switches to TX mode and sends before the Arduino radio is in RX mode
+  * 3. If AutoACK is disabled, this can be set as low as 0. If AA/ESB enabled, set to 100uS minimum on RPi
+  *
+  * @warning If set to 0, ensure 130uS delay after stopListening() and before any sends
+  */
+  
+  uint32_t txDelay;
+
+  /**
+  * 
+  * On all devices but Linux and ATTiny, a small delay is added to the CSN toggling function
+  * 
+  * This is intended to minimise the speed of SPI polling due to radio commands
+  *
+  * If using interrupts or timed requests, this can be set to 0 Default:5
+  */
+  
+  uint32_t csDelay;
   
   /**@}*/
   /**
@@ -950,6 +988,13 @@ s   *
    * @param address The 40-bit address of the pipe to open.
    */
   void openWritingPipe(uint64_t address);
+
+  /**
+   * Empty the receive buffer
+   *
+   * @return Current value of status register
+   */
+  uint8_t flush_rx(void);
 
 private:
 
@@ -1042,13 +1087,6 @@ private:
   uint8_t read_payload(void* buf, uint8_t len);
 
   /**
-   * Empty the receive buffer
-   *
-   * @return Current value of status register
-   */
-  uint8_t flush_rx(void);
-
-  /**
    * Retrieve the current status of the chip
    *
    * @return Current value of status register
@@ -1137,8 +1175,8 @@ private:
  */
 
  /**
- * @example GettingStarted.cpp
- * <b>For Raspberry Pi</b><br>
+ * @example gettingstarted.cpp
+ * <b>For Linux</b><br>
  * <b>Updated: TMRh20 2014 </b><br>
  *
  * This is an example of how to use the RF24 class to communicate on a basic level. Configure and write this sketch to two
@@ -1161,8 +1199,8 @@ private:
  */
  
  /**
- * @example GettingStarted_Call_Response.cpp
- * <b>For Raspberry Pi</b><br>
+ * @example gettingstarted_call_response.cpp
+ * <b>For Linux</b><br>
  * <b>New: TMRh20 2014</b><br>
  *
  * This example continues to make use of all the normal functionality of the radios including
@@ -1192,8 +1230,8 @@ private:
  */
  
  /**
- * @example Transfer.cpp
- * <b>For Raspberry Pi</b><br>
+ * @example transfer.cpp
+ * <b>For Linux</b><br>
  * This example demonstrates half-rate transfer using the FIFO buffers<br>
  *
  * It is an example of how to use the RF24 class.  Write this sketch to two
@@ -1284,7 +1322,7 @@ private:
  /**
  * @example pingpair_dyn.cpp
  *
- * This is an example of how to use payloads of a varying (dynamic) size on Raspberry Pi.
+ * This is an example of how to use payloads of a varying (dynamic) size on Linux.
  */
 
 /**
@@ -1293,18 +1331,6 @@ private:
  * This is a python example for RPi of how to use payloads of a varying (dynamic) size.
  */ 
  
-/**
- * @example pingpair_dyn.ino
- *
- * This is an example of how to use payloads of a varying (dynamic) size.
- */
- 
- /**
- * @example pingpair_dyn.ino
- *
- * This is an example of how to use payloads of a varying (dynamic) size.
- */
-
 /**
  * @example scanner.ino
  *
@@ -1343,7 +1369,7 @@ private:
  * - Uses SPI transactions on Arduino
  * - New layout for <a href="Portability.html">easier portability:</a> Break out defines & includes for individual platforms to RF24/utility
  * - <a href="MRAA.html">MRAA</a> support added ( Galileo, Edison, etc)
- * - <a href="BBB.html">BBB/Generic Linux </a> support via spidev & MRAA
+ * - <a href="Linux.html">Generic Linux support (SPIDEV)</a> support
  * - Support for RPi 2 added
  * - Major Documentation cleanup & update (Move all docs to github.io)
  *
@@ -1358,6 +1384,7 @@ private:
  * @li <a href="https://github.com/TMRh20/RF24/archive/master.zip"><b>Download</b></a>
  * @li <a href="https://github.com/tmrh20/RF24/"><b>Source Code</b></a>
  * @li <a href="http://tmrh20.blogspot.com/2014/03/high-speed-data-transfers-and-wireless.html"><b>My Blog:</b> RF24 Optimization Overview</a> 
+ * @li <a href="http://tmrh20.blogspot.com/2016/08/raspberry-pilinux-with-nrf24l01.html"><b>My Blog:</b> RPi/Linux w/RF24Gateway</a> 
  * @li <a href="http://www.nordicsemi.com/files/Product/data_sheet/nRF24L01_Product_Specification_v2_0.pdf">Chip Datasheet</a>
  *
  * **Additional Information and Add-ons**
@@ -1386,8 +1413,9 @@ private:
  *
  * @li <a href="Arduino.html"><b>Arduino</b></a> (Uno, Nano, Mega, Due, Galileo, etc)
  * @li <a href="ATTiny.html"><b>ATTiny</b></a>
- * @li Linux ( <a href="RPi.html"><b>RPi</b></a> , <a href="BBB.html"><b>BBB</b></a>, <a href="MRAA.html"><b>MRAA</b></a> supported boards ( Galileo, Edison, etc))
- * @li <a href="Python.html"><b>Python</b></a> wrapper available for RPi
+ * @li <a href="Linux.html"><b>Linux devices</b></a>( <a href="RPi.html"><b>RPi</b></a> , <a href="Linux.html"><b>Linux SPI userspace device</b></a>, <a href="MRAA.html"><b>MRAA</b></a> supported boards ( Galileo, Edison, etc), <a href="LittleWire.html"><b>LittleWire</b></a>)
+ * @li <a href="CrossCompile.html"><b>Cross-compilation</b></a> for linux devices
+ * @li <a href="Python.html"><b>Python</b></a> wrapper available for Linux devices
  *
  * <br>
  * **General µC Pin layout** (See the individual board support pages for more info)
@@ -1445,14 +1473,28 @@ private:
  *
  * Setup:<br>
  * 1. Install the digitalIO library<br>
- * 2. Open RF24_config.h in a text editor. Uncomment the line #define SOFTSPI<br>
- * 3. In your sketch, add #include DigitalIO.h
+ * 2. Open RF24_config.h in a text editor. 
+      Uncomment the line 
+      @code
+      #define SOFTSPI
+      @endcode
+      or add the build flag/option
+      @code
+      -DSOFTSPI
+      @endcode
+ * 3. In your sketch, add
+ *     @code
+ *     #include DigitalIO.h
+ *     @endcode
  *
  * @note Note: Pins are listed as follows and can be modified by editing the RF24_config.h file<br>
  *
- *     const uint8_t SOFT_SPI_MISO_PIN = 16;
- *     const uint8_t SOFT_SPI_MOSI_PIN = 15;
- *     const uint8_t SOFT_SPI_SCK_PIN = 14;
+ *     #define SOFT_SPI_MISO_PIN 16
+ *     #define SOFT_SPI_MOSI_PIN 15
+ *     #define SOFT_SPI_SCK_PIN 14
+ * Or add the build flag/option
+ *
+ *     -DSOFT_SPI_MISO_PIN=16 -DSOFT_SPI_MOSI_PIN=15 -DSOFT_SPI_SCK_PIN=14
  *
  * <br>
  * **Alternate Hardware (UART) Driven  SPI**
@@ -1561,27 +1603,27 @@ private:
  * 
  *
  *
- * @page BBB BeagleBone Black
+ * @page Linux Linux devices
  *
- * BeagleBone Black is supported via MRAA or SPIDEV.
+ * Generic Linux devices are supported via SPIDEV, MRAA, RPi native via BCM2835, or using LittleWire.
  *
- *  @note The SPIDEV option should work with most Linux systems supporting SPIDEV. <br>
- *  Users may need to edit the RF24/utility/BBB/spi.cpp file to configure the spi device. (Defaults: "/dev/spidev1.0";  or  "/dev/spidev1.1"; )
+ *  @note The SPIDEV option should work with most Linux systems supporting spi userspace device. <br>
  *
  * <br>
  * @section AutoInstall Automated Install 
- *(**Designed & Tested on RPi** - Defaults to SPIDEV on BBB)
+ *(**Designed & Tested on RPi** - Defaults to SPIDEV on devices supporting it)
  *
  * 
- * 1. Download the install.sh file from http://tmrh20.github.io/RF24Installer/RPi/install.sh
+ * 1. Install prerequisites if there are any (MRAA, LittleWire libraries, setup SPI device etc)
+ * 2. Download the install.sh file from http://tmrh20.github.io/RF24Installer/RPi/install.sh
  * @code wget http://tmrh20.github.io/RF24Installer/RPi/install.sh @endcode
- * 2. Make it executable:
+ * 3. Make it executable
  * @code chmod +x install.sh @endcode
- * 3. Run it and choose your options
+ * 4. Run it and choose your options
  * @code ./install.sh @endcode
- * 4. Run an example from one of the libraries
+ * 5. Run an example from one of the libraries
  * @code 
- * cd rf24libs/RF24/examples_RPi  
+ * cd rf24libs/RF24/examples_linux  
  * @endcode
  * Edit the gettingstarted example, to set your pin configuration
  * @code nano gettingstarted.cpp
@@ -1591,20 +1633,22 @@ private:
  *
  * <br>
  * @section ManInstall Manual Install
- * 1. Make a directory to contain the RF24 and possibly RF24Network lib and enter it: 
+ * 1. Install prerequisites if there are any (MRAA, LittleWire libraries, setup SPI device etc)
+ * @note See the <a href="http://iotdk.intel.com/docs/master/mraa/index.html">MRAA </a> documentation for more info on installing MRAA <br>
+ * 2. Make a directory to contain the RF24 and possibly RF24Network lib and enter it
  * @code
  *  mkdir ~/rf24libs 
  *  cd ~/rf24libs
 *  @endcode
- * 2. Clone the RF24 repo:
+ * 3. Clone the RF24 repo
  *    @code git clone https://github.com/tmrh20/RF24.git RF24 @endcode
- * 3. Change to the new RF24 directory
+ * 4. Change to the new RF24 directory
  *    @code cd RF24 @endcode
- * 4. Build the library, and run an example file: 
- * **Note:** See the <a href="http://iotdk.intel.com/docs/master/mraa/index.html">MRAA </a> documentation for more info on installing MRAA
- *    @code sudo make install  OR  sudo make install RF24_MRAA=1 @endcode
+ * 5. Configure build environment using @code ./configure @endcode script. It auto detectes device and build environment. For overriding autodetections, use command-line switches, see @code ./configure --help @endcode for description.
+ * 6. Build the library, and run an example file
+ * @code sudo make install @endcode
  * @code
- * cd examples_RPi  
+ * cd examples_linux  
  * @endcode
  * Edit the gettingstarted example, to set your pin configuration
  * @code nano gettingstarted.cpp 
@@ -1622,33 +1666,11 @@ private:
  * RF24 supports all MRAA supported platforms, but might not be tested on each individual platform due to the wide range of hardware support:<br>
  * <a href="https://github.com/TMRh20/RF24/issues">Report an RF24 bug or issue </a>
  *
- * @section Setup Setup
+ * @section Setup Setup and installation
  * 1. Install the MRAA lib
  * 2. As per your device, SPI may need to be enabled
+ * 3. Follow <a href="Linux.html">Linux installation steps</a> to install RF24 libraries
  * 
- * @section MRAA_Install Install 
- *
- * 1. Make a directory to contain the RF24 and possibly RF24Network lib and enter it: 
- * @code
- *  mkdir ~/rf24libs 
- *  cd ~/rf24libs
-*  @endcode
- * 2. Clone the RF24 repo:
- *    @code git clone https://github.com/tmrh20/RF24.git RF24 @endcode
- * 3. Change to the new RF24 directory
- *    @code cd RF24 @endcode
- * 4. Build the library: 
- *    @code sudo make install -B RF24_MRAA=1 @endcode
- * 5. Configure the correct pins in gettingstarted.cpp (See http://iotdk.intel.com/docs/master/mraa/index.html )
- *    @code
- *    cd examples_RPi  
- *    nano gettingstarted.cpp 
- *    @endcode
- * 6. Build an example
- *    @code
- *    make  
- *    sudo ./gettingstarted
- *    @endcode
  *
  * <br><br><br>
  *
@@ -1667,43 +1689,11 @@ private:
  * @code sudo raspi-config  @endcode
  * A. Update the tool via the menu as required<br>
  * B. Select **Advanced** and **enable the SPI kernel module** <br>
- * C. Update other software and libraries:
+ * C. Update other software and libraries
  * @code sudo apt-get update @endcode
  * @code sudo apt-get upgrade @endcode 
- * <br>
- * @section AutoInstall Automated Install
- *
- * 1. Download the install.sh file from http://tmrh20.github.io/RF24Installer/RPi/install.sh
- * @code wget http://tmrh20.github.io/RF24Installer/RPi/install.sh @endcode
- * 2. Make it executable:
- * @code chmod +x install.sh @endcode
- * 3. Run it and choose your options
- * @code ./install.sh @endcode
- * 4. Run an example from one of the libraries
- * @code 
- * cd rf24libs/RF24/examples_RPi  
- * make  
- * sudo ./gettingstarted  
- * @endcode
  * <br><br>
- * @section ManInstall Manual Install
- * 1. Make a directory to contain the RF24 and possibly RF24Network lib and enter it: 
- * @code
- *  mkdir ~/rf24libs 
- *  cd ~/rf24libs
-*  @endcode
- * 2. Clone the RF24 repo:
- *    @code git clone https://github.com/tmrh20/RF24.git RF24 @endcode
- * 3. Change to the new RF24 directory
- *    @code cd RF24 @endcode
- * 4. Build the library, and run an example file: 
- * @code sudo make install
- * cd examples_RPi  
- * make  
- * sudo ./gettingstarted
- * @endcode
  *
- * <br><br>
  * @section Build Build Options
  * The default build on Raspberry Pi utilizes the included **BCM2835** driver from http://www.airspayce.com/mikem/bcm2835
  * 1. @code sudo make install -B @endcode
@@ -1711,7 +1701,7 @@ private:
  * Build using the **MRAA** library from http://iotdk.intel.com/docs/master/mraa/index.html <br>
  * MRAA is not included. See the <a href="MRAA.html">MRAA</a> platform page for more information.
  *
- * 1. Install, and build MRAA:
+ * 1. Install, and build MRAA
  * @code
  * git clone https://github.com/intel-iot-devkit/mraa.git
  * cd mraa
@@ -1727,15 +1717,21 @@ private:
  * Run @code sudo ldconfig @endcode
  *
  * 3. Install RF24, using MRAA
- * @code sudo make install -B RF24_MRAA=1 @endcode
+ * @code
+ * ./configure --driver=MRAA
+ * sudo make install -B
+ * @endcode
  * See the gettingstarted example for an example of pin configuration
  *
- * Build using **spidev**:
+ * Build using **SPIDEV**
  *
- * 1. Edit the RF24/utility/BBB/spi.cpp file
- * 2. Change the default device definition to @code this->device = "/dev/spidev0.0";; @endcode
- * 3. Run @code sudo make install -B RF24_SPIDEV=1 @endcode
- * 4. See the gettingstarted example for an example of pin configuration
+ * 1. Make sure that spi device support is enabled and /dev/spidev\<a\>.\<b\> is present
+ * 2. Install RF24, using SPIDEV
+ * @code
+ * ./configure --driver=SPIDEV
+ * sudo make install -B
+ * @endcode
+ * 3. See the gettingstarted example for an example of pin configuration
  *
  * <br>
  * @section Pins Connections and Pin Configuration
@@ -1776,6 +1772,7 @@ private:
  * **SPI_DEV Constructor**
  *
  * @code RF24 radio(22,0); @endcode
+ * In general, use @code RF24 radio(<ce_pin>, <a>*10+<b>); @endcode for proper SPIDEV constructor to address correct spi device at /dev/spidev\<a\>.\<b\>
  *
  * See http://pi.gadgetoid.com/pinout
  *
@@ -1811,39 +1808,165 @@ private:
  *
  *  
  * @page Python Python Wrapper (by https://github.com/mz-fuzzy)
- * 
+ *
+ * @note Both python2 and python3 are supported.
+ *
  * @section Install Installation:  
- * 
- * Install the boost libraries:  (Note: Only the python libraries should be needed, this is just for simplicity)
  *
- * @code sudo apt-get install libboost1.50-all @endcode
+ * 1. Install the python-dev (or python3-dev) and boost libraries
+ * @code sudo apt-get install python-dev libboost-python-dev @endcode
+ * @note For python3 in Raspbian, it's needed to manually link python boost library, like this:
+ * @code sudo ln -s /usr/lib/arm-linux-gnueabihf/libboost_python-py34.so /usr/lib/arm-linux-gnueabihf/libboost_python3.so @endcode
  *
- * Build the library:  
+ * 2. Install python-setuptools (or python3-setuptools)
+ * @code sudo apt-get install python-setuptools @endcode
  *
+ * 3. Build the library
  * @code ./setup.py build   @endcode
+ * @note Build takes several minutes on arm-based machines. Machines with RAM <1GB may need to increase amount of swap for build.
  *
- * Install the library 
- *
+ * 4. Install the library
  * @code sudo ./setup.py install  @endcode
- *
- * 
  * See the additional <a href="pages.html">Platform Support</a> pages for information on connecting your hardware  <br>
  * See the included <a href="pingpair_dyn_8py-example.html">example </a> for usage information.   
  * 
- * Running the Example:  
- * 
+ * 5. Running the Example
  * Edit the pingpair_dyn.py example to configure the appropriate pins per the above documentation:  
- *
  * @code nano pingpair_dyn.py   @endcode
- *
- * Configure another device, Arduino or RPi with the <a href="pingpair_dyn_8py-example.html">pingpair_dyn</a> example  
- *
+ * Configure another device, Arduino or RPi with the <a href="pingpair_dyn_8py-example.html">pingpair_dyn</a> example <br>
  * Run the example  
- *
  * @code sudo ./pingpair_dyn.py  @endcode
  *
  * <br><br><br>
  *
+ * @page CrossCompile Linux cross-compilation
+ * 
+ * RF24 library supports cross-compilation. Advantages of cross-compilation:
+ *  - development tools don't have to be installed on target machine
+ *  - resources of target machine don't have to be sufficient for compilation
+ *  - compilation time can be reduced for large projects
+ *
+ *  Following prerequisites need to be assured:
+ *  - ssh passwordless access to target machine (https://linuxconfig.org/passwordless-ssh)
+ *  - sudo of a remote user without password (http://askubuntu.com/questions/334318/sudoers-file-enable-nopasswd-for-user-all-commands)
+ *  - cross-compilation toolchain for your target machine; for RPi
+ *  @code git clone https://github.com/raspberrypi/tools rpi_tools @endcode
+ *  and cross-compilation tools must be in PATH, for example
+ *  @code export PATH=$PATH:/your/dir/rpi-tools/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin @endcode
+ *
+ * @section CxSteps Cross compilation steps:
+ * 1. clone RF24 to a machine for cross-compilation
+ * @code
+ * git clone https://github.com/TMRh20/RF24
+ * cd RF24
+ * @endcode
+ * 2. configure for cross compilation
+ * @code ./configure --remote=pi@target_linux_host @endcode
+ * eventually
+ * @code ./configure --remote=pi@target_linux_host --driver=<driver> @endcode
+ * 3. build
+ * @code make @endcode
+ * 4. (opt) install library to cross-compilation machine into cross-exvironment - important for compilation of examples
+ * @code sudo make install @endcode
+ * 5. upload library to target machine
+ * @code make upload @endcode
+ * 6. (opt) compile examples
+ * @code
+ * cd examples_linux
+ * make
+ * @endcode
+ * 7. (opt) upload examples to target machine
+ * @code make upload @endcode
+ *
+ * @section CxStepsPython Cross comilation steps for python wrapper
+ *
+ * Prerequisites:
+ * - Python setuptools must be installed on both target and cross-compilation machines
+ *   @code sudo pip install setuptools @endcode
+ *   or
+ *   @code sudo apt-get install python-setuptools @endcode
+ *
+ * Installation steps:
+ * 1. Assure having libboost-python-dev library in your cross-compilation environment. Alternatively, you can install it into your target machine and copy /usr and /lib directories to the cross-compilation machine.
+ * For example
+ * @code
+ * mkdir -p rpi_root && rsync -a pi@target_linux_host:/usr :/lib rpi_root
+ * export CFLAGS="--sysroot=/your/dir/rpi_root -I/your/dir/rpi_root/usr/include/python2.7/"
+ * @endcode
+ *
+ * 2. Build the python wrapper
+ * @code
+ * cd pyRF24
+ * ./setup.py build --compiler=crossunix
+ * @endcode
+ *
+ * 3. Make the egg package
+ * @code ./setup.py bdist_egg --plat-name=cross @endcode
+ * dist/RF24-<version>-cross.egg should be created.
+ *
+ * 4. Upload it to the target machine and install there:
+ * @code
+ * scp dist/RF24-*-cross.egg pi@target_linux_host:
+ * ssh pi@target_linux_host 'sudo easy_install RF24-*-cross.egg'
+ * @endcode
+ *
+ * <br><br><br>
+ *
+ * @page ATXMEGA ATXMEGA
+ * 
+ * The RF24 driver can be build as a static library with Atmel Studio 7 in order to be included as any other library in another program for the XMEGA family.
+ *
+ * Currently only the <b>ATXMEGA D3</b> family is implemented.
+ * 
+ * @section Preparation 
+ * 
+ * Create an empty GCC Static Library project in AS7.<br>
+ * As not all files are required, copy the following directory structure in the project:
+ * 
+ * @code
+ * utility\
+ *   ATXMegaD3\
+ *     compatibility.c
+ *     compatibility.h
+ *     gpio.cpp
+ *     gpio.h
+ *     gpio_helper.c
+ *     gpio_helper.h
+ *     includes.h
+ *     RF24_arch_config.h
+ *     spi.cpp
+ *     spi.h
+ * nRF24L01.h
+ * printf.h
+ * RF24.cpp
+ * RF24.h
+ * RF24_config.h
+ * @endcode
+ * 
+ * @section Usage
+ * 
+ * Add the library to your project!<br>
+ * In the file where the **main()** is put the following in order to update the millisecond functionality:
+ * 
+ * @code
+ * ISR(TCE0_OVF_vect)
+ * {
+ * 	update_milisec();
+ * }
+ * @endcode
+ * 
+ * Declare the rf24 radio with **RF24 radio(XMEGA_PORTC_PIN3, XMEGA_SPI_PORT_C);**
+ * 
+ * First parameter is the CE pin which can be any available pin on the uC.
+ * 
+ * Second parameter is the CS which can be on port C (**XMEGA_SPI_PORT_C**) or on port D (**XMEGA_SPI_PORT_D**). 
+ * 
+ * Call the **__start_timer()** to start the millisecond timer.
+ * 
+ * @note Note about the millisecond functionality:<br>
+ * 
+ * 	The millisecond functionality is based on the TCE0 so don't use these pins as IO.<br>
+ * 	The operating frequency of the uC is 32MHz. If you have other frequency change the TCE0 registers appropriatly in function **__start_timer()** in **compatibility.c** file for your frequency. 
  *
  * @page Portability RF24 Portability
  *
@@ -1875,7 +1998,7 @@ private:
  *<br>
  * @section Device_Detection Device Detection
  *
- * 1. The main detection for Linux devices is done in the Makefile, with the includes.h from the proper hardware directory copied to RF24/utility/includes.h <br>
+ * 1. The main detection for Linux devices is done in the configure script, with the includes.h from the proper hardware directory copied to RF24/utility/includes.h <br>
  * 2. Secondary detection is completed in RF24_config.h, causing the include.h file to be included for all supported Linux devices <br>
  * 3. RF24.h contains the declaration for SPI and GPIO objects 'spi' and 'gpio' to be used for porting-in related functions.
  *
@@ -1888,4 +2011,3 @@ private:
  */
 
 #endif // __RF24_H__
-

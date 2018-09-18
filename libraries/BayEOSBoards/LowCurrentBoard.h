@@ -379,11 +379,11 @@ void sleepLCB() {
 void delayLCB(uint16_t _millis) {
 	_millis /= (1000 / TICKS_PER_SECOND);
 	noInterrupts();
-	uint16_t end_ticks = ticks + _millis + 1;
+	uint16_t end_ticks = ticks + _millis + 2;
 	interrupts();
 	do {
 		sleepLCB();
-	} while ((ticks < end_ticks));
+	} while ((ticks != end_ticks));
 }
 
 void readBatLCB() {

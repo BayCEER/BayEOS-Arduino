@@ -1,0 +1,114 @@
+##############################################################
+menu.cpu=Processor
+
+bayeos_atmega328bb.name=BayEOS Low Power Board
+
+bayeos_atmega328bb.upload.tool=arduino:avrdude
+bayeos_atmega328bb.upload.protocol=arduino
+bayeos_atmega328bb.upload.speed=57600
+
+bayeos_atmega328bb.bootloader.low_fuses=0xE2
+bayeos_atmega328bb.bootloader.high_fuses=0xDA
+bayeos_atmega328bb.bootloader.extended_fuses=0x06
+bayeos_atmega328bb.bootloader.file=atmega/ATmegaBOOT_168_atmega328_bayeos_8MHz_RTC.hex
+bayeos_atmega328bb.bootloader.unlock_bits=0x3F
+bayeos_atmega328bb.bootloader.lock_bits=0x0F
+bayeos_atmega328bb.bootloader.tool=arduino:avrdude
+
+bayeos_atmega328bb.build.core=arduino:arduino
+bayeos_atmega328bb.build.board=bayeos_atmega328bb
+bayeos_atmega328bb.build.variant=bayeos
+
+bayeos_atmega328bb.build.mcu=atmega328p
+bayeos_atmega328bb.build.f_cpu=8000000L
+bayeos_atmega328bb.upload.maximum_size=30720
+
+
+## 8MHz - ATMega328 - Variant
+bayeos_atmega328bb.menu.cpu.mega328p_8mhz=ATMega328 Variant (8 MHz)
+
+
+
+## 8MHz - ATMega168P 
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz=ATMega168p (8 MHz)
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.build.mcu=atmega168p
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.upload.maximum_size=14336
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.upload.maximum_data_size=1024
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.file=atmega/ATmegaBOOT_168_atmega168_bayeos_8MHz_RTC.hex
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.high_fuses=0xDE
+bayeos_atmega328bb.menu.cpu.mega168p_8mhz.bootloader.extended_fuses=0xf8
+
+## ATMega2560
+##############################################################
+bayeos_atmega328bb.menu.cpu.atmega2560=ATmega2560 (16 MHz, e.g. gBoard Pro)
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.0=0x2341
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.0=0x0010
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.1=0x2341
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.1=0x0042
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.2=0x2A03
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.2=0x0010
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.3=0x2A03
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.3=0x0042
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.4=0x2341
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.4=0x0210
+bayeos_atmega328bb.menu.cpu.atmega2560.vid.5=0x2341
+bayeos_atmega328bb.menu.cpu.atmega2560.pid.5=0x0242
+
+bayeos_atmega328bb.menu.cpu.atmega2560.upload.tool=arduino:avrdude
+bayeos_atmega328bb.menu.cpu.atmega2560.upload.maximum_data_size=8192
+
+bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.tool=arduino:avrdude
+bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.low_fuses=0xFF
+bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.unlock_bits=0x3F
+bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.lock_bits=0x0F
+
+bayeos_atmega328bb.menu.cpu.atmega2560.build.f_cpu=16000000L
+bayeos_atmega328bb.menu.cpu.atmega2560.build.core=arduino:arduino
+bayeos_atmega328bb.menu.cpu.atmega2560.build.variant=arduino:mega
+
+bayeos_atmega328bb.menu.cpu.atmega2560.upload.protocol=wiring
+bayeos_atmega328bb.menu.cpu.atmega2560.upload.maximum_size=253952
+bayeos_atmega328bb.menu.cpu.atmega2560.upload.speed=115200
+
+#bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.high_fuses=0xD8
+#bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.extended_fuses=0xFD
+#bayeos_atmega328bb.menu.cpu.atmega2560.bootloader.file=arduino:stk500v2/stk500boot_v2_mega2560.hex
+
+bayeos_atmega328bb.menu.cpu.atmega2560.build.mcu=atmega2560
+bayeos_atmega328bb.menu.cpu.atmega2560.build.board=AVR_MEGA2560
+
+
+## 16MHz - ATMega328
+bayeos_atmega328bb.menu.cpu.uno=ATMega328P (16 MHz, e.g. Uno)
+
+bayeos_atmega328bb.menu.cpu.uno.vid.0=0x2341
+bayeos_atmega328bb.menu.cpu.uno.pid.0=0x0043
+bayeos_atmega328bb.menu.cpu.uno.vid.1=0x2341
+bayeos_atmega328bb.menu.cpu.uno.pid.1=0x0001
+bayeos_atmega328bb.menu.cpu.uno.vid.2=0x2A03
+bayeos_atmega328bb.menu.cpu.uno.pid.2=0x0043
+bayeos_atmega328bb.menu.cpu.uno.vid.3=0x2341
+bayeos_atmega328bb.menu.cpu.uno.pid.3=0x0243
+
+bayeos_atmega328bb.menu.cpu.uno.upload.tool=arduino:avrdude
+bayeos_atmega328bb.menu.cpu.uno.upload.protocol=arduino:arduino
+bayeos_atmega328bb.menu.cpu.uno.upload.maximum_size=32256
+bayeos_atmega328bb.menu.cpu.uno.upload.maximum_data_size=2048
+bayeos_atmega328bb.menu.cpu.uno.upload.speed=115200
+
+bayeos_atmega328bb.menu.cpu.uno.build.mcu=atmega328p
+bayeos_atmega328bb.menu.cpu.uno.build.f_cpu=16000000L
+bayeos_atmega328bb.menu.cpu.uno.build.board=AVR_UNO
+bayeos_atmega328bb.menu.cpu.uno.build.core=arduino:arduino
+bayeos_atmega328bb.menu.cpu.uno.build.variant=arduino:standard
+
+## 14.7456MHz - ATMega328
+bayeos_atmega328bb.menu.cpu.mega328_14mhz=ATMega328P (14.7456 MHz)
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.build.f_cpu=14745600L
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.upload.maximum_size=30720
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.bootloader.low_fuses=0xFF
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.bootloader.high_fuses=0xDE
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.bootloader.extended_fuses=0xFD
+bayeos_atmega328bb.menu.cpu.mega328_14mhz.bootloader.file=atmega/ATmegaBOOT_168_atmega328_pro_8MHz.hex
+
+

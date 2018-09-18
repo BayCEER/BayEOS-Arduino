@@ -31,7 +31,7 @@ void setup()
   //myBuffer.reset(); //This will set all pointers to zero
   myBuffer.skip(); //This will move read pointer to write pointer
   myBuffer.setRTC(myRTC, 0); //Nutze RTC relativ!
-  client.setBuffer(myBuffer, 20); //use skip!
+  client.setBuffer(myBuffer, 120); //use skip!
   initLCB(); //init time2
   readBatLCB();
   while(!bme.begin(0x76)){};

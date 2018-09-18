@@ -82,6 +82,11 @@ public:
 	 */
 	uint8_t freeSpace(uint8_t length);
 
+	/**
+	 * Gives free space left in buffer
+	 */
+	unsigned long freeSpace(void);
+
 
 	/**
 	 * Read packet to dest

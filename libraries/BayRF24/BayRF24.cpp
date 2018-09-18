@@ -18,6 +18,7 @@ uint8_t BayRF24::sendPayload(void) {
 	uint8_t curr_pa = 0;
 	while (!res && curr_pa < 4) {
 		setPALevel((rf24_pa_dbm_e) curr_pa);
+		delayMicroseconds(random(2000));
 		res = RF24::write(getPayload(), getPacketLength());
 		curr_pa++;
 	}
@@ -32,6 +33,11 @@ uint8_t BayRF24::sendPayload(void) {
 	return !res;
 }
 
+void BayRF24::setTXAddr(uint64_t address){
+	_pipe = address;
+
+}
+
 void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
 		RF24_PA_HIGH, rf24_datarate_e rate = RF24_250KBPS) {
 	_pipe = address;
@@ -43,7 +49,9 @@ void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
 	setDataRate(rate);
 	setPALevel(pa_level);
 	_pa_level = pa_level;
-	setRetries(15, 15);
+//changed 0.1.2 - as we normally have a storage on board
+//User can call client.setRetries(15,15) after client.init
+	setRetries(15, 8);
 	setAutoAck(true);
 	if (_powerdown)
 		powerDown();
