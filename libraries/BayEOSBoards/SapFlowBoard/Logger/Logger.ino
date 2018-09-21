@@ -183,7 +183,8 @@ void setup()
 
 void loop() {
   measure();
-  if (myLogger._logging_disabled && myRTC.now().get() > 315360000L)
+  //Enable logging if RTC give a time later than 2010-01-01
+  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
     myLogger._logging_disabled = 0;
   myLogger.run();
   if (myLogger._logged_flag) {
@@ -200,14 +201,12 @@ void loop() {
   if (! connected) {
     myLogger._mode = 0;
   }
+  //check if still connected
   if (connected && digitalRead(CONNECTED_PIN)) {
-    connected++;
-    if (connected > 5) {
-      client.flush();
-      client.end();
-      connected = 0;
-    }
+    client.flush();
+    client.end();
   }
+  //Connected pin is pulled to GND
   if (!connected && ! digitalRead(CONNECTED_PIN)) {
     connected = 1;
     adjust_OSCCAL();

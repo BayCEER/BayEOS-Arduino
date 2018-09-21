@@ -1,10 +1,22 @@
-/****************************************************************
+/*
+   Low Power ADC-Board
+   is a variant of BayEOS Low Power Board
 
-   Example Sketch for running BayEOS-LCB with SPI-flash as logger
+   It has 12 screw clamps
+   1,7:       GRD
+   2,8:       VCC
+   3-5,9-11:  A0-A2,A3-A5
+   6,12;      MOSFET Power switch via D7
 
-***************************************************************/
+   For EC-5 soil moisture sensors solder a 2.5V LDO voltageregulator on the board.
+   Exitation time must be lower then 10ms
+
+   VWC = 0.00119 * mV - 0.400
+
+
+*/
 #define SAMPLING_INT 30
-#define NUMBER_OF_CHANNELS 6
+#define NUMBER_OF_CHANNELS 1
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>
@@ -25,27 +37,29 @@ BayEOSLogger myLogger;
 
 
 //Add your sensor measurements here!
-float values[NUMBER_OF_CHANNELS ];
+float values[NUMBER_OF_CHANNELS + 1];
 uint16_t count;
 unsigned long last_measurement;
 
+//Add your sensor measurements here!
 uint16_t current_tics, last_tics;
-
-
 void measure() {
   if (myLogger._logged_flag) {
     myLogger._logged_flag = 0;
     count = 0;
-    for (uint8_t i = 0; i < NUMBER_OF_CHANNELS; i++) {
+    for (uint8_t i = 0; i < NUMBER_OF_CHANNELS + 1; i++) {
       values[i] = 0;
     }
   }
 
-  //Add your sensor measurements here!
-
   digitalWrite(POWER_PIN, HIGH);
+  analogReference(INTERNAL);
+  delay(5);
+  for (uint8_t ch = 0; ch < NUMBER_OF_CHANNELS; ch++) {
+    values[ch + 1] += 0.00119 * 1100.0 / 1023 * analogRead(A0 + ch) - 0.400;
+  }
   analogReference(DEFAULT);
-  if (digitalRead(CONNECTED_PIN)) //Read Battery 
+  if (digitalRead(CONNECTED_PIN))
     myLogger._bat = (3.3 * (100 + 100) / 100 / 1023 * analogRead(A7)) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
@@ -106,6 +120,7 @@ void loop() {
   if (connected && digitalRead(CONNECTED_PIN)) {
     client.flush();
     client.end();
+    connected = 0;
   }
   //Connected pin is pulled to GND
   if (!connected && ! digitalRead(CONNECTED_PIN)) {

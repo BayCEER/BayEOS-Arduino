@@ -261,6 +261,13 @@ DateTime RTC_Timer2::now() {
     return s;
 }
 
+unsigned long RTC_Timer2::get() {
+	noInterrupts();
+    unsigned long s=_seconds;
+    interrupts();
+    return s;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // RTC_Millis implementation
 
@@ -273,6 +280,7 @@ void RTC_Millis::adjust(const DateTime& dt) {
 DateTime RTC_Millis::now() {
     return offset + millis() / 1000;
 }
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // RTC RX8025 implementation

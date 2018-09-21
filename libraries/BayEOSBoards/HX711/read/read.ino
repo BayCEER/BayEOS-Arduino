@@ -1,3 +1,11 @@
+/*
+ * Example Sketch for BayEOS-HX711-Board
+ * 
+ * The Board has two HX711 modules. 
+ * 
+ * 
+ */
+
 #include <HX711Array.h>
 #include <NTC.h>
 #include <Sleep.h>

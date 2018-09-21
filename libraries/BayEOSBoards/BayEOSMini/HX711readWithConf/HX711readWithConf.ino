@@ -1,3 +1,11 @@
+/*
+ * Example Sketch for running an HX711 Module on a BayEOSMini-Board
+ * 
+ * This sketch can be used for storing calibration data to
+ * ATMega328 EEPROM
+ *  
+ */
+
 #include <HX711Array.h>
 #include <NTC.h>
 #include <Sleep.h>

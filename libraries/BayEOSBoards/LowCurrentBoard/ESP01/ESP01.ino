@@ -35,7 +35,7 @@ void setup(void) {
   initLCB(); //init time2
   adjust_OSCCAL();
   //CHANGE CONFIG!!
-  client.readConfigFromStringPGM(PSTR("132.180.112.55|80|gateway/frame/saveFlat|import|import|WLAN-T1|pinternet.interkom.de|||5659|"));
+  client.readConfigFromStringPGM(PSTR("132.180.112.55|80|gateway/frame/saveFlat|import|import|WLAN-T1|SSID|PW|||"));
   client.powerUp();
   res = client.begin(115200);
   blinkLED(res + 1);

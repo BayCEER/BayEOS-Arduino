@@ -42,6 +42,7 @@ public:
     void adjust(const DateTime& dt);
     DateTime now();
     volatile long _seconds;
+    unsigned long get();
 };
 
 // RTC using the internal millis() clock, has to be initialized before use

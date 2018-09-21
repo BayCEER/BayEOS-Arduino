@@ -1,3 +1,13 @@
+/*
+ * Example Sketch for BayEOS CR2032 Mini Board with a
+ * BME-Sensor attached to I2C
+ * 
+ * The board should run with a CR2032 coin cell for several months
+ * 
+ * This Sketch uses Origin Frames. This overcomes the 6 pipe limitation
+ * of RF24. However, some frames may get lost, when boards send at the same time
+ */
+
 #define SAMPLING_INT 32
 
 //We use routed origin frames in this sketch

@@ -5,6 +5,8 @@
  * Sleep-Mode: 30µA
  * Measuring:  20mA
  * 
+ * Calibration data must be present in ATMega328 EEPROM
+ * use HX711readWithConf to store calibration data
  * 
  **************************************/
  
