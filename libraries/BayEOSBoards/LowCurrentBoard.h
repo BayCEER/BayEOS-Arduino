@@ -81,12 +81,16 @@ RTC_Timer2 myRTC;
 volatile long rtc_seconds_correct;
 #endif
 
+
 /*
  * ISR for timer2
  * increments RTC-Time
  * sets action bits
  */
 ISR(TIMER2_OVF_vect) {
+	#ifdef WITH_TIMER2_ISR_TASK
+	timer2_isr_task();
+	#endif
 	ticks++;
 	if(adjust_osccal_flag){
 		last_micros=current_micros;

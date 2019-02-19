@@ -64,7 +64,7 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_TimestampFrame 0x9 /* [0x9][(unsigned long) timestamp (sec since 2000-01-01 00:00 GMT)][Original Frame] */
 #define BayEOS_BinaryFrame 0xa /* [0xa][(unsigned long) pos][binary data] */
 #define BayEOS_OriginFrame 0xb /* [0xb][origin_length][ORIGIN][Original Frame] -> Origin replaces current origin*/
-#define BayEOS_MillisecondTimestampFrame 0xc /* [0xc][(long long) timestamp (millisec since 1970-01-01 00:00 GMT)][Original Frame] */]
+#define BayEOS_MillisecondTimestampFrame 0xc /* [0xc][(long long) timestamp (millisec since 1970-01-01 00:00 GMT)][Original Frame] */
 #define BayEOS_RoutedOriginFrame 0xd /* [0xd][origin_length][ORIGIN][Original Frame] -> Origin is appended to current origin using "/" */
 
 /*Send commands to the Gateway via frame/save interface */

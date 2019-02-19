@@ -10,6 +10,7 @@
 #include <BaySerial.h>
 
 BaySerial client = BaySerial(Serial);
+#define SAMPLING_INT 8
 
 #include <LowCurrentBoard.h>
 

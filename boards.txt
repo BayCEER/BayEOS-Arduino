@@ -56,6 +56,13 @@ bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2=ATMega328PB (8 MHz, 2.7V BOD)
 bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2.bootloader.extended_fuses=0x05
 bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2.build.mcu=atmega328pb
 
+## 8MHz - ATMega328PB 2.7V BOD
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2_nq=ATMega328PB (8 MHz, 2.7V BOD, NO RTC Crystal)
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2_nq.bootloader.extended_fuses=0x05
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2_nq.build.mcu=atmega328pb
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2_nq.bootloader.file=atmega/ATmegaBOOT_168_atmega328_pro_8MHz.hex
+
+
 
 ## 8MHz - ATMega168P 
 bayeos_atmega328bb.menu.cpu.mega168p_8mhz=ATMega168p (8 MHz, 1.8V BOD)

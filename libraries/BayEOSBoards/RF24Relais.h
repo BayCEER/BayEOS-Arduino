@@ -50,6 +50,7 @@ void initBoard() {
 	pinMode(R1_PIN, OUTPUT);
 	pinMode(LED_BUILTIN, OUTPUT);
 	client.init(RF24ADDRESS, RF24CHANNEL);
+	client.setRetries(15,15);
 	for (uint8_t i = 0; i < 6; i++) {
 		client.openReadingPipe(i, pipes[i]);
 	}
@@ -149,5 +150,5 @@ void runBoard(void) {
 			rx_error++;
 	}
 	commandHandler();
-	delay(50);
+	delay(5);
 }

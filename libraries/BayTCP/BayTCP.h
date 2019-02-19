@@ -160,7 +160,7 @@ protected:
 
 	uint8_t _mac_ip[6];
 	char _config_buffer[BayTCP_CONFIG_SIZE];
-	char _pgm_buffer[20];
+//	char _pgm_buffer[20];
 	char* _server; //0
 	char* _port; //1
 	char* _path; //2

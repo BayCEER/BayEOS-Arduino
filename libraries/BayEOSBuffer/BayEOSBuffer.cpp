@@ -81,6 +81,7 @@ unsigned long BayEOSBuffer::available(void) {
 }
 
 unsigned long BayEOSBuffer::freeSpace(void) {
+	if(_read_pos==_write_pos) return _max_length;
 	return (((unsigned long) (_max_length + _read_pos - _write_pos)) % _max_length);
 }
 

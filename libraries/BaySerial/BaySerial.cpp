@@ -63,12 +63,24 @@ void BaySerialInterface::sendFrame(void){
 }
 
 uint8_t BaySerialInterface::sendPayload(void){
+	if(_cts_pin){
+		for(uint8_t i=0;i<3;i++){
+			pinMode(_cts_pin,INPUT); //release CTS line for a short time
+			if( ! digitalRead(_cts_pin)) return TX_BUSY;
+			pinMode(_cts_pin,OUTPUT); //pull down CTS line
+			delayMicroseconds(random(1000));
+		}
+		begin(_baud);
+	}
 	if(_break) return TX_BREAK;
 	sendFrame();
-	uint8_t res=0;
-	if(res=readPacket(API_ACK)) return res;
-	else if(_ack==TX_OK) return 0;
-	else return 1;
+	uint8_t res=readPacket(API_ACK);
+	if(_cts_pin){
+		end();
+		pinMode(_cts_pin,INPUT);
+	}
+	if(! res && _ack!=TX_OK) res=1;
+	return res;
 
 }
 uint8_t BaySerialInterface::readIntoPayload(int timeout) {
@@ -129,8 +141,10 @@ uint8_t BaySerialInterface::readPacket(uint8_t type) {
 	}
 }
 
-BaySerial::BaySerial(HardwareSerial &serial,int timeout){
+BaySerial::BaySerial(HardwareSerial &serial,int timeout,long baud,uint8_t cts_pin){
    BaySerialInterface::_timeout=timeout;
+   BaySerialInterface::_baud=baud;
+   BaySerialInterface::_cts_pin=cts_pin;
    _serial=&serial;
 }
 
@@ -141,6 +155,7 @@ int BaySerial::i_available(void){
 	return _serial->available();
 }
 void BaySerial::begin(long baud){
+	_baud=baud;
 	_serial->begin(baud);
 }
 void BaySerial::flush(void){

@@ -1,20 +1,22 @@
-#include <CO2K33.h>
+#include <CO2K30.h>
 
-CO2K33 sensor;
+CO2K30 sensor;
 
 void setup() {
   Serial.begin(9600);
   sensor.begin();
   digitalWrite(SDA,HIGH);
   digitalWrite(SCL,HIGH);
+  pinMode(7,OUTPUT);
+  digitalWrite(7,HIGH);
   /*
    * Performe a Backgroud Calibration on Setup
    * Assumes that sensor is exposed to 400ppm CO2
    */
-  Serial.println("Starting Background Calibration");
-  uint8_t res=sensor.backgroundCalibration();
-  Serial.print("res=");
-  Serial.println(res);
+ // Serial.println("Starting Background Calibration");
+ // uint8_t res=sensor.backgroundCalibration();
+ // Serial.print("res=");
+ // Serial.println(res);
   
   res=sensor.triggerMeasurement();
   Serial.print("res=");

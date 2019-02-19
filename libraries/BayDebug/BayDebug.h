@@ -28,6 +28,29 @@ private:
 
 };
 
+class BayDebugCharbuffer : public BayEOSDebugInterface {
+public:
+	/**
+	 * Constructor
+	 */
+	BayDebugCharbuffer(char* buffer, int size);
+	char* get(void);
+	uint8_t sendPayload(void);
+
+private:
+	char* _buffer;
+	char _tmp[12]; //for itoa...
+	int _size;
+	int _pos;
+	int available(void);
+	int read(void);
+	size_t write(uint8_t b);
+    int peek(void);
+    void flush(void);
+
+};
+
+
 class BayDebug : public BayEOSDebugInterface {
 public:
 	/**

@@ -176,7 +176,7 @@ void sendStatus(void){
     pinMode(A0, INPUT);
     client.addChannelValue( 1.1 * 320 / 100 / 1023 * 1000 * adc);
     analogReference(DEFAULT);
-    client.addChannelValue((millis()-last_status)/SAMPLING_INT*10);
+    client.addChannelValue((float)(millis()-last_status)*10/SAMPLING_INT);
     last_status=millis();
 #if WITH_NTC
     float t = ntc.getTemp();

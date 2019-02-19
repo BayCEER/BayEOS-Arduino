@@ -29,6 +29,7 @@
 #define TX_OK 0x1
 #define TX_CHECKSUM_FAILED 0x2
 #define TX_BREAK 0x3
+#define TX_BUSY 0x4
 
 #include <inttypes.h>
 #include <BayEOS.h>
@@ -43,6 +44,7 @@ public:
 	 * 1 == no success
 	 * 2 == timeout
 	 * 3 == break
+	 * 4 == cts_busy
 	 */
 	uint8_t sendPayload(void);
 
@@ -86,6 +88,8 @@ protected:
 	uint8_t _ack;
 	uint8_t _pos;
 	uint8_t _break;
+	uint8_t _cts_pin=0;
+	long _baud;
 
 
 };
@@ -97,7 +101,7 @@ public:
 	/**
 	 * Constructor
 	 */
-	BaySerial(HardwareSerial& serial,int timeout=1000);
+	BaySerial(HardwareSerial& serial,int timeout=1000,long baud=38400,uint8_t cts_pin=0);
 	//BaySerial(void);
 
 	int available(void);

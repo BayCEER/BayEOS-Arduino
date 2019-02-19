@@ -138,7 +138,7 @@ float MCP342x::getData(byte adc_addr)
       if ((output_bcd[2]&B10000000) == 0) {readOK = true; break;} 
   }
 
-  if (!readOK) return 100.0; 
+  if (!readOK) return NAN;
 
   zahl = 0;
   zahl = output_bcd[0];

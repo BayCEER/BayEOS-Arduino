@@ -140,11 +140,11 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 #endif
 	printlnP(" HTTP/1.1");
 	printP("Authorization: Basic ");
-	strcpy(_pgm_buffer, _user);
-	strcat(_pgm_buffer, ":");
-	strcat(_pgm_buffer, _password);
-	base64_encode(_base64buffer, (char*) _pgm_buffer, strlen(_pgm_buffer));
-	_base64buffer[base64_enc_len(strlen(_pgm_buffer))] = 0;
+	strcpy(_base64buffer+70, _user);
+	strcat(_base64buffer+70, ":");
+	strcat(_base64buffer+70, _password);
+	base64_encode(_base64buffer, (char*) _base64buffer+70, strlen(_base64buffer+70));
+	_base64buffer[base64_enc_len(strlen(_base64buffer+70))] = 0;
 	println(_base64buffer); //BASE64
 #if BayTCP_DEBUG_INPUT
 	BayTCP_DEBUG_INTERFACE.println(_base64buffer);
@@ -154,7 +154,7 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 	BayTCP_DEBUG_INTERFACE.println(_server);
 #endif
 	println(_server);
-	printlnP("User-Agent: BayTCP");
+	printlnP("User-Agent: BayTCP-1.0");
 	printlnP("Content-Type: application/x-www-form-urlencoded");
 	printlnP("Connection: close");
 	printP("Content-Length: ");
@@ -451,8 +451,8 @@ uint8_t BayTCPInterface::wait_forPGM(const char* str, uint16_t timeout,
 		uint8_t bytes, char* buffer) {
 	uint8_t length = 0;
 	while (true) {
-		_pgm_buffer[length] = pgm_read_byte(str);
-		if (!_pgm_buffer[length])
+		_base64buffer[length] = pgm_read_byte(str);
+		if (!_base64buffer[length])
 			break;
 		str++;
 		length++;
@@ -471,7 +471,7 @@ uint8_t BayTCPInterface::wait_forPGM(const char* str, uint16_t timeout,
 #endif
 
 		if (offset < length) {
-			if (c == _pgm_buffer[offset])
+			if (c == _base64buffer[offset])
 				offset++;
 			else
 				offset = 0;
