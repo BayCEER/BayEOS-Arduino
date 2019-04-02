@@ -14,24 +14,21 @@
 
 #include <BaySerial.h>
 
-// Client with timeout 300ms, 9600 baud and CTS-pin 9
-BaySerial client=BaySerial(Serial,300,9600,9);
+// Client with timeout 300ms, 38400 baud and CTS-pin 9
+BaySerial client(Serial,300,38400,9);
 
 
 void setup(void){
+  pinMode(LED_BUILTIN,OUTPUT);
 //Do not call client.begin(...) here
 //client.begin and client.end is automatically called by sendPayload()
 }
 
 void loop(void){
-   client.startDataFrame();
+   client.startDataFrameWithOrigin(BayEOS_ChannelFloat32le,"Test-Board",0,1);
    client.addChannelValue(millis()/1000);     
    client.addChannelValue(analogRead(A0));     
    client.sendPayload();
-  
-   client.sendMessage("Just a message ;-)");
-
-   client.sendError("Just a test error message ;-)");
-   
+    
   delay(5000);
 }

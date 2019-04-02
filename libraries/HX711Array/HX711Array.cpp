@@ -20,7 +20,7 @@ void HX711Array::begin(uint8_t* dout, uint8_t length, uint8_t pd_sck,
 	_p = (uint8_t*) _values;
 	pinMode(_pd_sck, OUTPUT);
 	for (uint8_t i = 0; i < _length; i++) {
-		pinMode(_dout[i], INPUT);
+		pinMode(_dout[i], INPUT_PULLUP);
 	}
 	set_gain(gain);
 }

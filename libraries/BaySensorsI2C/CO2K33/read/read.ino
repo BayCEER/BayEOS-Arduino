@@ -1,6 +1,6 @@
-#include <CO2K30.h>
+#include <CO2K33.h>
 
-CO2K30 sensor;
+CO2K33 sensor;
 
 void setup() {
   Serial.begin(9600);
@@ -18,10 +18,6 @@ void setup() {
  // Serial.print("res=");
  // Serial.println(res);
   
-  res=sensor.triggerMeasurement();
-  Serial.print("res=");
-  Serial.println(res);
-  delay(25000);
 }
 
 void loop() {

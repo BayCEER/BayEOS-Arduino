@@ -3,6 +3,10 @@
 #define ADR_C A0
 #define INHIB A3
 
+#ifndef MAX11212_REFERENCE
+#define MAX11212_REFERENCE 3.3
+#endif
+
 #include <MAX11212.h>
 
 MAX11212 adc(A5,A4);
@@ -23,7 +27,7 @@ float readChannel(uint8_t nr, uint16_t delaytime=20){
 	digitalWrite(ADR_C,nr&0x4);
 	digitalWrite(INHIB,LOW);
 	delay(delaytime);
-	float v=3.3*adc.read()/131071;
+	float v=MAX11212_REFERENCE*adc.read()/131071;
 	digitalWrite(INHIB,HIGH);
 	return v;
 

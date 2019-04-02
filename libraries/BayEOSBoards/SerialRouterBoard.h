@@ -114,8 +114,14 @@ volatile long rtc_seconds_correct;
 #include <BayTCPSim900.h>
 BayGPRS client(Serial, 0); //No Power Pin
 #else
+#ifdef WLAN_CONFIG
 #include <BayTCPESP8266.h>
 BayESP8266 client(Serial, POWER_PIN);
+#else
+#include <BayDebug.h>
+BayDebug client(Serial);
+#define DEBUG_CONFIG 1
+#endif
 #endif
 
 
@@ -277,15 +283,20 @@ void initLCB() {
   rx_client.setBuffer(myBuffer);
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
-#ifdef GPRS_CONFIG
-  client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
-#else
-  client.readConfigFromStringPGM(PSTR(WLAN_CONFIG));
-#endif
-
   blinkLED(2);
   adjust_OSCCAL();
+#ifdef GPRS_CONFIG
+  client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
   tx_res = client.begin(38400);
+#else
+#ifdef WLAN_CONFIG
+  client.readConfigFromStringPGM(PSTR(WLAN_CONFIG));
+  tx_res = client.begin(38400);
+#else
+  client.begin(38400,1);
+#endif
+#endif
+
 #ifdef GPRS_CONFIG
   if (! tx_res) myRTC.adjust(client.now());
 #endif
@@ -406,13 +417,13 @@ void checkAction0(void){
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
     client.addChannelValue(myBuffer.readPos());
-#ifdef WLAN_CONFIG
-    client.addChannelValue(0);
-#else
+#ifdef GPRS_CONFIG
     if (gprs_status)
       client.addChannelValue(client.getRSSI());
     else
       client.addChannelValue(0);
+#else
+    client.addChannelValue(0);
 #endif
     client.addChannelValue(batLCB);
     client.addChannelValue(tx_error);
@@ -429,6 +440,7 @@ void checkAction0(void){
 #endif
     client.writeToBuffer();
 
+#ifndef DEBUG_CONFIG
     if (! gprs_status && batLCB > 3.9) {
       client.begin(38400);
 #ifdef NRF24_CHANNEL
@@ -444,35 +456,71 @@ void checkAction0(void){
        gprs_status = 0;
       }
     }
+#endif
 
     if (gprs_status) {
+#ifndef DEBUG_CONFIG
       tx_res = client.sendMultiFromBuffer(1000);
+#else
+      tx_res = client.sendFromBuffer();
+#endif
       if(tx_res) tx_error++;
       else tx_error=0;
       blinkLED(tx_res + 1);
-
+#ifndef DEBUG_CONFIG
       if(tx_error>5 && (tx_error % 5)==0){
     	    digitalWrite(POWER_PIN, LOW);
     	    delay(1000);
     	    digitalWrite(POWER_PIN, HIGH);
     	    client.begin(38400);
       }
+#endif
 
       while (! tx_res && myBuffer.available() && ! ISSET_ACTION(0)) {
 #ifdef NRF24_CHANNEL
         handleRF24();
 #endif
-        tx_res = client.sendMultiFromBuffer(1000);
+
+#ifndef DEBUG_CONFIG
+      tx_res = client.sendMultiFromBuffer(1000);
+#else
+      tx_res = client.sendFromBuffer();
+#endif
         blinkLED(tx_res + 1);
       }
     } else {
       digitalWrite(POWER_PIN, LOW);
-      digitalWrite(TXRX_PIN,1); //RX-MODE
-      pinMode(CTS_PIN,INPUT);//Free RX
     }
+#ifdef DEBUG_CONFIG
+    Serial.flush();
+#endif
+    digitalWrite(TXRX_PIN,1); //RX-MODE
+    pinMode(CTS_PIN,INPUT);//Free RX
+
 #ifdef WLAN_CONFIG
     client.powerDown();
 #endif
 
 
+}
+
+void startLCB() {
+	blinkLED(3);
+	delayLCB(2000);
+	noInterrupts();
+	action = 0;
+	ticks = 0;
+	myRTC._seconds=SAMPLING_INT-1;
+	interrupts();
+}
+
+void readRX(){
+ uint8_t res = rx_client.readIntoPayload();
+ if (res == 0) {
+   rx_client.writeToBuffer();
+   led_blink_rx1=1;
+   rx1_count++;
+ } else if (res == 1) {
+   rx1_error++;
+ }
 }
