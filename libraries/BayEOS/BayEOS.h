@@ -77,6 +77,8 @@ Note RSSI is negative but without sign as uint8_t
 //#define BayEOS_GatewayCommand_SetChannelName 0x21 /* [0xe][0x2][NR][Name]  */
 
 #define BayEOS_ChecksumFrame 0xf /* [0xf][frame][checksum_16bit] */
+#define BayEOS_DelayedSecondFrame 0x10 /* [0x10][(unsigned long) delay (sec)][Original Frame] */
+#define BayEOS_RF24Frame 0x11 /* [0x11][uint8_t pipe][Original Frame] */
 
 /* BayEOS Data Frames */
 /* [0x1][0x1][offset][[float]]+...  */
@@ -277,8 +279,16 @@ public:
 	/**
 	 * Set first five bytes of payload buffer
 	 */
-	void startTimestampFrame(unsigned long timestamp);
+	void startDelayedSecondFrame(unsigned long delay);
+	/**
+	 * Set first two bytes of payload buffer
+	 */
+	void startRF24Frame(uint8_t pipe);
 
+	/**
+	 * Set first five bytes of payload buffer
+	 */
+	void startTimestampFrame(unsigned long timestamp);
 	/**
 	 * Set first two bytes of payload buffer
 	 */

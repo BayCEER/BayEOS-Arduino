@@ -33,6 +33,7 @@
 
 #include <inttypes.h>
 #include <BayEOS.h>
+#include <BayEOSCommands.h>
 #include <HardwareSerial.h>
 #include <Arduino.h>
 
@@ -114,5 +115,51 @@ public:
 
 };
 
+/*
+ * BaySerialESP uses BaySerial to communicate with a
+ * specially programmed ESP-Router-Chip (BayESP8266 Library)
+ *
+ * The ESP-Chip can be attached to the normal FTDI port of the
+ * BayEOS-Board.
+ *
+ */
+
+class BaySerialESP : public BaySerial{
+public:
+	/*
+	 * Constructor
+	 */
+	BaySerialESP(HardwareSerial& serial, uint8_t ch_pd_pin=0, int timeout=1000);
+	/*
+	 * Sends data from buffer to esp and calls send command
+	 *
+	 * returns:
+	 * 0 == OK
+	 * other result codes see implementation
+	 */
+	uint8_t sendMultiFromBuffer(uint16_t maxsize=1000);
+
+	/*
+	 * Checks if Router is responding
+	 * returns
+	 * 0 == OK
+	 * 1 == not connected to WIFI
+	 * 2 == no ack
+	 * 3 == no response
+	 */
+	uint8_t isReady();
+
+
+	/*
+	 * Power Up ESP via ch_pd-Pin and call isReady()
+	 */
+	uint8_t powerUp(uint8_t tries=20);
+
+	void powerDown(void);
+
+
+private:
+	uint8_t _ch_pd_pin;
+};
 
 #endif

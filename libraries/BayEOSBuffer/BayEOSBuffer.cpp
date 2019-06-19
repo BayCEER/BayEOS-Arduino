@@ -255,9 +255,9 @@ unsigned long BayEOSBuffer::packetMillis(void){
 }
 
 
-void BayEOSBuffer::setRTC(RTC& rtc,boolean absolute_time) {
+void BayEOSBuffer::setRTC(RTC& rtc,uint8_t timeType) {
 	_rtc = &rtc;
-	_absoluteTime=absolute_time;
+	_timeType=timeType;
 }
 
 uint8_t BayEOSBuffer::rtc(void){

@@ -10,6 +10,7 @@ public:
 
 	uint8_t sendPayload(void);
 	void setTXAddr(uint64_t address);
+	void setTXAddr(uint8_t* address);
 	void init(uint64_t address,uint8_t c=0x71,rf24_pa_dbm_e pa_level=RF24_PA_HIGH, rf24_datarate_e rate=RF24_250KBPS);
 	bool i_available(uint8_t* pipe_nr);
 

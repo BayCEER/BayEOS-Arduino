@@ -164,16 +164,16 @@ uint8_t BayEOS::validateChecksum() {
 	uint16_t checksum = 0;
 	while (!has_checksum) {
 		switch (_payload[offset]) {
-		case BayEOS_RoutedFrame:
-			offset += 5;
+		case BayEOS_RF24Frame:
+			offset += 2;
 			break;
 		case BayEOS_RoutedFrameRSSI:
 			offset += 6;
 			break;
 		case BayEOS_DelayedFrame:
-			offset += 5;
-			break;
+		case BayEOS_DelayedSecondFrame:
 		case BayEOS_TimestampFrame:
+		case BayEOS_RoutedFrame:
 			offset += 5;
 			break;
 		case BayEOS_OriginFrame:
@@ -213,9 +213,19 @@ void BayEOS::startDelayedFrame(unsigned long delay) {
 	addToPayload(delay);
 }
 
+void BayEOS::startDelayedSecondFrame(unsigned long delay) {
+	startFrame((uint8_t) BayEOS_DelayedSecondFrame);
+	addToPayload(delay);
+}
+
 void BayEOS::startTimestampFrame(unsigned long timestamp) {
 	startFrame((uint8_t) BayEOS_TimestampFrame);
 	addToPayload(timestamp);
+}
+
+void BayEOS::startRF24Frame(uint8_t pipe) {
+	startFrame((uint8_t) BayEOS_RF24Frame);
+	addToPayload(pipe);
 }
 
 void BayEOS::startCommand(uint8_t cmd_api) {
@@ -313,11 +323,20 @@ uint8_t BayEOS::readFromBuffer(void) {
 			continue;
 		}
 		if (_buffer->rtc()) {
-			if (_buffer->_absoluteTime)
-				startTimestampFrame(_buffer->packetMillis());
-			else
+			switch(_buffer->_timeType){
+			case RTC_RELATIVE_MILLIS:
 				startDelayedFrame(
 						(_buffer->getTime() - _buffer->packetMillis()) * 1000);
+				break;
+			case RTC_RELATIVE_SECONDS:
+				startDelayedSecondFrame((_buffer->getTime() - _buffer->packetMillis()));
+				break;
+			case RTC_ABSOLUTE_SECONDS:
+				startTimestampFrame(_buffer->packetMillis());
+				break;
+
+			}
+
 		} else
 			startDelayedFrame(millis() - _buffer->packetMillis());
 

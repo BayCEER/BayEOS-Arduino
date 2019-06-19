@@ -171,4 +171,69 @@ int BaySerial::read(void){
 size_t BaySerial::write(uint8_t c){
 	return _serial->write(c);
 }
+BaySerialESP::BaySerialESP(HardwareSerial& serial, uint8_t ch_pd_pin, int timeout) : BaySerial(serial, timeout){
+	_ch_pd_pin=ch_pd_pin;
+}
+uint8_t BaySerialESP::powerUp(uint8_t tries){
+	if(! _ch_pd_pin) return 0;
+	pinMode(_ch_pd_pin,OUTPUT);
+	digitalWrite(_ch_pd_pin,HIGH);
+	uint8_t res;
+	while(tries){
+		res=isReady();
+		if(! res) return 0;
+		tries--;
+	}
+	return res;
+}
 
+void BaySerialESP::powerDown(){
+	if(! _ch_pd_pin) return;
+	pinMode(_ch_pd_pin,OUTPUT);
+	digitalWrite(_ch_pd_pin,LOW);
+}
+
+uint8_t BaySerialESP::isReady(void){
+	startCommand(BayEOS_RouterCommand);
+	addToPayload(ROUTER_IS_READY);
+	if(sendPayload()) return 2; //no ack
+	if(readIntoPayload()) return 3; //no response
+	if(getPayload(2)==ROUTER_IS_READY && getPayload(1)==BayEOS_RouterCommand) return getPayload(3);
+	else return 4; //wrong response
+}
+
+uint8_t BaySerialESP::sendMultiFromBuffer(uint16_t maxsize){
+	if(! _buffer->available()) return 0;
+	uint8_t res=isReady();
+	if(res) return res+10;
+	unsigned long read_pos=_buffer->readPos();
+
+	while(_buffer->available() && (_buffer->readPos()-read_pos)<maxsize && ! res){
+		res=sendFromBuffer();
+	}
+
+	if(res){
+		_buffer->seekReadPointer(read_pos);
+		return 20;
+	}
+
+	startCommand(BayEOS_RouterCommand);
+    addToPayload(ROUTER_SEND);
+	if(sendPayload()){
+		_buffer->seekReadPointer(read_pos);
+		return 22; //no ack
+	}
+	uint8_t tries=0;
+	while(readIntoPayload()){
+		tries++;
+		if(tries>15){
+			_buffer->seekReadPointer(read_pos);
+			return 23; //no response
+		}
+	}
+	if(getPayload(2)==ROUTER_SEND && getPayload(1)==BayEOS_RouterCommand)
+		res=getPayload(3);
+	else res=4;
+	if(res ) _buffer->seekReadPointer(read_pos);
+	return res;
+}

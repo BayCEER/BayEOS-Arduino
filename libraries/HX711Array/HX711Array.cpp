@@ -57,9 +57,11 @@ void HX711Array::shiftIn(uint8_t nr) {
 		_p[nr + 4 * j] = 0;
 	}
 	for (uint8_t i = 0; i < 8; ++i) {
+		noInterrupts();
 		digitalWrite(_pd_sck, HIGH);
         delayMicroseconds(1);
 		digitalWrite(_pd_sck, LOW);
+		interrupts();
 		for (j = 0; j < _length; j++) {
 			_p[nr + 4 * j] |= digitalRead(_dout[j]) << (7 - i);
 		}

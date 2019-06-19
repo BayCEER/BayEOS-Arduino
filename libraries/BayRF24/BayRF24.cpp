@@ -37,6 +37,10 @@ void BayRF24::setTXAddr(uint64_t address){
 	_pipe = address;
 
 }
+void BayRF24::setTXAddr(uint8_t* address){
+	memcpy((void*)&_pipe,address,5);
+
+}
 
 void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
 		RF24_PA_HIGH, rf24_datarate_e rate = RF24_250KBPS) {

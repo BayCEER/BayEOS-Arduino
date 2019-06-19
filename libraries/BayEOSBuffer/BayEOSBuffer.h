@@ -62,6 +62,9 @@ public:
 
 
 
+#define RTC_RELATIVE_MILLIS 0
+#define RTC_RELATIVE_SECONDS 2
+#define RTC_ABSOLUTE_SECONDS 1
 
 
 class BayEOSBuffer {
@@ -154,7 +157,7 @@ public:
 	 * NOTE: setting absolute_time to false will result in
 	 * relative time delayed frames...
 	 */
-	void setRTC(RTC& rtc,boolean absolute_time=true);
+	void setRTC(RTC& rtc,uint8_t timeType=RTC_ABSOLUTE_SECONDS);
 
 	/**
 	 * check existance of rtc
@@ -171,7 +174,7 @@ public:
 	unsigned long length(void);
 
 
-	boolean _absoluteTime;
+	uint8_t _timeType;
 	boolean _framesDiscarded;
 
 protected:

@@ -22,9 +22,11 @@ long MAX11212::read(bool cal,int timeout){
 	}
 	long v=0;
 	for(uint8_t i=0;i<(24+cal);i++){
+		noInterrupts();
 		digitalWrite(_sck,HIGH);
 		delayMicroseconds(1);
 		digitalWrite(_sck,LOW);
+		interrupts();
 		if(i<18)
 			v|=(long)digitalRead(_dout)<<(23-i);
 	}

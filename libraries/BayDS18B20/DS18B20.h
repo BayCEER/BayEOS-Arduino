@@ -15,6 +15,11 @@
 #ifndef DS18B20_CHANNELS
 #define DS18B20_CHANNELS 16
 #endif
+// Device resolution
+#define TEMP_9_BIT  0x1F //  9 bit
+#define TEMP_10_BIT 0x3F // 10 bit
+#define TEMP_11_BIT 0x5F // 11 bit
+#define TEMP_12_BIT 0x7F // 12 bit
 
 #include <OneWire.h>
 #include <inttypes.h>
@@ -42,6 +47,11 @@ public:
 	 * starts temperature conversion
 	 */
 	void t_conversion(void);
+
+	/**
+	 * Set resolution
+	 */
+	void setResolution(uint8_t newResolution);
 
 	 /**
 	  * search for unknown Sensors

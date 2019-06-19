@@ -111,6 +111,38 @@ void DS18B20::writeAddrToEEPROM(uint8_t channel){ //Channel beginnt mit 1
 	}
 }
 
+void DS18B20::setResolution(uint8_t newResolution){
+	newResolution=constrain(newResolution, 9, 12);
+
+	for(uint8_t i=0;i<_ds18b20_channels;i++){
+		if(! _addr[i*8]) continue;
+		reset();
+		select(&_addr[i*8]);
+		write(0x4E);         // Write Scratchpad
+		write(0);
+		write(0);
+		switch (newResolution){
+		            case 12:
+		                write(TEMP_12_BIT);
+		                break;
+		            case 11:
+		                write(TEMP_11_BIT);
+		                break;
+		            case 10:
+		                write(TEMP_10_BIT);
+		                break;
+		            case 9:
+		            default:
+		                write(TEMP_9_BIT);
+		                break;
+		}
+		reset();
+		select(&_addr[i*8]);
+		write(0x48); // Copy EEPROM
+		delay(20);
+	}
+
+}
 
 uint8_t DS18B20::readChannel(uint8_t channel, float* f,uint8_t tries){
 	int addr_offset=(channel-1-_channel_offset)*8;
