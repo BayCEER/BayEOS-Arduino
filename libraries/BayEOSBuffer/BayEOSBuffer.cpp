@@ -205,7 +205,7 @@ void BayEOSBuffer::next(void) {
 uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
 	uint8_t move_read_pos = 0;
 	while (!freeSpace(length+5)) {
-		//Write Pointer überholt END Pointer
+		//End Pointer überholt Read Pointer
 		if (_end == _read_pos) {
 			_framesDiscarded = 1;
 			move_read_pos = 1;

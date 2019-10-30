@@ -75,9 +75,9 @@ public:
 	virtual void end(void)=0;
 
 protected:
-	uint8_t readPacket(uint8_t type=API_DATA);
+	uint8_t readPacket(uint8_t type=API_DATA, int timeout=5000);
 	void sendByte(uint8_t b, bool escape);
-	uint8_t readByte(int timeout, bool escape);
+	uint8_t readByte(bool escape);
 	void sendAck(uint8_t b);
 
 	bool _escape;

@@ -83,8 +83,14 @@ void BayEOSLogger::liveData(uint16_t wait) {
 		return;
 	if(_client->sendPayload())
 		_mode=0;
-
-	delay(wait);
+	while(wait){
+		if(_client->available()){
+			handleCommand();
+			return;
+		}
+		delay(1);
+		wait--;
+	}
 }
 
 void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t min_sampling_int,uint16_t bat_warning) {

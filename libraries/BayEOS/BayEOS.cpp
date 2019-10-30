@@ -292,6 +292,18 @@ uint8_t BayEOS::sendMessage(const String &s) {
 	return sendPayload();
 }
 
+uint8_t BayEOS::createMessage(const String &s,uint8_t checksum, uint8_t frametype) {
+	_next = 0;
+	uint8_t ret;
+	if (checksum)
+		addToPayload((uint8_t) BayEOS_ChecksumFrame);
+	addToPayload(frametype);
+	ret=addToPayload(s);
+	if (checksum)
+		ret=addChecksum();
+	return ret;
+}
+
 uint8_t BayEOS::writeToBuffer(void) {
 	if ((getPayloadLength() - getPacketLength()) < 5)
 		return 0;

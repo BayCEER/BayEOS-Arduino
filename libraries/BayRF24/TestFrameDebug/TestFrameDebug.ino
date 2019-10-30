@@ -9,7 +9,7 @@
 //#define RF24ADDRESS 0x45c431aebfLL
 #define RF24CHANNEL 0x72
 
-#define WITH_CHECKSUM 0
+#define WITH_CHECKSUM 1
 
 /* ce,csn pins - adjust to your layout*/
 BayRF24 client = BayRF24(9, 10);
@@ -22,6 +22,9 @@ void setup(void) {
   client.init(RF24ADDRESS, RF24CHANNEL,RF24_PA_MAX);
   printf_begin();
   client.printDetails();
+
+  client.createMessage("TestFrameDebug",WITH_CHECKSUM);
+  client.sendPayload();
 }
 
 void loop(void) {
@@ -38,5 +41,5 @@ void loop(void) {
   delay(5000);
   client.printDetails();
 
-}
 
+}

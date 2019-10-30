@@ -95,24 +95,33 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 }
 
 void BayEOSBufferSPIFlash::resetStorage(void) {
-	_flash->eraseSector(0); //only earse Sector 0
+	_flash->eraseSector(0); //only erase Sector 0
 	_flash->eraseSector(_max_length); //erase pointer region
 }
 
 void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 		unsigned long end_pos) {
 	if ((start_pos >> 12) != (end_pos >> 12)) {
+		uint8_t move_read_pos=0;
 		if (end_pos >= _max_length)
 			end_pos = 0;
-		while (_read_pos >= end_pos && _read_pos < (end_pos + 4096)) {
-			initNextPacket();
-			next();
-			_framesDiscarded = 1;
-#if SERIAL_DEBUG
-			Serial.println("Frames discarded");
-#endif
+		while (_end >= end_pos && _end < (end_pos+4096)) {
+			//End Pointer überholt Read Pointer
+			if (_end == _read_pos) {
+				_framesDiscarded = 1;
+				move_read_pos = 1;
+	#if SERIAL_DEBUG
+				Serial.println("Verwerfe Paket");
+	#endif
+			}
+			_end += initPacket(_end) + 5;
+			if (_end >= _max_length)
+				_end -= _max_length;
+			if (move_read_pos)
+				_read_pos = _end;
 		}
 		_flash->eraseSector(end_pos);
+		_flush_count=_flush_skip;
 #if SERIAL_DEBUG
 		Serial.println("Erase sector");
 #endif

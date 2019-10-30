@@ -196,6 +196,12 @@ public:
 	uint8_t sendMessage(const String &s);
 
 	/**
+	 * Create a Message in payload
+	 */
+	uint8_t createMessage(const String &s, uint8_t checksum=0, uint8_t frametype=BayEOS_Message);
+
+
+	/**
 	 * Set first byte of payload buffer and set _next to 1
 	 */
 	void startFrame(uint8_t type);

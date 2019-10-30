@@ -205,6 +205,7 @@ void loop() {
   if (connected && digitalRead(CONNECTED_PIN)) {
     client.flush();
     client.end();
+    connected=0;
   }
   //Connected pin is pulled to GND
   if (!connected && ! digitalRead(CONNECTED_PIN)) {

@@ -1,28 +1,26 @@
 #include "BaySerial.h"
-uint8_t BaySerialInterface::readByte(int timeout,bool escape){
+uint8_t BaySerialInterface::readByte(bool escape){
 	_read_timeout=false;
 	uint8_t b=0;
-	while(timeout>0){
+	while(_timeout>0){
         if(i_available()){
         	b = read();
         	if (escape && b == ESCAPE) {
+        		while(! i_available() && _timeout>0){
+        			delay(1);
+        			_timeout--;
+        		}
         		if (i_available()) {
         			b = read();
-        			b= 0x20 ^ b;
+        			return 0x20 ^ b;
         		} else {
-				// escape byte.  next byte will be
-        			_escape = true;
-        			continue;
+        			_read_timeout=true;
         		}
-        	}
-        	if (_escape == true) {
-        		b = 0x20 ^ b;
-        		_escape = false;
         	}
         	return b;
         }
- 		timeout--;
 		delay(1);
+ 		_timeout--;
 	}
 	_read_timeout=true;
 	return b;
@@ -45,8 +43,7 @@ void BaySerialInterface::sendAck(uint8_t b){
 	sendByte(0x1,true);
 	sendByte(0x2,true);
 	sendByte(b,true);
-//	sendByte(b+0x2,true); Ursprüngliche Version !!! FALSCH!!!
-	sendByte(0xff-(b+0x2),true); //RICHTIG!
+	sendByte(0xff-(b+0x2),true);
 }
 
 void BaySerialInterface::sendFrame(void){
@@ -84,33 +81,30 @@ uint8_t BaySerialInterface::sendPayload(void){
 
 }
 uint8_t BaySerialInterface::readIntoPayload(int timeout) {
-	_read_timeout=timeout;
+	_timeout=timeout;
 	return readPacket(API_DATA);
 }
 
-uint8_t BaySerialInterface::readPacket(uint8_t type) {
+uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
+	_timeout=timeout;
+	start:
 	_pos=0;
 	uint8_t b=0;
 	while(true){
-        b = readByte(_timeout,false);
+        b = readByte(false);
     	if(_read_timeout) return 2;
         if(b == START_BYTE) break;
 	}
 
-	_length=readByte(_timeout,true);
+	_length=readByte(true);
 	if(_read_timeout) return 2;
 
-	_api=readByte(_timeout,true);
-	if(_api!=type){
-	   return readPacket(type);
-	}
+	_api=readByte(true);
 	_checksumTotal=_api;
 	if(_read_timeout) return 2;
 
-
-
 	while(_pos<_length){
-		b=readByte(_timeout,true);
+		b=readByte(true);
 		if(_read_timeout) return 2;
 		_checksumTotal+= b;
 		if(_api==API_DATA) _payload[_pos] = b;
@@ -119,7 +113,7 @@ uint8_t BaySerialInterface::readPacket(uint8_t type) {
 	}
 
 	_next=_pos;
-	b=readByte(_timeout,true);
+	b=readByte(true);
 	if(_read_timeout) return 2;
 	_checksumTotal+= b;
 
@@ -128,6 +122,11 @@ uint8_t BaySerialInterface::readPacket(uint8_t type) {
 		_break=1;
 		return TX_BREAK;
 	}
+
+	if(_api!=type){
+		goto start;
+	}
+	if(type==API_DATA && i_available()) goto start; //obviously old packet!
 	// reset break when there is data
 	if(_api==API_DATA && _break) _break=0;
 	// verify checksum

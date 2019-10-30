@@ -13,13 +13,12 @@ uint8_t BayRF24::sendPayload(void) {
 		stopListening();
 	openWritingPipe (_pipe);
 	uint8_t res;
-
-	res = RF24::write(getPayload(), getPacketLength());
+	res = RF24::write(BayEOS::getPayload(), BayEOS::getPacketLength());
 	uint8_t curr_pa = 0;
 	while (!res && curr_pa < 4) {
 		setPALevel((rf24_pa_dbm_e) curr_pa);
 		delayMicroseconds(random(2000));
-		res = RF24::write(getPayload(), getPacketLength());
+		res = RF24::write(BayEOS::getPayload(), BayEOS::getPacketLength());
 		curr_pa++;
 	}
 
