@@ -29,12 +29,24 @@ float ntc10_R2T(float r) {
 #define TICKS_PER_SECOND 16
 uint8_t connected = 0;
 
+
 BaySerial client(Serial);
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
 #include <LowCurrentBoard.h>
 
+void delayLogger(unsigned long d){
+  if(connected){
+    unsigned long s=millis();
+    while((millis()-s)<d){
+      myLogger.handleCommand();
+      myLogger.sendBinaryDump();
+    }
+  } else {
+    delayLCB(d); 
+  }
+}
 
 
 //Add your sensor measurements here!
@@ -69,13 +81,13 @@ void measure() {
     digitalWrite(A1, ch & 0x4);
     digitalWrite(A2, ch & 0x2);
     digitalWrite(A3, ch & 0x1);
-    delayLCB(10);
+    delayLogger(10);
     mcp342x.runADC(0);
-    delayLCB(mcp342x.getADCTime());
+    delayLogger(mcp342x.getADCTime());
     float I = mcp342x.getData() / PRE_RESISTOR;
 
     mcp342x.runADC(1);
-    delayLCB(mcp342x.getADCTime());
+    delayLogger(mcp342x.getADCTime());
     float R_mess = mcp342x.getData() / I / NTC10FACTOR;
     values[ch + 1] += ntc10_R2T(R_mess);
   }
@@ -139,7 +151,6 @@ void loop() {
 
   //sleep until timer2 will wake us up...
   if (! connected) {
-    myLogger._mode = 0;
     Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
   }
 
@@ -147,6 +158,8 @@ void loop() {
   if (connected && digitalRead(CONNECTED_PIN)) {
     client.flush();
     client.end();
+    myLogger._mode = 0;
+    connected=0;
   }
 
   //Connected pin is pulled to GND
@@ -157,4 +170,3 @@ void loop() {
   }
 
 }
-

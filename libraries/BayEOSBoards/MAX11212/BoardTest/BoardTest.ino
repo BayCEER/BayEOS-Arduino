@@ -1,5 +1,4 @@
 #include <BayEOSBufferSPIFlash.h>
-#define POWER_DIVIDER ((1000.0 + 413.0) / 413.0)
 #include <MAX11212Board.h>
 
 SPIFlash flash(8);
@@ -46,6 +45,3 @@ void loop() {
   Serial.flush();
  
 }
-
-
-

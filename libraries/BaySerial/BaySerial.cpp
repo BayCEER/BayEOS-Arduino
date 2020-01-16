@@ -81,8 +81,7 @@ uint8_t BaySerialInterface::sendPayload(void){
 
 }
 uint8_t BaySerialInterface::readIntoPayload(int timeout) {
-	_timeout=timeout;
-	return readPacket(API_DATA);
+	return readPacket(API_DATA,timeout);
 }
 
 uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
@@ -117,14 +116,14 @@ uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
 	if(_read_timeout) return 2;
 	_checksumTotal+= b;
 
+
+	if(_api!=type){
+		goto start;
+	}
 	// set break
 	if(_api==API_ACK && _ack==TX_BREAK){
 		_break=1;
 		return TX_BREAK;
-	}
-
-	if(_api!=type){
-		goto start;
 	}
 	if(type==API_DATA && i_available()) goto start; //obviously old packet!
 	// reset break when there is data

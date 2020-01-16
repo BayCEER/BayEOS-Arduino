@@ -47,7 +47,10 @@ uint8_t gprs_status; //1 = 0n, 0 = Off
 #endif
 
 #define LED_PIN 5
+
+#ifndef LED_RX1
 #define LED_RX1 4
+#endif
 #define LED_RX2 3
 #define LED_RX3 2
 #define POWER_PIN 7
@@ -277,7 +280,7 @@ void initLCB() {
 
   myBuffer.init(flash); //This will restore old pointers
   myBuffer.skip();
-  myBuffer.setRTC(myRTC, 0); //Nutze RTC relativ!
+  myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); //Nutze RTC relativ!
   //We could also try to use absolute times received from GPRS!
   client.setBuffer(myBuffer);
   pinMode(POWER_PIN, OUTPUT);

@@ -68,12 +68,17 @@ void HX711Array::shiftIn(uint8_t nr) {
 	}
 }
 
+void HX711Array::set_no_sleep(bool ns){
+	no_sleep=ns;
+}
+
 long HX711Array::read(uint8_t timeout) {
 	// wait for the chip to become ready
 	while (!is_ready()) {
 		timeout--;
 		if(! timeout) return 0xf0000000;
-		Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE); // sleep function called here
+		if(! no_sleep) Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE); // sleep function called here
+		else delay(5);
 	}
 	unsigned long value = 0;
 

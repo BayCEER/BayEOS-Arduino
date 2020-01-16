@@ -1,22 +1,11 @@
 /*
-   Low Power ADC-Board
-   is a variant of BayEOS Low Power Board
-
-   It has 12 screw clamps
-   1,7:       GRD
-   2,8:       VCC
-   3-5,9-11:  A0-A2,A3-A5
-   6,12;      MOSFET Power switch via D7
-
-   For EC-5 soil moisture sensors solder a 2.5V LDO voltageregulator on the board.
-   Exitation time must be lower then 10ms
-
-   VWC = 0.00119 * mV - 0.400
-
+ Logger Sketch for MAX11212-Board
 
 */
 #define SAMPLING_INT 30
-#define NUMBER_OF_CHANNELS 1
+#define NUMBER_OF_CHANNELS 6
+
+#include <MAX11212Board.h>
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>
@@ -51,12 +40,15 @@ void measure() {
       values[i] = 0;
     }
   }
+  adc.read(1); //read with calibration
+  adc.read(); //read once without calibration
 
   digitalWrite(POWER_PIN, HIGH);
   analogReference(INTERNAL);
   delay(5);
   for (uint8_t ch = 0; ch < NUMBER_OF_CHANNELS; ch++) {
-    values[ch + 1] += 0.00119 * 1100.0 / 1023 * analogRead(A0 + ch) - 0.400;
+    float mV=readChannel(ch, 30)*1000;
+    values[ch + 1] += 4.824e-10*mV*mV*mV-2.278e-6*mV*mV+3.898e-3*mV-2.154; // eqation 2 Teros10 page 14 [m³/m³]
   }
   analogReference(DEFAULT);
   if (digitalRead(CONNECTED_PIN))
@@ -87,6 +79,7 @@ void setup() {
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
   initLCB(); //init time2
+  initMAX11212();
 }
 
 void loop() {

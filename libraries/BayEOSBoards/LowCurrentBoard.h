@@ -359,16 +359,14 @@ void initLCB() {
 	// Search and Delete
 	while(channel=ds.checkSensors()) {
 		new_addr=ds.getChannelAddress(channel);
-		client.startFrame((uint8_t) BayEOS_Message);
-		client.addToPayload(String("DS:")+channel+"-"+ds.addr2String(new_addr));
+		client.createMessage(String("DS:")+channel+"-"+ds.addr2String(new_addr),CHECKSUM_FRAMES);
 		client.writeToBuffer();
 		ds.deleteChannel(new_addr);
 	}
 	while(new_addr=ds.search()) {
 		if(channel=ds.getNextFreeChannel()) {
 			ds.addSensor(new_addr,channel);
-			client.startFrame((uint8_t) BayEOS_Message);
-			client.addToPayload(String("DS:")+channel+"+"+ds.addr2String(new_addr));
+			client.createMessage(String("DS:")+channel+"+"+ds.addr2String(new_addr),CHECKSUM_FRAMES);
 			client.writeToBuffer();
 		}
 	}

@@ -12,6 +12,7 @@ private:
 	long _values[4];
 	uint8_t* _p;
 	void shiftIn(uint8_t nr);
+	bool no_sleep;
 
 public:
 	HX711Array();
@@ -48,6 +49,9 @@ public:
 
 	// wakes up the chip after power down mode
 	void power_up();
+
+	//set no sleep mode
+	void set_no_sleep(bool ns);
 };
 
 class Scale4PointCal {

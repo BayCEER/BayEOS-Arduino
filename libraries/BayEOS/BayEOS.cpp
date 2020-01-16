@@ -409,8 +409,10 @@ uint8_t BayEOS::sendFromBuffer(void) {
 					_failure_counter++;
 				return 1;
 			}
-		} else
+		} else {
 			_skip_counter++;
+			return 1;
+		}
 	}
 	return 0;
 }

@@ -85,7 +85,7 @@ NTC_HX711::NTC_HX711(HX711Array &hx, float pr, float nt, uint8_t n):NTC_Sensor(n
 }
 
 float NTC_HX711::readResistance(void){
-	if(power_pin){
+	if(power_pin>0){
 		pinMode(power_pin,OUTPUT);
 		digitalWrite(power_pin,HIGH);
 		delay(1);

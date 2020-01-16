@@ -41,7 +41,7 @@ BayEOSBufferRAM myBuffer(buffer);
 void longPressHandler(uint8_t nr);
 void shortPressHandler(uint8_t nr);
 
-#define SAMPLING_INT 120
+#define SAMPLING_INT 300
 #define TICKS_PER_SECOND 1
 #define ACTION_COUNT 1
 #include <LowCurrentBoard.h>

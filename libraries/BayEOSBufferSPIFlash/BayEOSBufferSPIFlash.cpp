@@ -34,8 +34,10 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 		if (_temp < _max_length)
 			_end = _temp;
 
-		//Move ahead until we find 0xffffffff
-		while (true) {
+		//Move ahead until we find 0xffffffff or reach 255
+		uint8_t i=255;
+		while (i) {
+			i--;
 			_flash->readByteArray(_write_pos, p, 4);
 			uint8_t l = _flash->readByte(_write_pos + 4);
 			uint8_t move_read_pos = 0;
@@ -66,28 +68,6 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 			Serial.flush();
 #endif
 		}
-		/* NO LONGER NEEDED!! WE RESTORED THE OLD POINTER SETTING ABOVE!
-		 //We have to erase the current write pointer sector as we do not know
-		 //whether it has be written something after the pointer
-		 checkEraseSector(_write_pos, _write_pos + 4096);
-		 //copy current sector from start to write pointer to following sector
-		 _pos = _write_pos & 0xfffff000L; //current sector
-		 _temp = ((_pos + 4096)>=_max_length?0:_pos+4096); //target sector
-		 while (_pos < _write_pos) {
-		 _flash->writeByte(_temp, _flash->readByte(_pos),false);
-		 _pos++;
-		 _temp++;
-		 }
-		 _flash->eraseSector(_write_pos);
-		 //copy back
-		 _pos = _write_pos & 0xfffff000L;
-		 _temp = ((_pos + 4096)>=_max_length?0:_pos+4096);
-		 while (_pos < _write_pos) {
-		 _flash->writeByte(_pos, _flash->readByte(_temp),false);
-		 _pos++;
-		 _temp++;
-		 }
-		 */
 	} else {
 		reset();
 	}
@@ -121,6 +101,7 @@ void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 				_read_pos = _end;
 		}
 		_flash->eraseSector(end_pos);
+
 		_flush_count=_flush_skip;
 #if SERIAL_DEBUG
 		Serial.println("Erase sector");
@@ -169,15 +150,17 @@ int BayEOSBufferSPIFlash::read(uint8_t *dest, int length) {
 }
 
 void BayEOSBufferSPIFlash::flush(void) {
+	_flush_count++;
+	// make sure that there is always 0xffffffff left between end of write and end of buffer
+	checkEraseSector(_write_pos,_write_pos+4);
 #if SERIAL_DEBUG
 	Serial.print("Flush (");
 	Serial.print(_flush_offset);
 	Serial.print(") ");
 #endif
-	_flush_count++;
 	if (_flush_count < _flush_skip)
 		return;
-	//save the poiters to EEPROM
+	//save the pointers to EEPROM
 	if (_flush_offset == 255) {
 		_flush_offset = 0;
 	}

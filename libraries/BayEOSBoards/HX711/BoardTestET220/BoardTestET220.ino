@@ -48,11 +48,11 @@ void loop() {
     scale.power_down();
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis());
-    //Ausgabe der Spannung in mV bei 10V Anregung!
-    client.addChannelValue(10000.0/32/8388608*adc[0]);
-    client.addChannelValue(10000.0/32/8388608*adc[1]);
-    client.addChannelValue(10000.0/32/8388608*adc[2]);
-    client.addChannelValue(10000.0/32/8388608*adc[3]);
+    //Ausgabe der Spannung in µV bei 3.3V Boardspannung!
+    client.addChannelValue(3300000.0/32/256/256/256*adc[0]);
+    client.addChannelValue(3300000.0/32/256/256/256*adc[1]);
+    client.addChannelValue(3300000.0/32/256/256/256*adc[2]);
+    client.addChannelValue(3300000.0/32/256/256/256*adc[3]);
     sendOrBufferLCB();
 
     Serial.flush();
@@ -65,6 +65,3 @@ void loop() {
    sleepLCB();
 
 }
-
-
-

@@ -175,9 +175,10 @@ uint8_t BayEOSBuffer::initPacket(unsigned long pos) {
 }
 
 void BayEOSBuffer::next(void) {
-	if (_packet_length == 0) {
+	if (_packet_length == 0 ||
+			(_read_pos<_write_pos && (_read_pos+5+_packet_length)>_write_pos)) {
 #if SERIAL_DEBUG
-		Serial.println("Packet Length is 0. This should not happen...");
+		Serial.println("Packet Length is 0 or invalid!. This should not happen...");
 #endif
 		_read_pos = _write_pos;
 	} else {

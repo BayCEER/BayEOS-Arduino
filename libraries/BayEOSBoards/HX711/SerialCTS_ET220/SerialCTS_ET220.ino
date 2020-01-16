@@ -56,10 +56,10 @@ void loop() {
     client.startDataFrameWithOrigin(BayEOS_Float32le, ORIGIN, 0, 1);
     client.addChannelValue(millis());
     //Ausgabe der Spannung in mV bei 10V Anregung!
-    client.addChannelValue(10000.0/32/8388608*adc[0]);
-    client.addChannelValue(10000.0/32/8388608*adc[1]);
-    client.addChannelValue(10000.0/32/8388608*adc[2]);
-    client.addChannelValue(10000.0/32/8388608*adc[3]);
+    client.addChannelValue(10000.0/32/256/256/256*adc[0]);
+    client.addChannelValue(10000.0/32/256/256/256*adc[1]);
+    client.addChannelValue(10000.0/32/256/256/256*adc[2]);
+    client.addChannelValue(10000.0/32/256/256/256*adc[3]);
     sendOrBufferLCB();
     //Read battery voltage _after_ long uptime!!!
 
@@ -72,6 +72,3 @@ void loop() {
   sleepLCB();
 
 }
-
-
-
