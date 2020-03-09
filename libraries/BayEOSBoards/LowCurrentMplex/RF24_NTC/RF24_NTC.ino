@@ -76,6 +76,7 @@ void loop()
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
     digitalWrite(MCPPOWER_PIN, HIGH);
+    delayLCB(20);
     client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
     client.addChannelValue(1000 * batLCB);
     for (uint8_t ch = 0; ch < 8; ch++) {
@@ -123,5 +124,3 @@ void loop()
 
 
 }
-
-

@@ -5,8 +5,8 @@ BayEOSBufferSPIFlash myBuffer;
 #include <BayRF24.h>
 #include "printf.h"
 
-#define RF24ADDRESS 0x45c431ae24LL
-#define RF24CHANNEL 0x72
+#define RF24ADDRESS 0x45c4e3f046
+#define RF24CHANNEL 0x70
 #define WITH_CHECKSUM 1
 
 /* ce,csn pins - adjust to your layout*/

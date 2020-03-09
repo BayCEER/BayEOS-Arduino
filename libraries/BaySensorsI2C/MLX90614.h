@@ -54,10 +54,10 @@ class MLX90614  {
   boolean begin();
   uint32_t readID(void);
 
-  double readObjectTempC(void);
-  double readAmbientTempC(void);
-  double readObjectTempF(void);
-  double readAmbientTempF(void);
+  double readObjectTempC(uint8_t tries=3);
+  double readAmbientTempC(uint8_t tries=3);
+  double readObjectTempF(uint8_t tries=3);
+  double readAmbientTempF(uint8_t tries=3);
   void enterSleepMode(void);
 
 
@@ -68,9 +68,10 @@ class MLX90614  {
    *
    * *******************************************************/
   void exitSleepMode(int t_delay=100);
+  uint8_t crc8 (uint8_t inCrc, uint8_t inData);
 
  private:
-  float readTemp(uint8_t reg);
+  float readTemp(uint8_t reg, uint8_t tries=3);
 
   uint8_t _addr;
   uint16_t read16(uint8_t addr);

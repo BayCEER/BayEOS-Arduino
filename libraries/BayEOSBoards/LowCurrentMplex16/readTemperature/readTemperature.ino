@@ -5,15 +5,20 @@
 
 
 */
-#define PRERESISTOR 10000.0
-
-//When inividual preresistorvalues are given PRERESITOR is ignored
-//#define PRERESISTORS {9955.0, 9964.0, 9956.0, 9966.0, 9955.0, 9972.0, 9975.0, 9972.0, 9945.0, 9962.0, 9988.0, 9957.0, 9957.0, 9964.0, 9950.0, 9954.0 }
+#define PRERESISTOR 14300.0
+#define NTC10FACTOR 0.5
 
 //Define resolution
-const uint8_t rate = 2; //0-3: 12bit ... 18bit
+const uint8_t rate = 1; //0-3: 12bit ... 18bit
 
 #include <MCP342x.h>
+#include <math.h>
+
+float ntc10_R2T(float r) {
+  float log_r = log(r);
+  return 440.61073 - 75.69303 * log_r +
+         4.20199 * log_r * log_r - 0.09586 * log_r * log_r * log_r;
+}
 const byte addr = 0;
 const uint8_t gain = 0; //0-3: x1, x2, x4, x8
 //  create an objcet of the class MCP342x
@@ -25,9 +30,6 @@ char str_buf[50] = "                            ";
 
 #define MCPPOWER_PIN 6
 
-#ifdef PRERESISTORS
-float preresistors[]=PRERESISTORS;
-#endif
 
 void setup()
 {
@@ -46,38 +48,23 @@ void setup()
 void loop()
 {
   digitalWrite(MCPPOWER_PIN, HIGH);
-  delay(20);
+  delay(20);  
   for (uint8_t ch = 0; ch < 16; ch++) {
     digitalWrite(A1, ch & 0x8);
     digitalWrite(A0, ch & 0x4);
     digitalWrite(A3, ch & 0x2);
     digitalWrite(A2, ch & 0x1);
     delay(1);
-    Serial.print(ch);
-    Serial.print("\t");
     mcp342x.runADC(0);
     delay(mcp342x.getADCTime());
     span = mcp342x.getData();
- #ifdef PRERESISTORS
-    float strom = span / preresistors[ch] * 1000; //current in mA
-#else
-    float strom = span / PRERESISTOR * 1000; //current in mA
-#endif
-    dtostrf(span, 10, 6, str_buf);
-    Serial.print(str_buf);
-    Serial.print("\t");
-    dtostrf(strom, 10, 6, str_buf);
-    Serial.print(str_buf);
-    Serial.print("\t");
+    float strom = span / PRERESISTOR; //current in mA
     mcp342x.runADC(1);
     delay(mcp342x.getADCTime());
-    span = mcp342x.getData();
-    dtostrf(span, 10, 6, str_buf);
+    float R_mess = mcp342x.getData() / strom / NTC10FACTOR;
+    dtostrf(ntc10_R2T(R_mess), 10, 2, str_buf);
     Serial.print(str_buf);
-    Serial.print("\t");
-    dtostrf(span / strom, 10, 6, str_buf); //kOhm
-    Serial.println(str_buf);
-
+    Serial.print(" ");
   }
   digitalWrite(MCPPOWER_PIN, LOW);
 
@@ -85,5 +72,5 @@ void loop()
 
 
   //  do it every n seconds
-  delay(2000);
+  delay(1000);
 }

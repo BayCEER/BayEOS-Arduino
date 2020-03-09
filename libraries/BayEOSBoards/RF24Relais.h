@@ -122,6 +122,10 @@ void runBoard(void) {
 
 	while (client.i_available(&pipe_num)) {
 		len = client.getDynamicPayloadSize();
+		if(! len){
+			delay(5);
+			continue;
+		}
 		client.read(nrf_payload, len);
 		client.startFrame(nrf_payload[0]);
 		for (uint8_t i = 1; i < len; i++) {

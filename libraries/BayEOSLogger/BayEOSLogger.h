@@ -33,6 +33,7 @@ public:
   void sendBinaryDump(void);
   void liveData(uint16_t wait);
   void run();
+  void setClient(BayEOS& client);
 
   unsigned long _last_measurement;
   unsigned long _long1, _long2, _long3; //used to store time and pos information

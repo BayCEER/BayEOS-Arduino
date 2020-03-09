@@ -3,7 +3,7 @@
 #define WITH_SLEEP 1
 
 //SDA, SCL
-SHT3x sht(A3, A2);
+SHT3x sht(A4, A5);
 
 float temperature;
 float humidity;

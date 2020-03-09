@@ -80,6 +80,7 @@ void measure() {
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
+  delayLogger(20);
   for (uint8_t ch = 0; ch < 16; ch++) {
     digitalWrite(A1, ch & 0x8);
     digitalWrite(A0, ch & 0x4);

@@ -384,7 +384,6 @@ uint8_t handleRF24(void) {
 
 		} else {
 			rx2_error++;
-			radio.read(payload, len);
 		}
 		if (count > 10)
 			break;

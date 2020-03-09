@@ -96,6 +96,7 @@ void loop()
     client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
     client.addChannelValue(millis());
     client.addChannelValue(batLCB);
+    delayLCB(20); //wait for capacities to be loaded.
 
     for (uint8_t ch = 0; ch < 16; ch++) {
       if ((ch & 0x8) == 0) {
@@ -154,5 +155,3 @@ void loop()
 
 
 }
-
-

@@ -93,6 +93,10 @@ void BayEOSLogger::liveData(uint16_t wait) {
 	}
 }
 
+void BayEOSLogger::setClient(BayEOS& client) {
+	_client = &client;
+}
+
 void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc, uint16_t min_sampling_int,uint16_t bat_warning) {
 	_rtc = &rtc;
 	_buffer = &buffer;

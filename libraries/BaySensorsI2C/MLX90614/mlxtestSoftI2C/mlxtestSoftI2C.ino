@@ -17,7 +17,7 @@
  ****************************************************/
 
 #include <MLX90614SoftI2C.h>
-MLX90614SoftI2C mlx(A4,A5);
+MLX90614SoftI2C mlx(A2,A3);
 
 void setup() {
   Serial.begin(9600);
@@ -27,11 +27,10 @@ void setup() {
 }
 
 void loop() {
+  mlx.exitSleepMode(200);
   Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempC()); 
   Serial.print("*C\tObject = "); Serial.print(mlx.readObjectTempC()); Serial.println("*C");
-  Serial.print("Ambient = "); Serial.print(mlx.readAmbientTempF()); 
-  Serial.print("*F\tObject = "); Serial.print(mlx.readObjectTempF()); Serial.println("*F");
-
   Serial.println();
-  delay(500);
+  mlx.enterSleepMode();
+  delay(1000);
 }

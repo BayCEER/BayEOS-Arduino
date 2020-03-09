@@ -1,16 +1,15 @@
 #include <BaySerialRF24.h>
 
 RF24 radio(9,10);
-BaySerialRF24 client(radio);
+BaySerialRF24 client(radio,300);
 
 const uint8_t channel=0x62;
-const uint8_t tx_adr[5] = {0x12, 0xae, 0x31, 0xc4, 0x45};
-const uint8_t rx_adr[5] = {0x24, 0xae, 0x31, 0xc4, 0x45};
+const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 
 void setup() {
-  client.begin(channel,rx_adr, tx_adr);
   Serial.begin(9600);
   Serial.println("Starting...");
+  client.init(channel,adr);
 }
 
 void loop(){
@@ -28,6 +27,7 @@ void loop(){
   res=client.sendPayload();
   t=millis()-t;
   
+  Serial.print("\t");
   Serial.print(t);
   Serial.print("ms ");
   if(res){
@@ -35,7 +35,7 @@ void loop(){
     Serial.println(res);
   } else
     Serial.println("ok");
-  delay(5000);
+  //delay(5000);
   
 }
   

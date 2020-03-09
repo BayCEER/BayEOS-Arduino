@@ -1,11 +1,19 @@
+/*
+ * Logger-Sketch for Read-Out via RF24
+ * use BaySerialRF24/LoggerConnector as receiver
+ */
+
 #define SAMPLING_INT 30
 #define PRE_RESISTOR 14300
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
 #define NTC10FACTOR 0.5
 #define MCPPOWER_PIN 6
+#define NRF24_TRYINT 60
+const uint8_t channel = 0x70;
+const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 
 #include <BayEOSBufferSPIFlash.h>
-#include <BaySerial.h>
+#include <BaySerialRF24.h>
 #include <BayEOSLogger.h>
 #include <Sleep.h>
 #include <Wire.h>
@@ -30,7 +38,8 @@ float ntc10_R2T(float r) {
 uint8_t connected = 0;
 
 
-BaySerial client(Serial);
+RF24 radio(9,10);
+BaySerialRF24 client(radio,100,3); //wait maximum 100ms for ACK
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
@@ -65,15 +74,9 @@ void measure() {
     }
   }
 
-
-
-
-
-
   digitalWrite(POWER_PIN, HIGH);
   analogReference(INTERNAL);
-  if (digitalRead(CONNECTED_PIN))
-    myLogger._bat = (1.1 * 320 / 100 / 1023 * analogRead(A0)) * 1000;
+  myLogger._bat = (1.1 * 320 / 100 / 1023 * analogRead(A0)) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
@@ -103,8 +106,6 @@ void measure() {
     client.addChannelValue(values[i] / count, i + 2);
   }
 
-
-
 }
 
 
@@ -115,6 +116,8 @@ void setup() {
   pinMode(CONNECTED_PIN, INPUT_PULLUP);
   myBuffer.init(flash);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
+  client.init(channel, adr);
+  radio.powerDown();
   client.setBuffer(myBuffer);
   //register all in BayEOSLogger
   myLogger.init(client, myBuffer, myRTC, 60, 2500); //min_sampling_int = 60
@@ -129,6 +132,37 @@ void setup() {
   initLCB(); //init time2
 }
 
+
+unsigned long last_try = -NRF24_TRYINT;
+
+void send_test_byte(void) {
+  uint8_t test_byte[] = {XOFF};
+  uint8_t res = 0;
+  last_try = myRTC.get();
+  if (! connected) radio.powerUp();
+  radio.stopListening();
+  res = radio.write(test_byte, 1);
+  uint8_t curr_pa = 0;
+  while (!res && curr_pa < 4) {
+    radio.setPALevel((rf24_pa_dbm_e) curr_pa);
+    delayMicroseconds(random(1000));
+    res = radio.write(test_byte, 1);
+    curr_pa++;
+  }
+  if (res){
+    blinkLED(0);
+    client.last_activity = millis();
+    radio.startListening();
+    digitalWrite(LED_BUILTIN, 1);
+    connected=1;
+  } else {
+    digitalWrite(LED_BUILTIN, 0);
+    radio.powerDown();
+    connected=0;
+  }
+}
+
+
 void loop() {
   //Enable logging if RTC give a time later than 2010-01-01
   if (myLogger._logging_disabled && myRTC.get() > 315360000L)
@@ -141,33 +175,20 @@ void loop() {
   }
   myLogger.run();
 
-  if (! connected && myLogger._logging_disabled) {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayLCB(200);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayLCB(800);
-    pinMode(LED_BUILTIN, INPUT);
-  }
-
-  //sleep until timer2 will wake us up...
   if (! connected) {
-    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-  }
-
-  //check if still connected
-  if (connected && digitalRead(CONNECTED_PIN)) {
-    client.flush();
-    client.end();
     myLogger._mode = 0;
-    connected=0;
-  }
-
-  //Connected pin is pulled to GND
-  if (!connected && ! digitalRead(CONNECTED_PIN)) {
-    connected = 1;
-    adjust_OSCCAL();
-    client.begin(38400);
+    //sleep until timer2 will wake us up...
+    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
+    
+   //check if receiver is present
+   if((myRTC.get() - last_try) > NRF24_TRYINT) {
+      send_test_byte();
+      if (! connected && myLogger._logging_disabled)
+        blinkLED(NRF24_TRYINT * 2);
+    } 
+  } else if((millis() - client.last_activity) > 30000) {
+    //check if still connected
+    send_test_byte();
   }
 
 }

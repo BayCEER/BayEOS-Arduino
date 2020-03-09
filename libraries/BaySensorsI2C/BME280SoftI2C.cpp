@@ -41,14 +41,17 @@ bool BME280SoftI2C::begin(uint8_t a) {
   return true;
 }
 
+void BME280SoftI2C::setIIRFilter(uint8_t filter=1){
+	write8(BME280_REGISTER_CONFIG, filter<<2);
+}
 /**************************************************************************/
 /*!
     @brief  Write mode bits in ctrl_meas
 */
 /**************************************************************************/
-void BME280SoftI2C::triggerMeasurement()
+void BME280SoftI2C::triggerMeasurement(uint8_t p_oversampling,uint8_t t_oversampling)
 {
-	  write8(BME280_REGISTER_CONTROL, B00100101);
+  write8(BME280_REGISTER_CONTROL, t_oversampling<<5 | p_oversampling<<2 | B00000001);
 }
 /**************************************************************************/
 /*!

@@ -419,7 +419,6 @@ uint8_t handleRF24(void) {
 
 		} else {
 			rx1_error++;
-			radio.read(payload, len);
 		}
 		if (count > 10)
 			break;
@@ -460,7 +459,6 @@ uint8_t handleRF24(void) {
 
 		} else {
 			rx2_error++;
-			radio2.read( payload, len );
 		}
 		if (count > 10) break;
 	}
@@ -502,7 +500,6 @@ uint8_t handleRF24(void) {
 
 		} else {
 			rx3_error++;
-			radio3.read( payload, len );
 		}
 		if (count > 10) break;
 	}

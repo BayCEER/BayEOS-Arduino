@@ -2,13 +2,12 @@
 uint8_t BaySerialInterface::readByte(bool escape){
 	_read_timeout=false;
 	uint8_t b=0;
-	while(_timeout>0){
+	while((millis()-_start)<_current_timeout){
         if(i_available()){
         	b = read();
         	if (escape && b == ESCAPE) {
-        		while(! i_available() && _timeout>0){
+        		while(! i_available() && (millis()-_start)<_current_timeout){
         			delay(1);
-        			_timeout--;
         		}
         		if (i_available()) {
         			b = read();
@@ -20,7 +19,6 @@ uint8_t BaySerialInterface::readByte(bool escape){
         	return b;
         }
 		delay(1);
- 		_timeout--;
 	}
 	_read_timeout=true;
 	return b;
@@ -29,37 +27,41 @@ uint8_t BaySerialInterface::readByte(bool escape){
 
 
 void BaySerialInterface::sendByte(uint8_t b, bool escape) {
-
 	if (escape && (b == START_BYTE || b == ESCAPE || b == XON || b == XOFF || b=='\n' || b=='\r')) {
 		write(ESCAPE);
 		write(b ^ 0x20);
 	} else {
 		write(b);
 	}
+
 }
 
 void BaySerialInterface::sendAck(uint8_t b){
 	sendByte(START_BYTE,false);
 	sendByte(0x1,true);
-	sendByte(0x2,true);
+	sendByte(API_ACK,true);
 	sendByte(b,true);
-	sendByte(0xff-(b+0x2),true);
+	sendByte(0xff-(b+API_ACK),true);
+	//Serial.print("A");
+	flush();
 }
 
 void BaySerialInterface::sendFrame(void){
+	//Serial.print("F");
 	sendByte(START_BYTE,false);
 	sendByte(getPacketLength(),true);
-	sendByte(0x1,true);
+	sendByte(API_DATA,true);
 	_checksumTotal=0x1;
 	for(uint8_t i=0;i<getPacketLength();i++){
 		sendByte(_payload[i],true);
 		_checksumTotal+=_payload[i];
 	}
 	sendByte((0xff-_checksumTotal),true);
-
+	flush();
 }
 
 uint8_t BaySerialInterface::sendPayload(void){
+	//Serial.print("S");
 	if(_cts_pin){
 		for(uint8_t i=0;i<3;i++){
 			pinMode(_cts_pin,INPUT); //release CTS line for a short time
@@ -71,7 +73,17 @@ uint8_t BaySerialInterface::sendPayload(void){
 	}
 	if(_break) return TX_BREAK;
 	sendFrame();
+	delay(1);
 	uint8_t res=readPacket(API_ACK);
+	if(res && _retries){
+		for(uint8_t i=0;i<_retries;i++){
+			delay(10);
+			sendFrame();
+			res=readPacket(API_ACK);
+			if(! res) break;
+		}
+	}
+
 	if(_cts_pin){
 		end();
 		pinMode(_cts_pin,INPUT);
@@ -85,8 +97,12 @@ uint8_t BaySerialInterface::readIntoPayload(int timeout) {
 }
 
 uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
-	_timeout=timeout;
+	if(timeout) _current_timeout=timeout;
+	else _current_timeout=_timeout;
+	_start=millis();
 	start:
+	//Serial.print("P");
+	//Serial.print(millis());
 	_pos=0;
 	uint8_t b=0;
 	while(true){
@@ -97,10 +113,15 @@ uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
 
 	_length=readByte(true);
 	if(_read_timeout) return 2;
+	//Serial.print("P");
+	//Serial.print(millis());
+
+	//Serial.print("L");
 
 	_api=readByte(true);
 	_checksumTotal=_api;
 	if(_read_timeout) return 2;
+	//Serial.print("P");
 
 	while(_pos<_length){
 		b=readByte(true);
@@ -110,6 +131,8 @@ uint8_t BaySerialInterface::readPacket(uint8_t type,int timeout) {
 		else _ack=b;
 		_pos++;
 	}
+	//Serial.print("P");
+	//Serial.print(millis());
 
 	_next=_pos;
 	b=readByte(true);

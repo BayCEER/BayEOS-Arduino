@@ -1,10 +1,20 @@
+/*
+ * 4 Point Calibration
+ * 
+ * use Two weights (e.g. Zero + Calibration weight) and
+ * to temperatures
+ * 
+ * The 4 Point Calibration data can be stored to ATMega EEPROM 
+ * 
+ */
+
 #include <HX711Array.h>
 #include <NTC.h>
 #include <Sleep.h>
 uint8_t dout[] = {A5};
 uint8_t sck = A4;
 HX711_4PointCal scale;
-NTC_ADC ntc(A1,A2,20000.0,10.0);
+NTC_HX711 ntc(scale, 2 * 470000.0, 10.0);
 
 #define INIT_CAL 0
 
@@ -32,20 +42,19 @@ void setup(void){
   scale.saveConf();
 #endif
   scale.readConf();
-  scale.tare(ntc.getTemp());
   scale.printConf();  
 
 }
 
 void loop(void){
   delay(1000);
-  float temp=ntc.getTemp();
-  scale.readADC();
-  
+  ntc.readResistance();
+  float temp=ntc.getTemp(0);
+  long adc = scale.read_average(5);
+
   Serial.print(temp);
   Serial.print("\t");
-  Serial.print(scale.getRaw());
+  Serial.print(adc);
   Serial.print("\t");
-  Serial.println(scale.getWeight(temp));
+  Serial.println(scale.getWeight(adc,temp));
 }
-

@@ -106,7 +106,16 @@ class BME280SoftI2C : public SoftI2C
     BME280SoftI2C(uint8_t dataPin, uint8_t clockPin);
 
     bool  begin(uint8_t addr = BME280_ADDRESS);
-    void  triggerMeasurement(void);
+    /*
+     * Set the IIRFilter of BME
+     * must be between 1 and 5 according to 1,2,4,8,16
+     */
+    void setIIRFilter(uint8_t filter=1);
+    /*
+     * triggers a measurement
+     * the p_oversampling is a int between 1 and 5 according to 1,2,4,8,16
+      */
+    void  triggerMeasurement(uint8_t p_oversampling=1,uint8_t t_oversampling=1);
     float readTemperature(void);
     float readPressure(void);
     float readHumidity(void);

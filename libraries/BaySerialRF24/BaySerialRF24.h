@@ -16,30 +16,38 @@
 #include <RF24.h>
 
 class BaySerialRF24 : public BaySerialInterface {
+private:
+	void stopListenMode();
+	void startListenMode();
 protected:
 	RF24* _radio; //Pointer to existing radio!!
 	uint8_t buffer[32];
 	uint8_t read_pos;
 	uint8_t write_pos;
 	uint8_t length;
-	uint8_t pipe;
 	uint8_t _flush_size;
+	uint8_t _r_counter;
+	uint8_t _w_counter;
+	bool _send_timeout;
 public:
 	/**
 	 * Constructor
 	 */
-	BaySerialRF24(RF24& radio,int timeout=1000);
+	BaySerialRF24(RF24& radio,int timeout=1000,uint8_t retries=1);
 
 	int available(void);
 	int i_available(void);
 	void begin(long baud);
-	void begin(uint8_t ch, uint8_t* rx_adr, uint8_t* tx_adr, uint8_t flush_size=24);
+	void init(uint8_t ch, uint8_t *adr, uint8_t flush_size=12);
 	void flush(void);
 	void end(void);
 	int read(void);
 	size_t write(uint8_t c);
+	unsigned long last_activity;
 
 };
+
+
 
 
 #endif

@@ -61,7 +61,7 @@ public:
 	 * 1 == no success (Checksum failure)
 	 * 2 == timeout
 	 */
-	uint8_t readIntoPayload(int timeout=5000);
+	uint8_t readIntoPayload(int timeout=0);
 
 	void sendTXBreak(void){
 		sendAck(TX_BREAK);
@@ -75,14 +75,16 @@ public:
 	virtual void end(void)=0;
 
 protected:
-	uint8_t readPacket(uint8_t type=API_DATA, int timeout=5000);
+	uint8_t readPacket(uint8_t type=API_DATA, int timeout=0);
 	void sendByte(uint8_t b, bool escape);
 	uint8_t readByte(bool escape);
 	void sendAck(uint8_t b);
 
 	bool _escape;
 	bool _read_timeout;
-	int  _timeout;
+	unsigned long _start;
+	uint16_t _timeout;
+	uint16_t _current_timeout;
 	uint8_t _length;
 	uint8_t _checksumTotal;
 	uint8_t _api;
@@ -90,6 +92,7 @@ protected:
 	uint8_t _pos;
 	uint8_t _break;
 	uint8_t _cts_pin=0;
+	uint8_t _retries=0;
 	long _baud;
 
 
