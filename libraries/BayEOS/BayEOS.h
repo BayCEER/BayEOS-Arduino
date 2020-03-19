@@ -40,7 +40,7 @@
 
 #ifndef BayEOS_h
 #define BayEOS_h
-#define BayEOS_VERSION "1.4"
+#define BayEOS_VERSION "1.5"
 /*
  *  Frame-Types
  */
@@ -145,9 +145,20 @@ Still working but depreciated!!
 #define BayEOS_ModeStop 0x12 /* renamed from StopLiveData - Should be used to stop DUMP/LIVE/SEND-Mode */
 #define BayEOS_Seek 0x13
 #define BayEOS_StartBinaryDump 0x14 /** [unsigned long start_pos - optional][unsigned long end_pos - optional] */
-#define BayEOS_BufferCommand 0x15 /** 0: save current read pointer to EEPROM, 1: erase, 2: set read pointer to last EEPROM pos
- 3 = set read pointer to write pointer,4 = set read pointer to end pos of binary dump, 5 = get read pos, 6 get write pos */
+ /** Buffer Commands
+  * 0: save current read pointer to EEPROM
+  * 1: erase
+  * 2: set read pointer to last EEPROM pos
+  * 3: set read pointer to write pointer
+  * 4: set read pointer to end pos of binary dump
+  * 5: get read pos
+  * 6: get write pos
+  * 7: get end pos  (v1.5)
+  * 8: get length (v1.5)
+  * *******************************/
+#define BayEOS_BufferCommand 0x15
 #define BayEOS_GetBatStatus 0x16 /* [0x2][0x16] -> returns [0x3][0x16][uint16_t mV][uint16_t warning limit] */
+#define BayEOS_BufferInfo 0x17 /*(v1.5) [0x2][0x17] -> returns [0x3][0x17][uint32_t read][uint32_t write][uint32_t end][uint32_t length] */
 
 
 #ifndef BayEOS_MAX_PAYLOAD

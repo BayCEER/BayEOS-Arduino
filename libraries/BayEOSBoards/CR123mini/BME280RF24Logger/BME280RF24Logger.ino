@@ -4,7 +4,7 @@
 
 ***************************************************************/
 #define SAMPLING_INT 30
-#define NUMBER_OF_CHANNELS 3
+#define NUMBER_OF_CHANNELS 4
 #define NRF24_TRYINT 60
 const uint8_t channel = 0x70;
 const uint8_t adr[] = {0x46, 0xf0, 0xe3, 0xc4, 0x45};
@@ -16,7 +16,8 @@ RF24 radio(9, 10);
 BaySerialRF24 client(radio, 100, 3); //wait maximum 100ms for ACK
 
 #include <BayEOSLogger.h>
-#include <Sleep.h>
+#include <BME280SoftI2C.h>
+BME280SoftI2C bme(A4,A5); // I2C
 
 
 #define TICKS_PER_SECOND 16
@@ -53,8 +54,11 @@ void measure() {
   myLogger._bat = (1.1 * (220 + 100) / 100 / 1023 * analogRead(A7)) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
-
-  values[1] +=connected;
+  bme.triggerMeasurement();
+  delayLCB(40);
+  values[1] +=bme.readTemperature();
+  values[3] +=bme.readPressure();
+  values[2] +=bme.readHumidity();
 
   count++;
 
@@ -75,10 +79,12 @@ void setup() {
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.setBuffer(myBuffer);
   //register all in BayEOSLogger
-  myLogger.init(client, myBuffer, myRTC, 60, 3300); //min_sampling_int = 60, LOW BAT Warning 3700mV
+  myLogger.init(client, myBuffer, myRTC, 60, 2700); //min_sampling_int = 60, LOW BAT Warning 3700mV
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
   initLCB(); //init time2
+  while(!bme.begin(0x76)){};
+
 }
 
 

@@ -246,10 +246,24 @@ void BayEOSLogger::handleCommand(void) {
 			/* store current read poiter pos to eeprom */
 			writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
 			_long1 = _buffer->available(); //will return available bytes
-		} else if (_client->getPayload(2) == 5)
-			_long1 = _buffer->readPos();//will return read pos
-		else if (_client->getPayload(2) == 6)
-			_long1 = _buffer->writePos();//will return write pos
+		} else {
+			switch(_client->getPayload(2)){
+			case 5:
+				_long1 = _buffer->readPos();//will return read pos
+				break;
+			case 6:
+				_long1 = _buffer->writePos();//will return write pos
+				break;
+			case 7:
+				_long1 = _buffer->endPos();//will return end pos
+				break;
+			case 8:
+				_long1 = _buffer->length();//will return available bytes for new
+				break;
+
+			}
+
+		}
 		break;
 
 	}
@@ -268,6 +282,12 @@ void BayEOSLogger::handleCommand(void) {
 		break;
 	case BayEOS_BufferCommand:
 		_client->addToPayload(_long1);
+		break;
+	case BayEOS_BufferInfo:
+		_client->addToPayload(_buffer->readPos());
+		_client->addToPayload(_buffer->writePos());
+		_client->addToPayload(_buffer->endPos());
+		_client->addToPayload(_buffer->length());
 		break;
 	case BayEOS_GetSamplingInt:
 		_client->addToPayload(_sampling_int);
