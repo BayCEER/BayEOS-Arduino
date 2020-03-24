@@ -29,7 +29,6 @@ public:
 
   void handleCommand(void);
   void logData(void);
-  void sendData(void);
   void sendBinaryDump(void);
   void liveData(uint16_t wait);
   void run();

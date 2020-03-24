@@ -13,6 +13,12 @@ public:
 	void setTXAddr(uint8_t* address);
 	void init(uint64_t address,uint8_t c=0x71,rf24_pa_dbm_e pa_level=RF24_PA_HIGH, rf24_datarate_e rate=RF24_250KBPS);
 	bool i_available(uint8_t* pipe_nr);
+	/**
+	 * Read a frame from rx (ack payload)
+	 * returns 0 for success
+	 * 1 == no ack payload
+	 */
+	uint8_t readIntoPayload(void);
 
 	uint64_t _pipe;
 	uint8_t _powerdown;

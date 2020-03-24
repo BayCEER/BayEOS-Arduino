@@ -5,6 +5,10 @@ void BayEOS::startFrame(uint8_t type) {
 	addToPayload(type);
 }
 
+void BayEOS::startFrame(void) {
+	_next = 0;
+}
+
 void BayEOS::startDataFrame(uint8_t subtype, uint8_t checksum) {
 	_next = 0;
 	if (checksum)

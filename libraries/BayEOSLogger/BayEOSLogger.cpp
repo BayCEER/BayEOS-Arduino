@@ -39,22 +39,13 @@ void BayEOSLogger::sendBinaryDump(void) {
 		_long1 -= _buffer->length();
 
 	if(_long1==_long2) _mode=0;
-	if(_client->sendPayload()){
+	uint8_t e_count=0;
+	while(_client->sendPayload() && e_count<3){
+		delay(50);
 		//send error!
-		_mode=0;
+		e_count++;
 	}
-}
-
-void BayEOSLogger::sendData(void) {
-	if(_mode!=LOGGER_MODE_DATA) return;
-	if (_long2 > _buffer->readPos()){
-		if(_client->sendFromBuffer()){
-			//send error!
-			_mode=0;
-			readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-			_buffer->seekReadPointer(_long1);
-		}
-	} else _mode = 0;
+	if(e_count>=3) _mode=0;
 }
 
 void BayEOSLogger::logData(void) {
@@ -176,6 +167,10 @@ void BayEOSLogger::handleCommand(void) {
 		cmd_response_api = BayEOS_GetName;
 		break;
 
+	case BayEOS_SetLoggingDisabled:
+		_logging_disabled=_client->getPayload(2);
+		cmd_response_api = BayEOS_GetLoggingDisabled;
+		break;
 	case BayEOS_SetSamplingInt:
 		for (i = 0; i < 2; i++) {
 			*(((uint8_t*) &_sampling_int) + i) = _client->getPayload(i + 2);
@@ -291,6 +286,9 @@ void BayEOSLogger::handleCommand(void) {
 		break;
 	case BayEOS_GetSamplingInt:
 		_client->addToPayload(_sampling_int);
+		break;
+	case BayEOS_GetLoggingDisabled:
+		_client->addToPayload(_logging_disabled);
 		break;
 	case BayEOS_GetBatStatus:
 		_client->addToPayload(_bat);

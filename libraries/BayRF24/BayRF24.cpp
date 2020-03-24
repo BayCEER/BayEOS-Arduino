@@ -5,6 +5,12 @@ BayRF24::BayRF24(uint8_t _cepin, uint8_t _cspin, uint8_t powerdown = 1) :
 	_powerdown = powerdown;
 }
 
+uint8_t BayRF24::readIntoPayload(void){
+	if(! RF24::available() && ! isAckPayloadAvailable() ) return 1;
+	_next=RF24::getDynamicPayloadSize(); //store end pos
+	RF24::read(BayEOS::_payload,_next); //read directly into _payload
+	return 0;
+}
 
 uint8_t BayRF24::sendPayload(void) {
 	if (_powerdown)
@@ -48,6 +54,7 @@ void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
 	setChannel(c);
 	setPayloadSize(32);
 	enableDynamicPayloads();
+	enableAckPayload();               // Allow optional ack payloads
 	setCRCLength (RF24_CRC_16);
 	setDataRate(rate);
 	setPALevel(pa_level);
