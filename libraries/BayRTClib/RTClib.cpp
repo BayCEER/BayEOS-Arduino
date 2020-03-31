@@ -274,11 +274,15 @@ unsigned long RTC_Timer2::get() {
 long RTC_Millis::offset = 0;
 
 void RTC_Millis::adjust(const DateTime& dt) {
-    offset = dt.get() - millis() / 1000;
+	last_set=millis();
+    offset = dt.get();
 }
 
 DateTime RTC_Millis::now() {
-    return offset + millis() / 1000;
+	if((millis()-last_set)>3456000000){
+		adjust(now());
+	}
+    return offset + (millis()-last_set) / 1000;
 }
 
 

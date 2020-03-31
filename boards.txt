@@ -49,7 +49,7 @@ bayeos_atmega328bb.menu.cpu.mega328_8mhz2.build.mcu=atmega328
 
 ## 8MHz - ATMega328PB 1.8V BOD
 bayeos_atmega328bb.menu.cpu.mega328pb_8mhz=ATMega328PB (8 MHz, 1.8V BOD)
-bayeos_atmega328bb.menu.cpu.mega328pb_8mhz.build.mcu=atmega328
+bayeos_atmega328bb.menu.cpu.mega328pb_8mhz.build.mcu=atmega328pb
 
 ## 8MHz - ATMega328PB 2.7V BOD
 bayeos_atmega328bb.menu.cpu.mega328pb_8mhz2=ATMega328PB (8 MHz, 2.7V BOD)

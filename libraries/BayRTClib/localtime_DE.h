@@ -13,15 +13,20 @@ struct HOLIDAY {
 	uint8_t month;
 };
 
-//Fixed day holidays
-HOLIDAY holidays[]={{1,1},{6,1},{3,10},{1,11},{25,12},{26,12}};
-
+//Returns true for all free days incl. Saturday and Sunday
 bool isHoliday(DateTime& date){
+	//Saturday or Sunday
 	if(date.dayOfWeek()==0 || date.dayOfWeek()==6) return true;
+
+	//Fixed day holidays
+	HOLIDAY holidays[]={{1,1},{6,1},{3,10},{1,11},{25,12},{26,12}};
 	for(uint8_t i=0;i<sizeof(holidays)/2;i++){
 		if(holidays[i].day==date.day() && holidays[i].month==date.month()) return true;
 	}
 
+	//Variable date holidays (easter)
+    //day shifts to easter sunday for Karfreitag, Ostermontag, Himmelfahrt, Pfingstmontag, Fronleichnam
+    int8_t easter_shifts[]={-2,1,39,50,60};
 	//calculate easter sunday
     int a = date.year() % 19;
     int b = date.year() /100;
@@ -37,8 +42,6 @@ bool isHoliday(DateTime& date){
     int n = (h - m + r + 90) / 25; //month
     int p = (h - m + r + n + 19) % 32; //day
     DateTime easter_sunday(date.year(),n,p);
-    //day shifts for Karfreitag, Ostermontag, Himmelfahrt, Pfingstmontag, Fronleichnam
-    int8_t easter_shifts[]={-2,1,39,50,60};
     DateTime easter_holiday;
     for(uint8_t i=0;i<sizeof(easter_shifts);i++){
     	easter_holiday=DateTime(easter_sunday.get()+86400L*easter_shifts[i]);
@@ -47,6 +50,8 @@ bool isHoliday(DateTime& date){
     return false;
 }
 
+
+//Returns true when there is daylight saving for the date
 bool isDaylightSaving(DateTime& d){
 	DateTime temp;
 	if(d.month()<3) return false;
@@ -70,9 +75,10 @@ bool isDaylightSaving(DateTime& d){
 	}
 }
 
+//get the time shift for the date
 long getShift(DateTime& d){
-	if(isDaylightSaving(d)) return 7200;
-	else return 3600;
+	if(isDaylightSaving(d)) return 7200; //Two hours ahead from UTC
+	else return 3600; //One hour ahead from UTC
 }
 
 #endif

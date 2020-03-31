@@ -1,6 +1,6 @@
 #include "BayRF24.h"
 
-BayRF24::BayRF24(uint8_t _cepin, uint8_t _cspin, uint8_t powerdown = 1) :
+BayRF24::BayRF24(uint8_t _cepin, uint8_t _cspin, uint8_t powerdown) :
 		RF24(_cepin, _cspin) {
 	_powerdown = powerdown;
 }
@@ -47,8 +47,7 @@ void BayRF24::setTXAddr(uint8_t* address){
 
 }
 
-void BayRF24::init(uint64_t address, uint8_t c = 0x71, rf24_pa_dbm_e pa_level =
-		RF24_PA_HIGH, rf24_datarate_e rate = RF24_250KBPS) {
+void BayRF24::init(uint64_t address, uint8_t c, rf24_pa_dbm_e pa_level, rf24_datarate_e rate) {
 	_pipe = address;
 	RF24::begin();
 	setChannel(c);

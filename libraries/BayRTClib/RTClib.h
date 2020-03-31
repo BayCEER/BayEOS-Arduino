@@ -46,7 +46,6 @@ public:
 };
 
 // RTC using the internal millis() clock, has to be initialized before use
-// NOTE: this clock won't be correct once the millis() timer rolls over (>49d?)
 class RTC_Millis : public RTC {
 public:
     void begin() {}
@@ -54,6 +53,7 @@ public:
     DateTime now();
 
 protected:
+    unsigned long last_set; //store the millis() value of last adjust()
     static long offset;
 };
 
