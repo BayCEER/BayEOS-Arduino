@@ -6,8 +6,12 @@
 #define SAMPLING_INT 30
 #define NUMBER_OF_CHANNELS 4
 #define NRF24_TRYINT 60
+#define BLINK_ON_LOGGING_DISABLED 1
 const uint8_t channel = 0x70;
 const uint8_t adr[] = {0x46, 0xf0, 0xe3, 0xc4, 0x45};
+//channel map and unit map must not exceed 98 characters!
+char channel_map[] = "time;bat;temp;hum;pre";
+char unit_map[] = "ms;V;C;%;Pa";
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerialRF24.h>
@@ -17,11 +21,10 @@ BaySerialRF24 client(radio, 100, 3); //wait maximum 100ms for ACK
 
 #include <BayEOSLogger.h>
 #include <BME280SoftI2C.h>
-BME280SoftI2C bme(A4,A5); // I2C
+BME280SoftI2C bme(A4, A5); // I2C
 
 
 #define TICKS_PER_SECOND 16
-uint8_t connected = 0;
 
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
@@ -56,9 +59,9 @@ void measure() {
   digitalWrite(POWER_PIN, LOW);
   bme.triggerMeasurement();
   delayLCB(40);
-  values[1] +=bme.readTemperature();
-  values[3] +=bme.readPressure();
-  values[2] +=bme.readHumidity();
+  values[1] += bme.readTemperature();
+  values[3] += bme.readPressure();
+  values[2] += bme.readHumidity();
 
   count++;
 
@@ -82,67 +85,46 @@ void setup() {
   myLogger.init(client, myBuffer, myRTC, 60, 2700); //min_sampling_int = 60, LOW BAT Warning 3700mV
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
+  myLogger.setChannelMap(channel_map);
+  myLogger.setUnitMap(unit_map);
   initLCB(); //init time2
-  while(!bme.begin(0x76)){};
+  while (!bme.begin(0x76)) {};
 
 }
 
 
 unsigned long last_try = -NRF24_TRYINT;
 
-void send_test_byte(void) {
-  uint8_t test_byte[] = {XOFF};
-  uint8_t res = 0;
-  last_try = myRTC.get();
-  if (! connected) radio.powerUp();
-  radio.stopListening();
-  res = radio.write(test_byte, 1);
-  uint8_t curr_pa = 0;
-  while (!res && curr_pa < 4) {
-    radio.setPALevel((rf24_pa_dbm_e) curr_pa);
-    delayMicroseconds(random(1000));
-    res = radio.write(test_byte, 1);
-    curr_pa++;
-  }
-  if (res){
-    blinkLED(0);
-    client.last_activity = millis();
-    radio.startListening();
-    digitalWrite(LED_BUILTIN, 1);
-    connected=1;
-  } else {
-    digitalWrite(LED_BUILTIN, 0);
-    radio.powerDown();
-    connected=0;
-  }
-}
 
 void loop() {
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
                                        (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
+  myLogger.run(client.connected);
 
-  if (! connected) {
+  if (! client.connected) {
     myLogger._mode = 0;
     //sleep until timer2 will wake us up...
     Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-    
-   //check if receiver is present
-   if((myRTC.get() - last_try) > NRF24_TRYINT) {
-      send_test_byte();
-      if (! connected && myLogger._logging_disabled)
-        blinkLED(NRF24_TRYINT * 2);
-    } 
-  } else if((millis() - client.last_activity) > 30000) {
+
+    //check if receiver is present
+    if ((myRTC.get() - last_try) > NRF24_TRYINT) {
+      blinkLED(0);
+      last_try = myRTC.get();
+      client.sendTestByte();
+#if BLINK_ON_LOGGING_DISABLED
+      if (! client.connected && myLogger._logging_disabled) {
+        last_try -= (NRF24_TRYINT - 5);
+        blinkLED(10);
+      }
+#endif
+    }
+  } else if ((millis() - client.last_activity) > 30000) {
     //check if still connected
-    send_test_byte();
+    last_try = myRTC.get();
+    client.sendTestByte();
   }
 
 }

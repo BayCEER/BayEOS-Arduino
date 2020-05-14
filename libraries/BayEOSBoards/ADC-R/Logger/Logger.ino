@@ -28,6 +28,9 @@
 #define WAIT_TIME_MICROS_BETWEEN 1000
 #define SAMPLING_INT 30
 #define NUMBER_OF_CHANNELS 10
+//channel map and unit map must not exceed 98 characters!
+char channel_map[] = "time;bat;temp1;temp2;temp3;R1+;R2+;R3+;R1-;R2-;R3-;Rain";
+char unit_map[] = "ms;V;C;C;C;Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;Counts";
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>
@@ -151,6 +154,8 @@ void setup() {
   myLogger.init(client, myBuffer, myRTC, 60, 3000); //min_sampling_int = 60, LOW BAT Warning 3000mV
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
+  myLogger.setChannelMap(channel_map);
+  myLogger.setUnitMap(unit_map);
   initLCB(); //init time2
 }
 
@@ -158,16 +163,12 @@ void loop() {
 #if WITHRAINGAUGE
   handleRainEventLCB();
 #endif
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
                                        (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
+  myLogger.run(connected);
 
   if (! connected && myLogger._logging_disabled) {
     pinMode(LED_BUILTIN, OUTPUT);
@@ -198,4 +199,3 @@ void loop() {
   }
 
 }
-

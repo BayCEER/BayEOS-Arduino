@@ -40,7 +40,7 @@
 
 #ifndef BayEOS_h
 #define BayEOS_h
-#define BayEOS_VERSION "1.5"
+#define BayEOS_VERSION "1.6"
 /*
  *  Frame-Types
  */
@@ -158,9 +158,11 @@ Still working but depreciated!!
   * *******************************/
 #define BayEOS_BufferCommand 0x15
 #define BayEOS_GetBatStatus 0x16 /* [0x2][0x16] -> returns [0x3][0x16][uint16_t mV][uint16_t warning limit] */
-#define BayEOS_BufferInfo 0x17 /*(v1.5) [0x2][0x17] -> returns [0x3][0x17][uint32_t read][uint32_t write][uint32_t end][uint32_t length] */
+#define BayEOS_BufferInfo 0x17 /*(v1.5) [0x2][0x17] -> returns [0x3][0x17][uint32_t read][uint32_t write][uint32_t end][uint32_t length][int8_t framesize][uint16_t sampling_int] */
 #define BayEOS_GetLoggingDisabled 0x18 /*(v1.6) [0x2][0x18] -> returns [0x3][0x18][uint8_t _logging_disabled]*/
 #define BayEOS_SetLoggingDisabled 0x19 /*(v1.6) [0x2][0x19][uint8_t 0/1] -> returns [0x3][0x19][uint8_t _logging_disabled]*/
+#define BayEOS_GetChannelMap 0x1a /*(v1.6) [0x2][0x1a] -> returns [0x3][0x1a][char ch1;ch2;ch3;ch4....]*/
+#define BayEOS_GetUnitMap 0x1b /*(v1.6) [0x2][0x1b] -> returns [0x3][0x1b][char unit1;unit2;....]*/
 
 #ifndef BayEOS_MAX_PAYLOAD
 #define BayEOS_MAX_PAYLOAD 100

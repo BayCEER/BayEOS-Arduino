@@ -24,6 +24,7 @@
 #define R_NTC 10000.0
 #define R_PRE 100000.0
 #define WITHRAINGAUGE 1
+#define BLINK_ON_LOGGING_DISABLED 1
 #define ADC_COUNT 20
 #define WAIT_TIME_MICROS_POWERUP 500
 #define WAIT_TIME_MICROS_BETWEEN 1000
@@ -33,6 +34,10 @@
 const uint8_t channel = 0x67;
 const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 #define LIPO 0
+//channel map and unit map must not exceed 98 characters!
+char channel_map[] = "time;bat;temp1;temp2;temp3;R1+;R2+;R3+;R1-;R2-;R3-;Rain";
+char unit_map[] = "ms;V;C;C;C;Ohm;Ohm;Ohm;Ohm;Ohm;Ohm;Counts";
+
 
 
 #include <BayEOSBufferSPIFlash.h>
@@ -49,9 +54,7 @@ NTC_ADC ntc2(3, A4, R_NTC, 5.0);
 NTC_ADC ntc3(3, A5, R_NTC, 5.0);
 
 
-#define CONNECTED_PIN 3
 #define TICKS_PER_SECOND 16
-uint8_t connected = 0;
 
 
 
@@ -160,7 +163,6 @@ void setup() {
   pinMode(POWER_PIN, OUTPUT);
   pinMode(4, OUTPUT);
   pinMode(6, OUTPUT);
-  pinMode(CONNECTED_PIN, INPUT_PULLUP);
   myBuffer.init(flash);
   myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS);
   client.setBuffer(myBuffer);
@@ -168,67 +170,46 @@ void setup() {
   myLogger.init(client, myBuffer, myRTC, 60, 3300); //min_sampling_int = 60, LOW BAT Warning 3000mV
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
+  myLogger.setChannelMap(channel_map);
+  myLogger.setUnitMap(unit_map);
   initLCB(); //init time2
 }
 
 unsigned long last_try = -NRF24_TRYINT;
 
-void send_test_byte(void) {
-  uint8_t test_byte[] = {XOFF};
-  uint8_t res = 0;
-  last_try = myRTC.get();
-  if (! connected) radio.powerUp();
-  radio.stopListening();
-  res = radio.write(test_byte, 1);
-  uint8_t curr_pa = 0;
-  while (!res && curr_pa < 4) {
-    radio.setPALevel((rf24_pa_dbm_e) curr_pa);
-    delayMicroseconds(random(1000));
-    res = radio.write(test_byte, 1);
-    curr_pa++;
-  }
-  if (res){
-    blinkLED(0);
-    client.last_activity = millis();
-    radio.startListening();
-    digitalWrite(LED_BUILTIN, 1);
-    connected=1;
-  } else {
-    digitalWrite(LED_BUILTIN, 0);
-    radio.powerDown();
-    connected=0;
-  }
-}
 
 void loop() {
 #if WITHRAINGAUGE
   handleRainEventLCB();
 #endif
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
                                        (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
+  myLogger.run(client.connected);
 
-  if (! connected) {
+  if (! client.connected) {
     myLogger._mode = 0;
     //sleep until timer2 will wake us up...
     Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-    
-   //check if receiver is present
-   if((myRTC.get() - last_try) > NRF24_TRYINT) {
-      send_test_byte();
-      if (! connected && myLogger._logging_disabled)
-        blinkLED(NRF24_TRYINT * 2);
-    } 
-  } else if((millis() - client.last_activity) > 30000) {
+
+    //check if receiver is present
+    if ((myRTC.get() - last_try) > NRF24_TRYINT) {
+      last_try = myRTC.get();
+      blinkLED(0);
+      client.sendTestByte();
+#if BLINK_ON_LOGGING_DISABLED
+      if (! client.connected && myLogger._logging_disabled) {
+        last_try -= (NRF24_TRYINT - 5);
+        blinkLED(10);
+      }
+#endif
+    }
+  } else if ((millis() - client.last_activity) > 30000) {
     //check if still connected
-    send_test_byte();
+    last_try = myRTC.get();
+    client.sendTestByte();
   }
 
 

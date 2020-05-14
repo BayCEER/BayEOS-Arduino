@@ -146,3 +146,28 @@ size_t BaySerialRF24::write(uint8_t c) {
 	return 1;
 }
 
+
+void BaySerialRF24::sendTestByte(uint8_t led) {
+  uint8_t test_byte[] = {XOFF};
+  uint8_t res = 0;
+  if (! connected) _radio->powerUp();
+  _radio->stopListening();
+  res = _radio->write(test_byte, 1);
+  uint8_t curr_pa = 0;
+  while (!res && curr_pa < 4) {
+    _radio->setPALevel((rf24_pa_dbm_e) curr_pa);
+    delayMicroseconds(random(1000));
+    res = _radio->write(test_byte, 1);
+    curr_pa++;
+  }
+  if (res) {
+    last_activity = millis();
+    _radio->startListening();
+    if(led) digitalWrite(led, 1);
+    connected = 1;
+  } else {
+    if(led) digitalWrite(led, 0);
+    _radio->powerDown();
+    connected = 0;
+  }
+}

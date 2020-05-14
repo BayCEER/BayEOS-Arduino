@@ -33,6 +33,7 @@ void setup()
   scale.power_down();
   Serial.println("Test done");
   Serial.flush();
+  pinMode(POWER_PIN, OUTPUT);
   startLCB();
 
 }
@@ -48,11 +49,16 @@ void loop() {
     scale.power_down();
     client.startDataFrame(BayEOS_Float32le);
     client.addChannelValue(millis());
+    digitalWrite(POWER_PIN, HIGH);
+    analogReference(DEFAULT);
+    client.addChannelValue(3.3 * (100 + 100) / 100 * analogRead(A7) / 1023);
+    digitalWrite(POWER_PIN, LOW);
+
     //Ausgabe der Spannung in µV bei 3.3V Boardspannung!
-    client.addChannelValue(3300000.0/32/256/256/256*adc[0]);
-    client.addChannelValue(3300000.0/32/256/256/256*adc[1]);
-    client.addChannelValue(3300000.0/32/256/256/256*adc[2]);
-    client.addChannelValue(3300000.0/32/256/256/256*adc[3]);
+    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[0]);
+    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[1]);
+    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[2]);
+    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[3]);
     sendOrBufferLCB();
 
     Serial.flush();
@@ -62,6 +68,6 @@ void loop() {
     client.sendFromBuffer();
     Serial.flush();
   }
-   sleepLCB();
+  sleepLCB();
 
 }

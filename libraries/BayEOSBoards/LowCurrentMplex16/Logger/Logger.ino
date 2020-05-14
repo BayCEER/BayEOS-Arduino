@@ -5,6 +5,8 @@
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
 #define NTC10FACTOR 0.5
 #define MCPPOWER_PIN 6
+char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8;T9;T10;T11;T12;T13,T14;T15;T16";
+char unit_map[] = "ms;V;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C";
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>
@@ -131,6 +133,8 @@ void setup() {
   myLogger.init(client, myBuffer, myRTC, 60, 2500); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
+  myLogger.setChannelMap(channel_map);
+  myLogger.setUnitMap(unit_map);
   Wire.begin();
   mcp342x.reset();
   mcp342x.storeConf(rate, gain);
@@ -142,16 +146,12 @@ void setup() {
 }
 
 void loop() {
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
                                        (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
+  myLogger.run(connected);
 
   if (! connected && myLogger._logging_disabled) {
     pinMode(LED_BUILTIN, OUTPUT);

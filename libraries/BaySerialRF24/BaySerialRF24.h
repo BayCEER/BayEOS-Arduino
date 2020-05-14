@@ -44,6 +44,12 @@ public:
 	int read(void);
 	size_t write(uint8_t c);
 	unsigned long last_activity;
+	bool connected;
+	/*
+	 * Send one byte to check if a receiver is present
+	 * sets connected
+	 */
+	void sendTestByte(uint8_t led=LED_BUILTIN);
 
 };
 

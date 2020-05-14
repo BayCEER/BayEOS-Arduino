@@ -19,7 +19,7 @@ bool isHoliday(DateTime& date){
 	if(date.dayOfWeek()==0 || date.dayOfWeek()==6) return true;
 
 	//Fixed day holidays
-	HOLIDAY holidays[]={{1,1},{6,1},{3,10},{1,11},{25,12},{26,12}};
+	HOLIDAY holidays[]={{1,1},{6,1},{1,5},{3,10},{1,11},{25,12},{26,12}};
 	for(uint8_t i=0;i<sizeof(holidays)/2;i++){
 		if(holidays[i].day==date.day() && holidays[i].month==date.month()) return true;
 	}

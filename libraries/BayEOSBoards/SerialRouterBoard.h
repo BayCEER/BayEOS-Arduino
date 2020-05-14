@@ -3,8 +3,7 @@
  *
  * It depends on some conventions:
  * 1. bayeos.client must be named "client"
- * 2. Dallas is called "ds"
- * 3. Changes in CONSTANTS must be declared before include
+ * 2. Changes in CONSTANTS must be declared before include
  */
 
 #include <Sleep.h>

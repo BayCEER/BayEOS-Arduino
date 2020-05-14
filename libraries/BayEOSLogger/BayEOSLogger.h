@@ -15,6 +15,7 @@
 #define LOGGER_MODE_DATA 0x2
 #define LOGGER_MODE_DUMP 0x3
 
+typedef void (*reset_callback_function)(void);
 
 class BayEOSLogger
 {
@@ -27,23 +28,30 @@ public:
   }
   void init(BayEOS& client,BayEOSBuffer& buffer,RTC& rtc,uint16_t min_sampling_int=10,uint16_t bat_warning=0);
 
+  void setChannelMap(char* map);
+  void setUnitMap(char* map);
   void handleCommand(void);
   void logData(void);
   void sendBinaryDump(void);
   void liveData(uint16_t wait);
-  void run();
+  void run(bool connected=true);
   void setClient(BayEOS& client);
+  void setResetCallback(reset_callback_function callback);
 
-  unsigned long _last_measurement;
+  unsigned long _next_log;
   unsigned long _long1, _long2, _long3; //used to store time and pos information
 
+  char* _channel_map;
+  char* _unit_map;
   uint16_t _min_sampling_int;
   uint16_t _sampling_int;
   uint16_t _bat;
   uint16_t _bat_warning;
   uint8_t _mode;
+  int8_t _framesize;
   BayEOS* _client;
   RTC* _rtc;
+  reset_callback_function _reset_callback;
   BayEOSBuffer* _buffer;
   uint8_t _logging_disabled;
   uint8_t _logged_flag; //this is set when data is written to buffer

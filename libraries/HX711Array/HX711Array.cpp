@@ -82,17 +82,19 @@ long HX711Array::read(uint8_t timeout) {
 	}
 	unsigned long value = 0;
 
-	uint8_t filler = 0x00;
-
 	// pulse the clock pin 24 times to read the data
 	shiftIn(2);
 	shiftIn(1);
 	shiftIn(0);
 
 	// set the channel and the gain factor for the next reading using the clock pin
-	for (unsigned int i = 0; i < GAIN; i++) {
+	for (uint8_t i = 0; i < GAIN; i++) {
+		noInterrupts();
 		digitalWrite(_pd_sck, HIGH);
+        delayMicroseconds(1);
 		digitalWrite(_pd_sck, LOW);
+		interrupts();
+        delayMicroseconds(1);
 	}
 
 	// Replicate the most significant bit to pad out a 32-bit signed integer

@@ -1,7 +1,7 @@
 /*
- * Logger-Sketch for Read-Out via RF24
- * use BaySerialRF24/LoggerConnector as receiver
- */
+   Logger-Sketch for Read-Out via RF24
+   use BaySerialRF24/LoggerConnector as receiver
+*/
 
 #define SAMPLING_INT 30
 #define PRE_RESISTOR 14300
@@ -9,8 +9,13 @@
 #define NTC10FACTOR 0.5
 #define MCPPOWER_PIN 6
 #define NRF24_TRYINT 60
+#define BLINK_ON_LOGGING_DISABLED 1
 const uint8_t channel = 0x70;
 const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
+//channel map and unit map must not exceed 98 characters!
+char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8";
+char unit_map[] = "ms;V;C;C;C;C;C;C;C;C";
+
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerialRF24.h>
@@ -33,27 +38,26 @@ float ntc10_R2T(float r) {
          4.20199 * log_r * log_r - 0.09586 * log_r * log_r * log_r;
 }
 
-#define CONNECTED_PIN 9
 #define TICKS_PER_SECOND 16
 uint8_t connected = 0;
 
 
-RF24 radio(9,10);
-BaySerialRF24 client(radio,100,3); //wait maximum 100ms for ACK
+RF24 radio(9, 10);
+BaySerialRF24 client(radio, 100, 3); //wait maximum 100ms for ACK
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
 #include <LowCurrentBoard.h>
 
-void delayLogger(unsigned long d){
-  if(connected){
-    unsigned long s=millis();
-    while((millis()-s)<d){
+void delayLogger(unsigned long d) {
+  if (connected) {
+    unsigned long s = millis();
+    while ((millis() - s) < d) {
       myLogger.handleCommand();
       myLogger.sendBinaryDump();
     }
   } else {
-    delayLCB(d); 
+    delayLCB(d);
   }
 }
 
@@ -113,7 +117,6 @@ void measure() {
 void setup() {
   pinMode(MCPPOWER_PIN, OUTPUT);
   pinMode(POWER_PIN, OUTPUT);
-  pinMode(CONNECTED_PIN, INPUT_PULLUP);
   myBuffer.init(flash);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
   client.init(channel, adr);
@@ -123,6 +126,8 @@ void setup() {
   myLogger.init(client, myBuffer, myRTC, 60, 2500); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
+  myLogger.setChannelMap(channel_map);
+  myLogger.setUnitMap(unit_map);
   Wire.begin();
   mcp342x.reset();
   mcp342x.storeConf(rate, gain);
@@ -135,60 +140,36 @@ void setup() {
 
 unsigned long last_try = -NRF24_TRYINT;
 
-void send_test_byte(void) {
-  uint8_t test_byte[] = {XOFF};
-  uint8_t res = 0;
-  last_try = myRTC.get();
-  if (! connected) radio.powerUp();
-  radio.stopListening();
-  res = radio.write(test_byte, 1);
-  uint8_t curr_pa = 0;
-  while (!res && curr_pa < 4) {
-    radio.setPALevel((rf24_pa_dbm_e) curr_pa);
-    delayMicroseconds(random(1000));
-    res = radio.write(test_byte, 1);
-    curr_pa++;
-  }
-  if (res){
-    blinkLED(0);
-    client.last_activity = millis();
-    radio.startListening();
-    digitalWrite(LED_BUILTIN, 1);
-    connected=1;
-  } else {
-    digitalWrite(LED_BUILTIN, 0);
-    radio.powerDown();
-    connected=0;
-  }
-}
-
 
 void loop() {
-  //Enable logging if RTC give a time later than 2010-01-01
-  if (myLogger._logging_disabled && myRTC.get() > 315360000L)
-    myLogger._logging_disabled = 0;
-
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
                                        (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
+  myLogger.run(client.connected);
 
-  if (! connected) {
+  if (! client.connected) {
     myLogger._mode = 0;
     //sleep until timer2 will wake us up...
     Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-    
-   //check if receiver is present
-   if((myRTC.get() - last_try) > NRF24_TRYINT) {
-      send_test_byte();
-      if (! connected && myLogger._logging_disabled)
-        blinkLED(NRF24_TRYINT * 2);
-    } 
-  } else if((millis() - client.last_activity) > 30000) {
+
+    //check if receiver is present
+    if ((myRTC.get() - last_try) > NRF24_TRYINT) {
+      blinkLED(0);
+      last_try = myRTC.get();
+      client.sendTestByte();
+#if BLINK_ON_LOGGING_DISABLED
+      if (! client.connected && myLogger._logging_disabled) {
+        last_try -= (NRF24_TRYINT - 5);
+        blinkLED(10);
+      }
+#endif
+    }
+  } else if ((millis() - client.last_activity) > 30000) {
     //check if still connected
-    send_test_byte();
+    last_try = myRTC.get();
+    client.sendTestByte();
   }
 
 }

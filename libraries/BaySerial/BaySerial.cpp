@@ -62,6 +62,7 @@ void BaySerialInterface::sendFrame(void){
 
 uint8_t BaySerialInterface::sendPayload(void){
 	//Serial.print("S");
+	if(_break) return TX_BREAK;
 	if(_cts_pin){
 		for(uint8_t i=0;i<3;i++){
 			pinMode(_cts_pin,INPUT); //release CTS line for a short time
@@ -71,7 +72,6 @@ uint8_t BaySerialInterface::sendPayload(void){
 		}
 		begin(_baud);
 	}
-	if(_break) return TX_BREAK;
 	sendFrame();
 	delay(1);
 	uint8_t res=readPacket(API_ACK);
