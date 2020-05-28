@@ -83,7 +83,12 @@ public:
 	 * Checks if there is "length" space left
 	 * return 0 if not
 	 */
-	uint8_t freeSpace(uint8_t length);
+	uint8_t freeSpace(uint16_t length);
+
+	/**
+	 * Free length space
+	 */
+	void makeFreeSpace(uint16_t length);
 
 	/**
 	 * Gives free space left in buffer

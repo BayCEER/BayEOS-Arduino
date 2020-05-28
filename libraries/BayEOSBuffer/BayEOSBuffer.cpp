@@ -8,7 +8,6 @@ BayEOSBuffer::BayEOSBuffer(void) {
 	_framesDiscarded = 0;
 }
 
-
 uint8_t BayEOSBuffer::b_seek(unsigned long pos) {
 	_pos = pos;
 	return seek(pos);
@@ -27,7 +26,7 @@ uint8_t BayEOSBuffer::b_write(const uint8_t *b, uint8_t length) {
 	_res = (((unsigned long) (_pos + length)) <= _max_length ?
 			length : _max_length - _pos);
 	_res = write(b, _res);
-	if (_res<0)
+	if (_res < 0)
 		return 0; //error!!
 	_pos += _res;
 	if (_pos == _max_length) {
@@ -36,9 +35,9 @@ uint8_t BayEOSBuffer::b_write(const uint8_t *b, uint8_t length) {
 	if (_res < length) {
 		//second write
 		_res = write(b + _res, length - _res);
-		if(_res<0)
+		if (_res < 0)
 			return 0; //error!!
-		_pos+=_res;
+		_pos += _res;
 		_res = length;
 	}
 	return _res;
@@ -68,7 +67,8 @@ int BayEOSBuffer::b_read(uint8_t *dest, int length) {
 	if (_res < length) {
 		//second read
 		_res = read(dest + _res, length - _res);
-		if (_res == -1) return -1;
+		if (_res == -1)
+			return -1;
 		_pos = _res;
 		_res = length;
 	}
@@ -81,11 +81,33 @@ unsigned long BayEOSBuffer::available(void) {
 }
 
 unsigned long BayEOSBuffer::freeSpace(void) {
-	if(_read_pos==_write_pos) return _max_length;
-	return (((unsigned long) (_max_length + _read_pos - _write_pos)) % _max_length);
+	if (_read_pos == _write_pos)
+		return _max_length;
+	return (((unsigned long) (_max_length + _read_pos - _write_pos))
+			% _max_length);
 }
 
-uint8_t BayEOSBuffer::freeSpace(uint8_t length) {
+void BayEOSBuffer::makeFreeSpace(uint16_t length) {
+	uint8_t move_read_pos = 0;
+	while (!freeSpace(length + 5)) {
+		//End Pointer überholt Read Pointer
+		if (_end == _read_pos) {
+			_framesDiscarded = 1;
+			move_read_pos = 1;
+#if SERIAL_DEBUG
+			Serial.println("Verwerfe Paket");
+#endif
+		}
+		_end += initPacket(_end) + 5;
+		if (_end >= _max_length)
+			_end -= _max_length;
+		if (move_read_pos)
+			_read_pos = _end;
+	}
+
+}
+
+uint8_t BayEOSBuffer::freeSpace(uint16_t length) {
 	if (_end == _write_pos)
 		return (_max_length > (unsigned long) length);
 #if SERIAL_DEBUG
@@ -113,9 +135,10 @@ uint8_t BayEOSBuffer::readBinary(unsigned long pos, uint8_t length,
 uint8_t BayEOSBuffer::readBinary(unsigned long pos, unsigned long stop,
 		uint8_t length, uint8_t *dest) {
 	b_seek(pos);
-	unsigned long remaining= ((unsigned long) (_max_length + stop - pos))
-				% _max_length;
-	if(remaining<length) length=remaining;
+	unsigned long remaining = ((unsigned long) (_max_length + stop - pos))
+			% _max_length;
+	if (remaining < length)
+		length = remaining;
 	return b_read(dest, length);
 }
 
@@ -148,7 +171,7 @@ void BayEOSBuffer::reset(void) {
 }
 
 void BayEOSBuffer::skip(void) {
-	_read_pos=_write_pos;
+	_read_pos = _write_pos;
 }
 
 uint8_t BayEOSBuffer::initNextPacket(void) {
@@ -175,8 +198,9 @@ uint8_t BayEOSBuffer::initPacket(unsigned long pos) {
 }
 
 void BayEOSBuffer::next(void) {
-	if (_packet_length == 0 ||
-			(_read_pos<_write_pos && (_read_pos+5+_packet_length)>_write_pos)) {
+	if (_packet_length == 0
+			|| (_read_pos < _write_pos
+					&& (_read_pos + 5 + _packet_length) > _write_pos)) {
 #if SERIAL_DEBUG
 		Serial.println("Packet Length is 0 or invalid!. This should not happen...");
 #endif
@@ -204,83 +228,81 @@ void BayEOSBuffer::next(void) {
 }
 
 uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
-	uint8_t move_read_pos = 0;
-	while (!freeSpace(length+5)) {
-		//End Pointer überholt Read Pointer
-		if (_end == _read_pos) {
-			_framesDiscarded = 1;
-			move_read_pos = 1;
-#if SERIAL_DEBUG
-			Serial.println("Verwerfe Paket");
-#endif
+	uint8_t tries = 0;
+	while (tries < 5) {
+		makeFreeSpace(length + 5);
+		b_seek(_write_pos);
+		unsigned long time = getTime();
+		uint8_t* b = (uint8_t *) &time;
+		bool time_write_error=(! b_write(b, 4));
+		if (!b_write(length) || time_write_error) { //This should never happen -- but in case we will make a valid length!
+			b_seek(_write_pos+4);
+			uint8_t length_failed = b_read();
+			makeFreeSpace((uint16_t) 5 + length_failed);
+			b_seek(_write_pos+5);
+			if(length_failed){
+				b_seek(_write_pos+5);
+				b_write(0xff); //invalid frame
+				if(length_failed>1)
+					b_write(payload, length_failed - 1); //make sure to write (free pages in flash!)
+			}
+			_write_pos += length_failed + 5;
+			if (_write_pos >= _max_length)
+				_write_pos -= _max_length;
+			tries++;
+		} else {
+			b_write(payload, length);
+			_write_pos	+= length + 5;
+			if (_write_pos >= _max_length)
+				_write_pos -= _max_length;
+			flush();
+			return length + 5;
 		}
-		_end += initPacket(_end) + 5;
-		if (_end >= _max_length)
-			_end -= _max_length;
-		if (move_read_pos)
-			_read_pos = _end;
+
 	}
-
-	b_seek(_write_pos);
-
-	unsigned long time = getTime();
-	uint8_t* b = (uint8_t *) &time;
-	b_write(b, 4);
-	b_write(length);
-	b_write(payload, length);
-
-	_write_pos += length + 5;
-	if (_write_pos >= _max_length)
-		_write_pos -= _max_length;
-
-#if SERIAL_DEBUG
-	Serial.println();
-	Serial.print("end: ");
-	Serial.print(_end);
-	Serial.print(" -- write: ");
-	Serial.print(_write_pos);
-	Serial.print(" -- read: ");
-	Serial.println(_read_pos);
-	Serial.println();
-#endif
 	flush();
-	return length + 5;
+	return 0;
 }
 
-uint8_t BayEOSBuffer::packetLength(void){
+uint8_t BayEOSBuffer::packetLength(void) {
 	return _packet_length;
 }
 
-unsigned long BayEOSBuffer::packetMillis(void){
+unsigned long BayEOSBuffer::packetMillis(void) {
 	return _millis;
 }
 
-
-void BayEOSBuffer::setRTC(RTC& rtc,uint8_t timeType) {
+void BayEOSBuffer::setRTC(RTC& rtc, uint8_t timeType) {
 	_rtc = &rtc;
-	_timeType=timeType;
+	_timeType = timeType;
 }
 
-uint8_t BayEOSBuffer::rtc(void){
-  if(_rtc!=NULL) return 1;
-  return 0;
+uint8_t BayEOSBuffer::rtc(void) {
+	if (_rtc != NULL)
+		return 1;
+	return 0;
 }
 
-
-unsigned long BayEOSBuffer::getTime(void){
-  if(_rtc!=NULL){
-	//DateTime now=_rtc->now();
-	return _rtc->now().get();
-  }
-  return millis();
+unsigned long BayEOSBuffer::getTime(void) {
+	if (_rtc != NULL) {
+		//DateTime now=_rtc->now();
+		return _rtc->now().get();
+	}
+	return millis();
 }
 
-unsigned long BayEOSBuffer::writePos(void){ return _write_pos; }
-unsigned long BayEOSBuffer::readPos(void){ return _read_pos; }
-unsigned long BayEOSBuffer::endPos(void){ return _end; }
-unsigned long BayEOSBuffer::length(void){ return _max_length; }
-
-
+unsigned long BayEOSBuffer::writePos(void) {
+	return _write_pos;
+}
+unsigned long BayEOSBuffer::readPos(void) {
+	return _read_pos;
+}
+unsigned long BayEOSBuffer::endPos(void) {
+	return _end;
+}
+unsigned long BayEOSBuffer::length(void) {
+	return _max_length;
+}
 
 //PROGMEM prog_uint8_t daysInMonth[]  = {31,28,31,30,31,30,31,31,30,31,30,31};
 
@@ -402,10 +424,22 @@ long DateTime::get() const {
 	return time2long(days, hh, mm, ss);
 }
 
-uint16_t DateTime::year() const { return 2000 + yOff; }
-uint8_t DateTime::month() const { return m; }
-uint8_t DateTime::day() const { return d; }
-uint8_t DateTime::hour() const { return hh; }
-uint8_t DateTime::minute() const { return mm; }
-uint8_t DateTime::second() const { return ss; }
+uint16_t DateTime::year() const {
+	return 2000 + yOff;
+}
+uint8_t DateTime::month() const {
+	return m;
+}
+uint8_t DateTime::day() const {
+	return d;
+}
+uint8_t DateTime::hour() const {
+	return hh;
+}
+uint8_t DateTime::minute() const {
+	return mm;
+}
+uint8_t DateTime::second() const {
+	return ss;
+}
 

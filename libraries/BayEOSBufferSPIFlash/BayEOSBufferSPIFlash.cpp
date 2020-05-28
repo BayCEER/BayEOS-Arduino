@@ -75,8 +75,10 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 }
 
 void BayEOSBufferSPIFlash::resetStorage(void) {
-	_flash->eraseSector(0); //only erase Sector 0
-	_flash->eraseSector(_max_length); //erase pointer region
+	uint8_t tries=0;
+
+	eraseSector(0); //only erase Sector 0
+	eraseSector(_max_length); //erase pointer region
 }
 
 void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
@@ -100,53 +102,99 @@ void BayEOSBufferSPIFlash::checkEraseSector(const unsigned long start_pos,
 			if (move_read_pos)
 				_read_pos = _end;
 		}
-		_flash->eraseSector(end_pos);
+		eraseSector(end_pos);
 
 		_flush_count=_flush_skip;
-#if SERIAL_DEBUG
-		Serial.println("Erase sector");
-#endif
-		seek(start_pos);
+		b_seek(start_pos);
 	}
 
 }
 
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t b) {
+#if SERIAL_DEBUG
+	Serial.print("W");
+	Serial.println(_pos);
+#endif
 	if (_pos < _max_length) {
 		checkEraseSector(_pos, _pos + 1);
-		_flash->writeByte(_pos, b, false);
-		//_pos++;
-		return 1;
-
+		return write_flash(_pos,&b,1);
 	}
 	return 0;
 }
 uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
+#if SERIAL_DEBUG
+	Serial.print("W");
+	Serial.print(_pos);
+	Serial.print("-");
+	Serial.println(_pos+length);
+#endif
 	if (_pos + length <= _max_length) {
 		checkEraseSector(_pos, _pos + length);
-		_flash->writeByteArray(_pos, b, length, false);
-		//_pos += length;
-		return length;
+		return write_flash(_pos, b, length);
 	}
 	return 0;
 }
 
+uint8_t BayEOSBufferSPIFlash::write_flash(unsigned long pos,const uint8_t *b, uint8_t length) {
+	uint8_t tries=0;
+	while(! _flash->writeByteArray(pos, b, length, true)){
+		delay(10);
+		tries++;
+		if(tries>2){
+#if SERIAL_DEBUG
+	Serial.println("Write flash failed");
+#endif
+			return 0;
+		}
+	}
+	return length;
+}
+
 uint8_t BayEOSBufferSPIFlash::seek(unsigned long pos) {
 	if (pos < _max_length) {
-		//_pos = pos;
+//		_pos = pos; //done in b_seek
 		return true;
 	} else
 		return false;
 }
 
 int BayEOSBufferSPIFlash::read(void) {
-	return _flash->readByte(_pos);
+	uint8_t data = 0;
+	read_flash(_pos,&data,1);
+	return data;
 }
 
 int BayEOSBufferSPIFlash::read(uint8_t *dest, int length) {
-	_flash->readByteArray(_pos, dest, length);
-	//_pos += length;
+	return read_flash(_pos,dest,length);
+}
+
+int BayEOSBufferSPIFlash::read_flash(unsigned long pos, uint8_t *dest,int length){
+	uint8_t tries=0;
+	while(! _flash->readByteArray(pos, dest, length)){
+		delay(10);
+		tries++;
+		if(tries>2) return 0;
+	}
 	return length;
+}
+
+bool BayEOSBufferSPIFlash::eraseSector(unsigned long pos){
+#if SERIAL_DEBUG
+		Serial.print("Erase Sector ");
+		Serial.println(pos);
+#endif
+	uint8_t tries;
+	while(! _flash->eraseSector(pos)){
+		delay(10);
+		tries++;
+		if(tries>10){
+#if SERIAL_DEBUG
+		Serial.println("Erase Sector failed...");
+#endif
+			return false;
+		}
+	}
+	return true;
 }
 
 void BayEOSBufferSPIFlash::flush(void) {
@@ -165,21 +213,21 @@ void BayEOSBufferSPIFlash::flush(void) {
 		_flush_offset = 0;
 	}
 	if (_flush_offset == 0)
-		_flash->eraseSector(_max_length);
+		eraseSector(_max_length);
+
 #if SERIAL_DEBUG
 	Serial.print("Flush");
 #endif
 	_temp = 0x0f0f0f0fL;
 	uint8_t *p;
 	p = (uint8_t*) &_temp;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset, p, 4, false);
-
+	write_flash(_max_length + 16 * _flush_offset, p, 4);
 	p = (uint8_t*) &_read_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 4, p, 4, false);
+	write_flash(_max_length + 16 * _flush_offset + 4,p,4);
 	p = (uint8_t*) &_write_pos;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 8, p, 4, false);
+	write_flash(_max_length + 16 * _flush_offset + 8,p,4);
 	p = (uint8_t*) &_end;
-	_flash->writeByteArray(_max_length + 16 * _flush_offset + 12, p, 4, false);
+	write_flash(_max_length + 16 * _flush_offset + 12,p,4);
 	_flush_offset++;
 	_flush_count = 0;
 #if SERIAL_DEBUG

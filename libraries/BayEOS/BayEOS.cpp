@@ -334,8 +334,13 @@ uint8_t BayEOS::readBinaryFromBuffer(unsigned long pos, unsigned long stop,
 uint8_t BayEOS::readFromBuffer(void) {
 	while (_buffer->available()) {
 		_buffer->initNextPacket();
-		if (!_buffer->packetLength()) {
-			_buffer->next(); //skip empty packet
+		if(_buffer->packetLength()>_buffer->available()){
+			//invalid packet!!
+			_buffer->skip();
+			return 0;
+		}
+		if (!_buffer->packetLength() || _buffer->packetLength()>BayEOS_MAX_PAYLOAD) {
+			_buffer->next(); //skip empty or too long packet
 			continue;
 		}
 		if (_buffer->rtc()) {
@@ -361,6 +366,10 @@ uint8_t BayEOS::readFromBuffer(void) {
 			continue;
 		}
 		_buffer->readPacket(&_payload[_next]);
+		if(_payload[_next]>0x40){
+			_buffer->next(); //skip invalid frame
+			continue;
+		}
 		_next += _buffer->packetLength();
 		return _buffer->packetLength();
 	}
