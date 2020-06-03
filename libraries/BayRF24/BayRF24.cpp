@@ -13,6 +13,7 @@ uint8_t BayRF24::readIntoPayload(void){
 }
 
 uint8_t BayRF24::sendPayload(void) {
+	if(BayEOS::getPacketLength()>32) return 0; //no way to send this packet!
 	if (_powerdown)
 		powerUp();
 	else

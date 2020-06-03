@@ -44,6 +44,11 @@ public:
 	// fills res array with average reading; times = how many times to read
 	uint8_t read_average(long* res, uint8_t times = 10, uint8_t timeout = 128);
 
+	// This function calculates a median out of 5 measurements
+	// After taking the median, have of the measurements has to be inside a max_dev range around the median
+	// returns an average reading; times = how many times to read
+	long read_average_with_filter(long* res, unsigned long max_dev=5000, uint8_t* counts=NULL, uint8_t times = 10, uint8_t timeout = 128);
+
 	// puts the chip into power down mode
 	void power_down();
 

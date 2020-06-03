@@ -139,6 +139,57 @@ uint8_t HX711Array::read_average(long* res,uint8_t times,uint8_t timeout) {
 	return 1;
 }
 
+void bubble_sort(long *a, int size) {
+    for(uint8_t i=0; i<(size-1); i++) {
+        for(uint8_t o=0; o<(size-(i+1)); o++) {
+                if(a[o] > a[o+1]) {
+                    long t = a[o];
+                    a[o] = a[o+1];
+                    a[o+1] = t;
+                }
+        }
+    }
+}
+
+long HX711Array::read_average_with_filter(long* res, unsigned long max_deviation, uint8_t* counts,uint8_t times,uint8_t timeout) {
+	uint8_t i,j;
+	long current[4][5];
+	uint8_t i_counts[4];
+	if(! counts) counts=i_counts;
+	read(timeout);
+	for(j=0;j<5;j++){
+		if(read(timeout)==0xf0000000) return 0xf0000000;
+		for(i=0;i<_length;i++){
+			current[i][j]=_values[i];
+		}
+	}
+
+
+	for(i=0;i<_length;i++){
+		res[i]=0;
+		counts[i]=0;
+		bubble_sort(current[i],5);
+	}
+
+	for(j=0;j<times;j++){
+		if(read(timeout)==0xf0000000) return 0xf0000000;
+		for(i=0;i<_length;i++){
+			if(abs(_values[i]-current[i][2])<max_deviation){
+				res[i]+=_values[i];
+				counts[i]++;
+			}
+		}
+	}
+	long value=0;
+	for(i=0;i<_length;i++){
+		if(counts[i]<(times/2)) return 0xf0000000;
+		res[i]/=counts[i];
+		value+=res[i];
+	}
+	return value;
+}
+
+
 void HX711Array::power_down() {
 	digitalWrite(_pd_sck, LOW);
 	digitalWrite(_pd_sck, HIGH);
