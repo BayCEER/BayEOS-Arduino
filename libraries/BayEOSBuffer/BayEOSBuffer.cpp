@@ -242,7 +242,7 @@ uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
 			b_seek(_write_pos+5);
 			if(length_failed){
 				b_seek(_write_pos+5);
-				b_write(0xff); //invalid frame
+				b_write(0x0); //invalid frame
 				if(length_failed>1)
 					b_write(payload, length_failed - 1); //make sure to write (free pages in flash!)
 			}

@@ -20,9 +20,12 @@ public:
 	 */
 	uint8_t readIntoPayload(void);
 
-	uint64_t _pipe;
+	void initRadio(void);
+	uint8_t _pipe[5];
 	uint8_t _powerdown;
 	uint8_t _pa_level;
+	uint8_t _rate;
+	uint8_t _channel;
 };
 
 

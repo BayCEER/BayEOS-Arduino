@@ -30,6 +30,7 @@ public:
 
   void setChannelMap(char* map);
   void setUnitMap(char* map);
+  void handleCommand1_5(void);
   void handleCommand(void);
   void logData(void);
   void sendBinaryDump(void);

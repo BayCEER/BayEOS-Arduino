@@ -1,3 +1,12 @@
+/*
+ * This is a logger with display
+ * 
+ * Due to storage limitations the
+ * logger only supports 1.5 and no live mode!
+ * 
+ * 
+ */
+
 #define SAMPLING_INT 16
 #define PRE_RESISTOR 14300
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
@@ -51,7 +60,7 @@ void delayLogger(unsigned long d) {
   if (connected) {
     unsigned long s = millis();
     while ((millis() - s) < d) {
-      myLogger.handleCommand();
+      myLogger.handleCommand1_5();
       myLogger.sendBinaryDump();
     }
   } else {
@@ -75,10 +84,6 @@ void measure() {
       values[i] = 0;
     }
   }
-
-
-
-
 
 
   digitalWrite(MCPPOWER_PIN, HIGH);
@@ -133,19 +138,20 @@ void measure() {
     display.print("BAT: ");
     display.print((float) myLogger._bat/1000);
   } else 
-    display.print("Low Battery!");
+    display.print("Low Bat!");
   display.display();
 
   count++;
 
   client.startDataFrame(0x41);
-  client.addChannelValue(millis(), 1);
+  client.addToPayload((uint8_t) 1);
+  client.addToPayload((float) millis());
+  //client.addChannelValue(millis(), 1);
   for (uint8_t i = 0; i < 9; i++) {
-    client.addChannelValue(values[i] / count, i + 2);
+    client.addToPayload(i+2);
+    client.addToPayload(values[i]);
+    //client.addChannelValue(values[i] / count, i + 2);
   }
-
-
-
 }
 
 
@@ -193,15 +199,10 @@ void loop() {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run();
-
-  if (! connected && myLogger._logging_disabled) {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayLCB(200);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayLCB(800);
-    pinMode(LED_BUILTIN, INPUT);
+  myLogger.logData();
+  if(connected){
+    myLogger.sendBinaryDump();
+    myLogger.handleCommand1_5();
   }
 
   //sleep until timer2 will wake us up...

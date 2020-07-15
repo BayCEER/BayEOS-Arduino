@@ -190,6 +190,7 @@ uint8_t BayEOS::validateChecksum() {
 		default:
 			return 2;
 		}
+		if(offset>50) return 2;
 	}
 	while (offset < getPacketLength() - 2) {
 		checksum += _payload[offset];
@@ -366,7 +367,7 @@ uint8_t BayEOS::readFromBuffer(void) {
 			continue;
 		}
 		_buffer->readPacket(&_payload[_next]);
-		if(_payload[_next]>0x40){
+		if(_payload[_next]==0){
 			_buffer->next(); //skip invalid frame
 			continue;
 		}

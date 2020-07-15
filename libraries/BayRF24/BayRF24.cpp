@@ -28,6 +28,7 @@ uint8_t BayRF24::sendPayload(void) {
 		res = RF24::write(BayEOS::getPayload(), BayEOS::getPacketLength());
 		curr_pa++;
 	}
+	if(! res) initRadio();
 
 	if (_powerdown)
 		powerDown();
@@ -40,25 +41,31 @@ uint8_t BayRF24::sendPayload(void) {
 }
 
 void BayRF24::setTXAddr(uint64_t address){
-	_pipe = address;
+	memcpy(_pipe, (void*)&address,5);
 
 }
 void BayRF24::setTXAddr(uint8_t* address){
-	memcpy((void*)&_pipe,address,5);
+	memcpy(_pipe,address,5);
 
 }
 
 void BayRF24::init(uint64_t address, uint8_t c, rf24_pa_dbm_e pa_level, rf24_datarate_e rate) {
-	_pipe = address;
+	memcpy(_pipe, (void*)&address,5);
+	_channel=c;
+	_pa_level = pa_level;
+	_rate = rate;
+	initRadio();
+}
+
+void BayRF24::initRadio(){
 	RF24::begin();
-	setChannel(c);
+	setChannel(_channel);
 	setPayloadSize(32);
 	enableDynamicPayloads();
 	enableAckPayload();               // Allow optional ack payloads
-	setCRCLength (RF24_CRC_16);
-	setDataRate(rate);
-	setPALevel(pa_level);
-	_pa_level = pa_level;
+	setCRCLength(RF24_CRC_16);
+	setDataRate(_rate);
+	setPALevel(_pa_level);
 //changed 0.1.2 - as we normally have a storage on board
 //User can call client.setRetries(15,15) after client.init
 	setRetries(15, 8);

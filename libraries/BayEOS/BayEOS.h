@@ -153,8 +153,8 @@ Still working but depreciated!!
   * 4: set read pointer to end pos of binary dump
   * 5: get read pos
   * 6: get write pos
-  * 7: get end pos  (v1.5)
-  * 8: get length (v1.5)
+  * 7: get end pos  (v1.5) *DO NOT USE - USE BufferInfo*
+  * 8: get length (v1.5) *DO NOT USE  - USE BufferInfo*
   * *******************************/
 #define BayEOS_BufferCommand 0x15
 #define BayEOS_GetBatStatus 0x16 /* [0x2][0x16] -> returns [0x3][0x16][uint16_t mV][uint16_t warning limit] */

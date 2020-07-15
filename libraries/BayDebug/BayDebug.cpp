@@ -17,7 +17,7 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset) {
 	}
 	offset++;
 
-	while (offset < getPacketLength() - _checksum) {
+	while (offset < (getPacketLength() - _checksum)) {
 		if (channel_type == BayEOS_ChannelLabel) {
 			channel = getPayload(offset) + offset + 1; //this is actually the end of the channel label
 			offset++;
@@ -53,6 +53,9 @@ void BayEOSDebugInterface::parseDataFrame(uint8_t offset) {
 			print(*(uint8_t*) (_payload + offset));
 			offset++;
 			break;
+		default:
+			print("Invalid data type");
+			offset=(getPacketLength() - _checksum);
 		}
 		println();
 	}

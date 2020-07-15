@@ -98,7 +98,7 @@ void loop(void) {
           for (uint8_t j = 0; j < 10; j++) {
             client.addChannelValue(count);
           }
-          if (client.writeToBuffer()) {
+          if (client.writeToBuffer()){
             if (! client.readFromBuffer()) {
               Serial.print("Read failed g  ");
               printBufferPointer();
@@ -107,7 +107,9 @@ void loop(void) {
             } else {
               uint8_t error = 0;
               for (uint8_t j = 0; j < 10; j++) {
-                if (*(long*)(client.getPayload() + 8 + (j * 4)) != count) error++;
+                if (*(long*)(client.getPayload() + 8 + (j * 4)) != count){
+                  error++;
+                }
               }
               if (error) {
                 Serial.print("Read failed #");
@@ -115,7 +117,6 @@ void loop(void) {
                 Serial.print(" ");
                 printBufferPointer();
                 client.sendPayload();
-
               }
             }
           } else {

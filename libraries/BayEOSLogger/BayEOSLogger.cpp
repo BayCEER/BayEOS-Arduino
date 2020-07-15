@@ -139,6 +139,204 @@ void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc,
 	_next_log = (_rtc->now().get() / _sampling_int) * _sampling_int + _sampling_int;
 }
 
+void BayEOSLogger::handleCommand1_5(void) {
+	uint8_t i;
+	if (!_client->available() || _client->readIntoPayload() ||
+	_client->getPayload(0)!=BayEOS_Command)
+		return;
+
+	//got command
+	//Serial.println("Got CMD");
+	uint8_t cmd_api = _client->getPayload(1);
+	uint8_t cmd_response_api = cmd_api;
+
+	/* DISABLED 1.4
+	 //This is for backward compatibility with older LoggerReaders
+	 if(cmd_api==BayEOS_StopData){
+	 _mode = 0;
+	 cmd_api = BayEOS_BufferCommand;
+	 }
+	 */
+	switch (cmd_api) {
+	case BayEOS_StartBinaryDump:
+		_mode = LOGGER_MODE_DUMP;
+		_long1 = _buffer->endPos();
+		_long2 = _buffer->writePos();
+
+		if (_client->getPacketLength() > 2) { //start
+			for (i = 0; i < 4; i++) {
+				*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+			}
+		}
+		if (_client->getPacketLength() > 6) { //end
+			for (i = 0; i < 4; i++) {
+				*(((uint8_t*) &_long2) + i) = _client->getPayload(i + 6);
+			}
+
+		}
+
+		//if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
+		//else _bufferwrap=0;
+		_long3 = 0;
+		/*
+		 Serial.print("BD\t");
+		 Serial.print(_long1);
+		 Serial.print("\t");
+		 Serial.print(_long2);
+		 Serial.print("\t");
+		 Serial.println((_bufferwrap?(_buffer->endPos()-_long1+_long2):(_long2-_long1)));
+		 */
+		break;
+	case BayEOS_SetName:
+		EEPROM.write(EEPROM_NAME_OFFSET, EEPROM_NAME_STARTBYTE);
+		for (i = 2; i < _client->getPacketLength(); i++) {
+			EEPROM.write(EEPROM_NAME_OFFSET + i - 1, _client->getPayload(i));
+		}
+		EEPROM.write(EEPROM_NAME_OFFSET + i - 1, 0);
+		cmd_response_api = BayEOS_GetName;
+		break;
+
+	case BayEOS_SetSamplingInt:
+		for (i = 0; i < 2; i++) {
+			*(((uint8_t*) &_sampling_int) + i) = _client->getPayload(i + 2);
+		}
+		if (_sampling_int < _min_sampling_int)
+			_sampling_int = _min_sampling_int;
+		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
+		cmd_response_api = BayEOS_GetSamplingInt;
+		break;
+
+	case BayEOS_SetTime:
+		for (i = 0; i < 4; i++) {
+			*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		}
+		_rtc->adjust(DateTime(_long1));
+		_logging_disabled = false;
+		cmd_response_api = BayEOS_GetTime;
+		break;
+	case BayEOS_ModeStop:
+		_mode = 0;
+		break;
+		/* DISABLED in 1.4
+		 case BayEOS_StartData:
+		 _mode = LOGGER_MODE_DATA;
+		 _long2 = _buffer->writePos();
+		 switch (_client->getPayload(2)) {
+		 case 1: // seek read-Pointer to start
+		 _buffer->seekReadPointer(_buffer->getEnd());
+		 break;
+		 }
+		 break;
+		 */
+	case BayEOS_BufferCommand:
+		if (_client->getPayload(2) < 5) {
+			switch (_client->getPayload(2)) {
+			case 1: /* reset Buffer */
+				_buffer->reset();
+				_framesize=0;
+				if(_reset_callback) (*_reset_callback)();
+				break;
+			case 2: /* reset read pointer to last read out position */
+				readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+				_buffer->seekReadPointer(_long1);
+				break;
+			case 3: /* set read pointer to current write pos */
+				_buffer->seekReadPointer(_buffer->writePos());
+				break;
+			case 4: /* set to _long2 of last binary dump
+			 please pay attention to do not call after [BinaryDump][start pos][end pos]
+			 this may result in illegal positions
+			 */
+				//_buffer->set(_buffer->writePos()); ??
+				_buffer->seekReadPointer(_long2);
+				break;
+			}
+			_long1 = _buffer->readPos();
+			/* store current read poiter pos to eeprom */
+			writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+			_long1 = _buffer->available(); //will return available bytes
+		} else {
+			switch (_client->getPayload(2)) {
+			case 5:
+				_long1 = _buffer->readPos(); //will return read pos
+				break;
+			case 6:
+				_long1 = _buffer->writePos(); //will return write pos
+				break;
+/*			case 7:
+				_long1 = _buffer->endPos(); //will return end pos
+				break;
+			case 8:
+				_long1 = _buffer->length(); //will return available bytes for new
+				break;
+*/
+			}
+
+		}
+		break;
+
+	}
+	//Command Response
+	_client->startCommandResponse(cmd_api);
+	switch (cmd_response_api) {
+	case BayEOS_GetVersion:
+		_client->addToPayload((char*) "1.5",3);
+		break;
+	case BayEOS_BufferCommand:
+		_client->addToPayload(_long1);
+		break;
+	case BayEOS_BufferInfo:
+		_client->addToPayload(_buffer->readPos());
+		_client->addToPayload(_buffer->writePos());
+		_client->addToPayload(_buffer->endPos());
+		_client->addToPayload(_buffer->length());
+		_client->addToPayload((uint8_t)_framesize);
+		_client->addToPayload(_sampling_int);
+		break;
+	case BayEOS_GetSamplingInt:
+		_client->addToPayload(_sampling_int);
+		break;
+	case BayEOS_GetBatStatus:
+		_client->addToPayload(_bat);
+		_client->addToPayload(_bat_warning);
+		break;
+	case BayEOS_GetName:
+		i = 1;
+		uint8_t n;
+		if (EEPROM.read(EEPROM_NAME_OFFSET) == EEPROM_NAME_STARTBYTE) {
+			while (n = EEPROM.read(EEPROM_NAME_OFFSET + i)) {
+				_client->addToPayload(n);
+				i++;
+			}
+		}
+		break;
+	case BayEOS_GetTime:
+		_client->addToPayload((unsigned long) _rtc->now().get());
+		break;
+	case BayEOS_StartBinaryDump:
+		_client->addToPayload(
+				(_long1 > _long2 ?
+						(_buffer->length() - _long1 + _long2) :
+						(_long2 - _long1)));
+		break;
+	case BayEOS_TimeOfNextFrame:
+		if (_client->readFromBuffer()) {
+			for (i = 0; i < 4; i++) {
+				*((uint8_t*) &_long1 + i) = _client->getPayload(i + 1);
+			}
+			_client->startCommandResponse(cmd_api);
+			_client->addToPayload(_long1);
+		} else {
+			_client->startCommandResponse(cmd_api);
+			_client->addToPayload((unsigned long) 0xffffffff);
+		}
+		break;
+	}
+	_client->sendPayload();
+
+}
+
+
 void BayEOSLogger::handleCommand(void) {
 	uint8_t i;
 	if (!_client->available() || _client->readIntoPayload() ||
@@ -300,7 +498,7 @@ void BayEOSLogger::handleCommand(void) {
 	_client->startCommandResponse(cmd_api);
 	switch (cmd_response_api) {
 	case BayEOS_GetVersion:
-		_client->addToPayload(BayEOS_VERSION);
+		_client->addToPayload((char*) BayEOS_VERSION,3);
 		break;
 	case BayEOS_BufferCommand:
 		_client->addToPayload(_long1);
