@@ -37,7 +37,6 @@ void BayEOSBufferSPIFlash::init(SPIFlash& flash, uint8_t flush_skip) {
 			i--;
 			_flash->readByteArray(_write_pos, p, 4);
 			uint8_t l = _flash->readByte(_write_pos + 4);
-			uint8_t move_read_pos = 0;
 
 			if (_temp == 0xffffffff)
 				break;

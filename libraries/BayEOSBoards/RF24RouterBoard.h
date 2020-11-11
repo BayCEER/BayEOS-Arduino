@@ -525,7 +525,11 @@ void checkAction0(void){
     adjust_OSCCAL();
     batLCB = BAT_MULTIPLIER * analogRead(A7);
 
+#ifdef BOARD_ORIGIN
+    client.startDataFrameWithOrigin(BayEOS_Float32le,BOARD_ORIGIN,0,1);
+#else
     client.startDataFrame();
+#endif
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
     client.addChannelValue(myBuffer.readPos());

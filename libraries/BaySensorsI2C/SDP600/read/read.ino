@@ -21,7 +21,6 @@ unsigned long last_loop;
 void loop(void){
   while((millis()-last_loop)<20){}
   last_loop=millis();
-  Serial.print(" ");
   Serial.print(sensor.read(),4);
-  Serial.println(" ");
+  Serial.print('\n');
 }

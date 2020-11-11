@@ -64,8 +64,8 @@ void BayRF24::initRadio(){
 	enableDynamicPayloads();
 	enableAckPayload();               // Allow optional ack payloads
 	setCRCLength(RF24_CRC_16);
-	setDataRate(_rate);
-	setPALevel(_pa_level);
+	setDataRate((rf24_datarate_e) _rate);
+	setPALevel((rf24_pa_dbm_e) _pa_level);
 //changed 0.1.2 - as we normally have a storage on board
 //User can call client.setRetries(15,15) after client.init
 	setRetries(15, 8);

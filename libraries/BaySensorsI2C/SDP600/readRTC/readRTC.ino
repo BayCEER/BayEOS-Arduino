@@ -33,7 +33,6 @@ uint8_t last_ticks;
 void loop(void){
   while((uint8_t)(ticks-last_ticks)<(uint8_t)3){}
   last_ticks=ticks;
-  Serial.print(" ");
   Serial.print(sensor.read(),4);
-  Serial.println(" ");
+  Serial.print('\n');
 }
