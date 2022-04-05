@@ -53,7 +53,17 @@ uint8_t gprs_status; //1 = 0n, 0 = Off
 #endif
 #define LED_RX2 3
 #define LED_RX3 2
+
+#ifndef POWER_PIN
 #define POWER_PIN 7
+#endif
+
+#ifndef WLAN_PIN
+#define WLAN_PIN 7
+#endif
+
+
+
 
 volatile uint16_t ticks;
 volatile uint8_t action;
@@ -119,9 +129,15 @@ volatile long rtc_seconds_correct;
 #include <BayTCPSim900.h>
 BayGPRS client(Serial, 0); //No Power Pin
 #else
+#ifdef WLAN_CONFIG
 #include <BayTCPESP8266.h>
-BayESP8266 client(Serial, POWER_PIN);
+BayESP8266 client(Serial, WLAN_PIN);
+#else
+#include <BaySerial.h>
+BaySerialESP client(Serial,WLAN_PIN);
 #endif
+#endif
+
 
 
 /*
@@ -286,16 +302,48 @@ void initLCB() {
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
 #ifdef GPRS_CONFIG
+#define ESP01 0
   client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
 #else
+#ifdef WLAN_CONFIG
+#define ESP01 1
   client.readConfigFromStringPGM(PSTR(WLAN_CONFIG));
+#else
+#define ESP01 1
+  client.begin(38400);
+  client.powerUp();
+  while(client.isReady()){
+    blinkLED(2);
+    delay(1500);
+  }
+#ifndef WLAN_CONFIG
+#ifdef ROUTER_NAME
+  while (tx_res=client.setName(ROUTER_NAME)){
+    if(tx_res==10+strlen(ROUTER_NAME)) break;
+    blinkLED(tx_res);
+    delay(tx_res*500+2000);
+  }
+#endif
+#endif
+ client.powerDown();
+#endif
+//  client.begin(9600);
+//  client.changeIPR(38400);
 #endif
 
   blinkLED(2);
   adjust_OSCCAL();
-  tx_res = client.begin(38400);
+
 #ifdef GPRS_CONFIG
+  tx_res = client.begin(38400);
   if (! tx_res) myRTC.adjust(client.now());
+#else
+#ifdef WLAN_CONFIG
+  tx_res = client.begin(38400);
+#else
+  client.powerUp();
+  tx_res=0;
+#endif
 #endif
   blinkLED(tx_res + 1);
   /*
@@ -519,7 +567,7 @@ void checkAction0(void){
     digitalWrite(POWER_PIN, HIGH);
     analogReference (DEFAULT);
     if(! gprs_status) delayLCB(1000);
-#ifdef WLAN_CONFIG
+#if ESP01
     delayLCB(100);
 #endif
     adjust_OSCCAL();
@@ -533,7 +581,7 @@ void checkAction0(void){
     client.addChannelValue(millis() / 1000);
     client.addChannelValue(myBuffer.writePos());
     client.addChannelValue(myBuffer.readPos());
-#ifdef WLAN_CONFIG
+#if ESP01
     client.addChannelValue(0);
 #else
     if (gprs_status)
@@ -581,6 +629,9 @@ void checkAction0(void){
     }
 
     if (gprs_status) {
+#if ESP01
+      client.powerUp();
+#endif
       tx_res = client.sendMultiFromBuffer(1000);
       if(tx_res) tx_error++;
       else tx_error=0;
@@ -600,7 +651,7 @@ void checkAction0(void){
       }
     } else
       digitalWrite(POWER_PIN, LOW);
-#ifdef WLAN_CONFIG
+#if ESP01
     client.powerDown();
 #endif
 

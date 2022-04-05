@@ -4,9 +4,9 @@ float span;
 SPIFlash flash(8);
 BayEOSBufferSPIFlash myBuffer;
 #include <HX711Array.h>
-uint8_t dout[] = {A3, A2, A1, A0};
-uint8_t sck = A4;
-long adc[4];
+uint8_t dout[] = {6, 4};
+uint8_t sck = 3;
+long adc[2];
 HX711Array scale;
 
 #include <BayDebug.h>
@@ -28,7 +28,7 @@ void setup()
   myBuffer.setRTC(myRTC, 0); //Nutze RTC relativ!
   client.setBuffer(myBuffer); //use skip!
   initLCB(); //init time2
-  scale.begin(dout, 4, sck); //start HX711Array with 4 ADCs
+  scale.begin(dout, 2, sck); //start HX711Array with 2 ADCs
   scale.set_gain(128);
   scale.power_down();
   Serial.println("Test done");
@@ -55,10 +55,8 @@ void loop() {
     digitalWrite(POWER_PIN, LOW);
 
     //Ausgabe der Spannung in µV bei 3.3V Boardspannung!
-    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[0]);
-    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[1]);
-    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[2]);
-    client.addChannelValue(3300000.0 / 32 / 256 / 256 / 256 * adc[3]);
+    client.addChannelValue(3300000.0 / 128 / 256 / 256 / 256 * adc[0]);
+    client.addChannelValue(3300000.0 / 128 / 256 / 256 / 256 * adc[1]);
     sendOrBufferLCB();
 
     Serial.flush();

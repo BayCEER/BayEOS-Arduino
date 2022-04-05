@@ -5,6 +5,11 @@
  * We have additional checksum and no limitation to 32 byte as for simple RF24
  * The receiver sends a acknowlege to the sender via RF24. This is done by the
  *
+ * The frames look like this:
+ * [NR][ --- DATA ----]
+ *
+ * NR incremented to avoid duplicated RF24-RX
+ * DATA of new frames are copied to the buffer
  *
  */
 

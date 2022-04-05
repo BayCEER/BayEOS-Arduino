@@ -11,11 +11,11 @@ int BaySerialRF24::available(void) {
 		flush();
 	if (length > read_pos)
 		return length - read_pos;
-	if(! _radio->available()) delay(3);
+	if(! _radio->available()) delay(2); //Wait 2ms for new data to arrive
 	while (_radio->available() && read_pos >= length) {
 		length = _radio->getDynamicPayloadSize();
 		if(! length){
-			delay(5);
+			delay(2);
 			continue; // Corrupt payload has been flushed
 		}
 		_radio->read(buffer, length);
@@ -27,9 +27,10 @@ int BaySerialRF24::available(void) {
 			//Serial.print(millis());
 			//Serial.print(_r_counter);
 			return length - 1;
-		} else
+		} else {
 			read_pos = length;
-
+			delay(2);
+		}
 	}
 	return 0;
 }
@@ -92,7 +93,7 @@ void BaySerialRF24::flush(void) {
 		if (res)
 			break;
 		tx_try++;
-		delay(10);
+		delay(5);
 	}
 	if (!res) {
 		_radio->setPALevel(RF24_PA_HIGH);

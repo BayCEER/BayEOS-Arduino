@@ -216,10 +216,21 @@ void BaySerialESP::powerDown(){
 
 uint8_t BaySerialESP::isReady(void){
 	startCommand(BayEOS_RouterCommand);
-	addToPayload(ROUTER_IS_READY);
+	addToPayload((uint8_t) ROUTER_IS_READY);
 	if(sendPayload()) return 2; //no ack
 	if(readIntoPayload()) return 3; //no response
 	if(getPayload(2)==ROUTER_IS_READY && getPayload(1)==BayEOS_RouterCommand) return getPayload(3);
+	else return 4; //wrong response
+}
+
+uint8_t BaySerialESP::setName(char* name){
+	startCommand(BayEOS_RouterCommand);
+	addToPayload((uint8_t) ROUTER_SET_NAME);
+	addToPayload(name);
+	addToPayload((uint8_t) 0);
+	if(sendPayload()) return 2; //no ack
+	if(readIntoPayload()) return 3; //no response
+	if(getPayload(2)==ROUTER_SET_NAME && getPayload(1)==BayEOS_RouterCommand) return getPayload(3);
 	else return 4; //wrong response
 }
 
@@ -239,7 +250,7 @@ uint8_t BaySerialESP::sendMultiFromBuffer(uint16_t maxsize){
 	}
 
 	startCommand(BayEOS_RouterCommand);
-    addToPayload(ROUTER_SEND);
+    addToPayload((uint8_t) ROUTER_SEND);
 	if(sendPayload()){
 		_buffer->seekReadPointer(read_pos);
 		return 22; //no ack

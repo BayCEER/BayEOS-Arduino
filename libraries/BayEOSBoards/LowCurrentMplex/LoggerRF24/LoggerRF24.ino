@@ -12,6 +12,17 @@
 #define BLINK_ON_LOGGING_DISABLED 1
 const uint8_t channel = 0x70;
 const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
+
+// Board type: DIL+Battery=1, SMD+LiPo=2
+#define BOARD_TYPE 1
+
+#if BOARD_TYPE == 1
+#define BAT_WARNING 2700
+#else
+#define BAT_WARNING 3800
+#endif
+
+
 //channel map and unit map must not exceed 98 characters!
 char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8";
 char unit_map[] = "ms;V;C;C;C;C;C;C;C;C";
@@ -39,18 +50,17 @@ float ntc10_R2T(float r) {
 }
 
 #define TICKS_PER_SECOND 16
-uint8_t connected = 0;
 
 
 RF24 radio(9, 10);
-BaySerialRF24 client(radio, 100, 3); //wait maximum 100ms for ACK
+BaySerialRF24 client(radio, 50, 3); //wait maximum 100ms for ACK
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
 #include <LowCurrentBoard.h>
 
 void delayLogger(unsigned long d) {
-  if (connected) {
+  if (client.connected) {
     unsigned long s = millis();
     while ((millis() - s) < d) {
       myLogger.handleCommand();
@@ -79,8 +89,13 @@ void measure() {
   }
 
   digitalWrite(POWER_PIN, HIGH);
+#if BOARD_TPYE == 1
   analogReference(INTERNAL);
   myLogger._bat = (1.1 * 320 / 100 / 1023 * analogRead(A0)) * 1000;
+#else
+  analogReference(DEFAULT);
+  myLogger._bat = (3.3 * 200 / 100 / 1023 * analogRead(A7)) * 1000;
+#endif
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
@@ -123,7 +138,7 @@ void setup() {
   radio.powerDown();
   client.setBuffer(myBuffer);
   //register all in BayEOSLogger
-  myLogger.init(client, myBuffer, myRTC, 60, 2500); //min_sampling_int = 60
+  myLogger.init(client, myBuffer, myRTC, 60, BAT_WARNING); //min_sampling_int = 60
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
   myLogger.setChannelMap(channel_map);

@@ -19,8 +19,9 @@ void setup(void){
 
 unsigned long last_loop;
 void loop(void){
-  while((millis()-last_loop)<20){}
-  last_loop=millis();
+  while((millis()-last_loop)<19){} 
+  // This is a sampling frequency of 1000/20=50.0000Hz
+  // Tests with arduino mini pro clones showed that the frequency is not very accurate (got 48.6Hz)
   Serial.print(sensor.read(),4);
   Serial.print('\n');
 }

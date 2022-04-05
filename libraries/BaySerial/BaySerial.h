@@ -152,6 +152,11 @@ public:
 	 */
 	uint8_t isReady();
 
+	/*
+	 * Sets the Name of the client an returns the strlen
+	 */
+	uint8_t setName(char* name);
+
 
 	/*
 	 * Power Up ESP via ch_pd-Pin and call isReady()

@@ -4,6 +4,10 @@ This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) 
 ## Installation
 1. Copy the URL (https://raw.githubusercontent.com/BayCEER/BayEOS-Arduino/master/package_BayEOS_index.json) to your additional boardmanager-URLs in your arduino IDE preferences (file/preferences)
 2. Install the package via tools/Board/Boardmanager
+3. Install the following libraries via sketch/Libraries/Librarymanager
+	- RF24 by TMRh20
+	- OneWire by Jim Studt, Tom Pollard ...
+  
 
 This library relays on some third party libraries (see below). To ease up installation
 these libraries have been included into this repository.
@@ -40,11 +44,9 @@ look like this:
 
 ## Content
 ### Included unmodified third party libraries
-1. [OneWire](http://www.pjrc.com/teensy/td_libs_OneWire.html)
-2. [RF24](https://github.com/TMRh20/RF24)
-3. [SdFat](https://github.com/greiman/SdFat)
-4. [Base64](https://github.com/adamvr/arduino-base64/)
-5. [SPIFlash](https://github.com/Marzogh/SPIFlash/)
+1. [SdFat](https://github.com/greiman/SdFat)
+2. [Base64](https://github.com/adamvr/arduino-base64/)
+3. [SPIFlash](https://github.com/Marzogh/SPIFlash/)
 
 ### Included modified third party libraries
 1. [iBoard](https://github.com/andykarpov/iBoardRF24) (some ports from RF24)

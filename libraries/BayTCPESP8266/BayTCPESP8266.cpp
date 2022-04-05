@@ -31,6 +31,7 @@ uint8_t BayESP8266Interface::changeIPR(long baud) {
 		printlnP(",8,1,0,0");
 		if (!wait_forOK(1000)) {
 			i_end();
+			powerDown();
 			i_begin(_baud);
 			return 0;
 		}

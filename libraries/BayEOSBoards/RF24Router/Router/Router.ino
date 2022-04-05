@@ -6,13 +6,14 @@
  */
 
 #define GPRS_CONFIG "132.180.112.55|80|gateway/frame/saveFlat|import|import|GPRS-RB|pinternet.interkom.de|||1812|"
-//#define WLAN_CONFIG "132.180.112.55|80|gateway/frame/saveFlat|import|import|WLAN-RB|SSID|PASSWORD|||"
+//#define POWER_PIN 6
+//#define WLAN_CONFIG "192.168.2.108|80|gateway/frame/saveFlat|import|import|WLAN-RB|WIFISSID|secretPW|||"
 
 #define SAMPLING_INT 128
 #define NRF24_CHANNEL 0x2b
 //Comment Channel 2 and 3 in case you did not install a module
-#define NRF24_2CHANNEL 0x4b
-#define NRF24_3CHANNEL 0x6b
+//#define NRF24_2CHANNEL 0x4b
+//#define NRF24_3CHANNEL 0x6b
 #define WITH_RF24_CHECKSUM 1
 const uint8_t pipe_0[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 const uint8_t pipe_1[] = {0x24, 0xae, 0x31, 0xc4, 0x45};
@@ -36,4 +37,3 @@ void loop()
   checkAction0();
   sleepLCB();
 }
-

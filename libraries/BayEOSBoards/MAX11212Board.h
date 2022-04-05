@@ -30,5 +30,6 @@ float readChannel(uint8_t nr, uint16_t delaytime=20){
 	float v=MAX11212_REFERENCE*adc.read()/131071;
 	digitalWrite(INHIB,HIGH);
 	return v;
-
 }
+
+
