@@ -5,7 +5,6 @@
 
 
 #include <HardwareSerial.h>
-#include <SoftwareSerial.h>
 #include <BayTCP.h>
 #include <RTClib.h>
 
@@ -161,23 +160,6 @@ private:
 };
 
 
-class BayGPRSsoftserial : private SoftwareSerial, public BayGPRSInterface {
-public:
-	/**
-	 * Constructor
-	 */
-	BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin, uint8_t powerPin=6, uint8_t resetPin=0);
-	uint8_t begin(long baud,uint8_t unlock_only=0);
-private:
-	int available(void);
-	int read(void);
-	void i_begin(long b);
-	void i_end(void);
-	int i_available(void);
-	size_t write(uint8_t b);
-    int peek(void);
-    void flush(void);
-};
 
 
 #endif

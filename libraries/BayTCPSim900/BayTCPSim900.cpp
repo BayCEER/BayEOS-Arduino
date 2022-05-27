@@ -357,39 +357,4 @@ int BayGPRS::peek(void){return _serial->peek();};
 void BayGPRS::flush(void){_serial->flush();};
 
 
-BayGPRSsoftserial::BayGPRSsoftserial(uint8_t rxPin, uint8_t txPin,uint8_t powerPin,uint8_t resetPin):SoftwareSerial(rxPin,txPin){
-	_powerPin=powerPin;
-	_resetPin=resetPin;
-	_urlencode=1;
-}
-uint8_t BayGPRSsoftserial::begin(long baud,uint8_t unlock_only){
-	BayGPRSInterface::begin(baud,unlock_only);
-}
-
-
-
-int BayGPRSsoftserial::available(void){
-	return SoftwareSerial::available();
-}
-int BayGPRSsoftserial::read(void){
-#if SIM900_DEBUG
-	int c=SoftwareSerial::read();
-	if(c!=-1) Serial.write(c);
-	return c;
-#else
-	return SoftwareSerial::read();
-#endif
-}
-void BayGPRSsoftserial::i_begin(long b){ SoftwareSerial::begin(b);}
-void BayGPRSsoftserial::i_end(void){ SoftwareSerial::end();}
-int BayGPRSsoftserial::i_available(void){return SoftwareSerial::available();}
-size_t BayGPRSsoftserial::write(uint8_t b){
-#if SIM900_DEBUG
-	Serial.write(b);
-#endif
-	return SoftwareSerial::write(b);
-}
-int BayGPRSsoftserial::peek(void){return SoftwareSerial::peek();};
-void BayGPRSsoftserial::flush(void){SoftwareSerial::flush();};
-
 

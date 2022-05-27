@@ -342,6 +342,8 @@ void BayTCPInterface::readConfigFromStringPGM(const char *string) {
 		string++;
 	}
 	setConfigPointers();
+//	println(_server);
+//	println(_port);
 }
 
 void BayTCPInterface::readConfigFromEEPROM(int eeoffset) {

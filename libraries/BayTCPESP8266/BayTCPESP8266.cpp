@@ -255,41 +255,4 @@ void BayESP8266::i_begin(long b) {
 	_serial->begin(b);
 }
 
-BayESP8266softserial::BayESP8266softserial(uint8_t rxPin, uint8_t txPin,
-		int8_t ch_pdPin) :
-		SoftwareSerial(rxPin, txPin) {
-	_urlencode = 1;
-	_ch_pdPin = ch_pdPin;
-	_mtu = 1500;
-}
-
-uint8_t BayESP8266softserial::begin(long baud) {
-	_baud = baud;
-	return init();
-}
-
-int BayESP8266softserial::available(void){
-	return SoftwareSerial::available();
-}
-int BayESP8266softserial::read(void){
-	return SoftwareSerial::read();
-}
-void BayESP8266softserial::i_begin(long b){
-	SoftwareSerial::begin(b);
-}
-void BayESP8266softserial::i_end(){
-	SoftwareSerial::end();
-}
-int BayESP8266softserial::i_available(void){
-	return SoftwareSerial::available();
-}
-size_t BayESP8266softserial::write(uint8_t b){
-	return SoftwareSerial::write(b);
-}
-int BayESP8266softserial::peek(void){
-	return SoftwareSerial::peek();
-}
-void BayESP8266softserial::flush(void){
-	SoftwareSerial::flush();
-}
 

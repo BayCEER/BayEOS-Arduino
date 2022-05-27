@@ -53,9 +53,6 @@ DS18B20 ds1(A3, 0, 1);
 DS18B20 ds2(A4, 0, 1);
 DS18B20 ds3(A5, 0, 1);
 
-#define TICKS_PER_SECOND 16
-
-
 
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;

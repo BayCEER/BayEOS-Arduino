@@ -3,7 +3,6 @@
 
 
 #include <HardwareSerial.h>
-#include <SoftwareSerial.h>
 #include <BayTCP.h>
 
 
@@ -120,24 +119,6 @@ private:
     void flush(void);
 };
 
-
-class BayESP8266softserial : private SoftwareSerial, public BayESP8266Interface {
-public:
-	/**
-	 * Constructor
-	 */
-	BayESP8266softserial(uint8_t rxPin, uint8_t txPin, int8_t ch_pdPin);
-	uint8_t begin(long baud);
-private:
-	int available(void);
-	int read(void);
-	void i_begin(long b);
-	void i_end();
-	int i_available(void);
-	size_t write(uint8_t b);
-    int peek(void);
-    void flush(void);
-};
 
 
 #endif
