@@ -314,6 +314,24 @@
 						}
 					],
 					"size": "3699498"
+				},
+				{
+					"name": "BayEOS AVR Boards",
+					"architecture": "avr",
+					"version": "0.1.18",
+					"category": "BayEOS Arduino",
+					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/v0.1.18.zip",
+					"checksum": "SHA-256:30e45eb6cc6e75c77eb12d18ad8bec8791d1b509e273d204cf3bcc34e9635d7e",
+					"help": {
+						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
+					},
+					"archiveFileName": "BayEOS-Arduino-0.1.18.zip",
+					"boards": [
+						{
+							"name": "BayEOS Low Power Board"
+						}
+					],
+					"size": "3698607"
 				}
 			],
 			"toolsDependencies": [
