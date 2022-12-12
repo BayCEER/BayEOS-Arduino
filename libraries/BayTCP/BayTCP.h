@@ -95,6 +95,7 @@ public:
 	 * 3 and more == result code of connect()+2
 	 */
 	uint8_t sendMultiFromBuffer(uint16_t maxsize=5000);
+	uint8_t sendMultiFromBufferWithAckPayload(uint16_t maxsize=5000);
 
 	/**
 	 * set as config value in config buffer
@@ -174,6 +175,7 @@ protected:
 	char _base64buffer[BayTCP_BUFFER];
 	uint8_t _tx_error_count;
 	uint16_t _mtu;
+	void urlDecode(char *str);
 	int strlenURLencoded(const char *str);
 	void printURLencoded(const char *str);
 	static const char* const _urlencodedChars;

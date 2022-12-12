@@ -309,6 +309,15 @@ uint8_t BayEOS::createMessage(const String &s,uint8_t checksum, uint8_t frametyp
 	return ret;
 }
 
+uint8_t BayEOS::createActionResponse(uint8_t key, uint8_t status) {
+	_payload[0]=BayEOS_ActionResponse;
+	_payload[1]=key;
+	_payload[2]=status;
+	_next=3;
+	return 0;
+}
+
+
 uint8_t BayEOS::writeToBuffer(void) {
 	if ((getPayloadLength() - getPacketLength()) < 5)
 		return 0;

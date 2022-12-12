@@ -1,29 +1,29 @@
 /*
- * This is the logger sketch for a BayEOS HX711 Board (2 HX711) run as continuous scale
- * 
- * The sketch logs 8 Channels
- * - CPU Time [ms]
- * - Battery Voltage [V] 
- * - Raw adc reading 1 [counts]
- * - Raw adc reading 2 [counts]
- * - temperature 1 [C]
- * - temperature 2 [C]
- * - calculated weight 1 [g] //depends on unit of calibration weight -- see below
- * - caluclated weight 2 [g]
- * 
- * For calibration 
- * 1. run the board as logger for one day without weight and one day with known weight. Temperature variations 
- * should be in the rage of desired measurements. 
- * 2. Calculate a linear regression out of the adc and temp values. One with and one without weight.
- * 3. Calculate the predicted adc values for 10 and 20°C
- * 4. Put all values in the calibration section of this sketch, set INIT_CAL to 1 
- *    and upload the sketch to the board. 
- * 5. Connect with the logger software and check for reasonable readings (Channel 7+8)
- * 
- * The calibration data is stored in EEPROM. In case of software updates you can reflash the sketch
- * to the board. But make sure the set INIT_CAL to 0 before. With INIT_CAL 0 the calibration data
- * in the sketch is ignored and calibration data from EEPROM is used.
- */
+   This is the logger sketch for a BayEOS HX711 Board (2 HX711) run as continuous scale
+
+   The sketch logs 8 Channels
+   - CPU Time [ms]
+   - Battery Voltage [V]
+   - Raw adc reading 1 [counts]
+   - Raw adc reading 2 [counts]
+   - temperature 1 [C]
+   - temperature 2 [C]
+   - calculated weight 1 [g] //depends on unit of calibration weight -- see below
+   - caluclated weight 2 [g]
+
+   For calibration
+   1. run the board as logger for one day without weight and one day with known weight. Temperature variations
+   should be in the rage of desired measurements.
+   2. Calculate a linear regression out of the adc and temp values. One with and one without weight.
+   3. Calculate the predicted adc values for 10 and 20°C
+   4. Put all values in the calibration section of this sketch, set INIT_CAL to 1
+      and upload the sketch to the board.
+   5. Connect with the logger software and check for reasonable readings (Channel 7+8)
+
+   The calibration data is stored in EEPROM. In case of software updates you can reflash the sketch
+   to the board. But make sure the set INIT_CAL to 0 before. With INIT_CAL 0 the calibration data
+   in the sketch is ignored and calibration data from EEPROM is used.
+*/
 
 
 #define SAMPLING_INT 60
@@ -45,7 +45,7 @@ HX711Array scale;
 #define CONNECTED_PIN 9
 uint8_t connected = 0;
 
-NTC_HX711 ntc(scale, A3, 2*470000, 3.0); //Adjust resistor values 
+NTC_HX711 ntc(scale, A3, 2 * 470000, 3.0); //Adjust resistor values
 Scale4PointCal cal0;
 Scale4PointCal cal1(28);
 
@@ -89,14 +89,16 @@ uint8_t measure() {
   float temp1 = ntc.getTemp(1);
 
   scale.power_up();
-  scale.read_average(adc);
+  scale.set_gain(128);
+  scale.read_average(adc, 1); //dummy reading
+  scale.read_average_with_filter(adc);
   scale.power_down();
   values[1] += adc[0];
   values[2] += adc[1];
   values[3] += temp0;
   values[4] += temp1;
-  values[5] += cal0.getWeight(adc[0],temp0);
-  values[6] += cal1.getWeight(adc[1],temp1);
+  values[5] += cal0.getWeight(adc[0], temp0);
+  values[6] += cal1.getWeight(adc[1], temp1);
 
   analogReference(DEFAULT);
   myLogger._bat = (BAT_DIVIDER * analogRead(A7)) * 1000;
@@ -146,9 +148,11 @@ void loop() {
   if (myLogger._logging_disabled && myRTC.get() > 315360000L)
     myLogger._logging_disabled = 0;
 
-  if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
-                                       (myRTC.get() - last_measurement) >= SAMPLING_INT)) {
-    if(connected){ //wait for the transmission to complete!
+  if (! myLogger._logging_disabled &&
+      (myLogger._mode == LOGGER_MODE_LIVE || (myRTC.get() - last_measurement) >= SAMPLING_INT) &&
+      myLogger._mode != LOGGER_MODE_DUMP
+     ) {
+    if (connected) { //wait for the transmission to complete!
       Serial.flush();
       delay(50);
     }

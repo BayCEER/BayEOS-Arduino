@@ -22,7 +22,7 @@ void blink(uint8_t times){
   
 }
 
-BaySerialESP client(Serial,9);
+BaySerialESP client(Serial,7);
 BayEOSBufferRAM myBuffer;
 
 void setup(void){

@@ -82,6 +82,7 @@ void loop(void) {
     temp1 = ntc.getTemp(1);
 
     scale.power_up();
+    scale.read_average(adc,1);
     scale.read_average(adc);
     scale.power_down();
 
@@ -136,5 +137,3 @@ void loop(void) {
   sleepLCB();
 
 }
-
-

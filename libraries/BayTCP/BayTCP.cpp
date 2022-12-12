@@ -106,6 +106,33 @@ int BayTCPInterface::strlenURLencoded(const char *str) {
 	return count;
 }
 
+void BayTCPInterface::urlDecode(char *str){
+	char *leader = str;
+	char *follower = str;
+
+	while (*leader) {
+	    if (*leader == '%') {
+	        leader++;
+	        char high = *leader;
+	        leader++;
+	        char low = *leader;
+
+	        if (high > 0x39) high -= 7;
+	        high &= 0x0f;
+
+	        if (low > 0x39) low -= 7;
+	        low &= 0x0f;
+
+	        *follower = (high << 4) | low;
+	    } else {
+	        *follower = *leader;
+	    }
+	    leader++;
+	    follower++;
+	}
+}
+
+
 void BayTCPInterface::printURLencoded(const char *str) {
 	if (!_urlencode) {
 		print(str);
@@ -256,6 +283,116 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize) {
 	disconnect();
 	return res;
 }
+
+uint8_t BayTCPInterface::sendMultiFromBufferWithAckPayload(uint16_t maxsize) {
+	if (!_buffer->available())
+		return 0;
+	uint8_t res;
+	res = connect();
+	if (res) {
+		_tx_error_count++;
+		return (res + 2);
+	}
+
+	uint16_t size;
+	unsigned long readpos = _buffer->readPos();
+
+	//Guess size for the POST request:
+	//We need the size of the POST request for Content-Length. However ATMEGA cannot build up a
+	//several kb POST request in RAM. So we send a guess content length and fill up with dummy content
+	if (_buffer->available() > ((unsigned long) maxsize)) {
+		size = maxsize;
+	} else {
+		size = _buffer->available();
+		size *= 2;
+		size += 30;	//Double size and add 30 - This is just a guess. "bayeosframes[]=base64(frame)"
+		if (size < 150)
+			size = 150; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
+		size += 7 + strlenURLencoded(_sender) + 1 + 9
+				+ strlenURLencoded(_password);
+		if (size > maxsize)
+			size = maxsize;
+	}
+	printPostHeader(size);
+	flushMTU();
+
+	//Send Body - first part (sender)
+	printP("sender=");
+	printURLencoded(_sender);
+	printP("&password=");
+	printURLencoded(_password);
+	uint16_t postsize = 7 + strlenURLencoded(_sender) + 1 + 9
+			+ strlenURLencoded(_password);
+	uint16_t mtusize = postsize;
+
+	//Send Body - second part (frames)
+	uint8_t framesize;
+	while (postsize < (size - 25) && readFromBuffer()) {
+		if (_mtu && mtusize > _mtu) {
+			flushMTU();
+			mtusize = 0;
+		}
+		base64_encode(_base64buffer, (char*) _payload, getPacketLength());
+		_base64buffer[base64_enc_len(getPacketLength())] = 0;
+		framesize = 1 + 15 + strlenURLencoded(_base64buffer);
+		postsize += framesize;
+		if (postsize <= size) { //Still space in the POST for the frame
+			mtusize += framesize;
+			printP("&bayeosframes[]=");
+			printURLencoded(_base64buffer);
+			_buffer->next();
+		} else { //Frame does not fitt in the POST
+			postsize -= framesize;
+			break;
+		}
+	}
+
+	//Fill up with dummy content
+	while (postsize < size) {
+		if (_mtu && mtusize > _mtu) {
+			flushMTU();
+			mtusize = 0;
+		}
+		print("&");
+		postsize++;
+		mtusize++;
+	}
+
+	println();
+	println();
+	finishTransmissionMode();
+	res = wait_forPGM(PSTR("HTTP/1.1 "),30000,3,_base64buffer);
+	if (res || _base64buffer[0]!='2') {
+		_buffer->seekReadPointer(readpos);
+		_tx_error_count++;
+		skipChars();
+		disconnect();
+		if(_base64buffer[0]!='2') res=1;
+		return res;
+	}
+	_tx_error_count = 0;
+	res = wait_forPGM(PSTR("Content-Length: "),5000,2,_base64buffer);
+
+	uint8_t ack_length=atoi(_base64buffer);
+	if( ack_length){
+		ack_length-=12;
+		if(ack_length>BayTCP_BUFFER) ack_length=BayTCP_BUFFER;
+		res = wait_forPGM(PSTR("bayeosframe="),5000,ack_length,_base64buffer);
+		if(! res){
+			urlDecode(_base64buffer);
+			_next=base64_decode((char *)_payload, _base64buffer, strlen(_base64buffer));
+		}
+
+	} else _next=0;
+	skipChars();
+	disconnect();
+	return 0;
+
+}
+
+
+
+
 
 uint8_t BayTCPInterface::sendPayload(void) {
 #if BayTCP_DEBUG_OUTPUT
@@ -494,7 +631,7 @@ uint8_t BayTCPInterface::wait_forPGM(const char* str, uint16_t timeout,
 				}
 				buffer[offset] = 0;
 			}
-			skipChars();
+			//skipChars();
 			return 0;
 		}
 

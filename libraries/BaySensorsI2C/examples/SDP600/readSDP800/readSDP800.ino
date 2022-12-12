@@ -9,19 +9,19 @@
  *******************************************************/
 #include <SDP600.h>
 
-SDP600 sensor;
+SDP800 sensor;
 
 void setup(void){
   Serial.begin(38400);
-  sensor.begin(); //Scale factor 1200 (1200 == 1 Pa)
-  sensor.setResolution(14); //Default resolution is 12
+  sensor.begin(); 
 }
 
-unsigned long last_loop;
+uint8_t last_loop;
 void loop(void){
-  while((millis()-last_loop)<19){} 
+  while( (uint8_t)((uint8_t)millis()-last_loop)<20){} 
   // This is a sampling frequency of 1000/20=50.0000Hz
   // Tests with arduino mini pro clones showed that the frequency is not very accurate (got 48.6Hz)
+  last_loop=millis();
   Serial.print(sensor.read(),4);
   Serial.print('\n');
 }

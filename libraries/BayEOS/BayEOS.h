@@ -80,6 +80,13 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_DelayedSecondFrame 0x10 /* [0x10][(unsigned long) delay (sec)][Original Frame] */
 #define BayEOS_RF24Frame 0x11 /* [0x11][uint8_t pipe][Original Frame] */
 
+#define BayEOS_Action 0x12 /* [0x12][Key][ARGS...] */
+#define BayEOS_ActionResponse 0x13 /* [0x13][Key][Status][RESPONSE...] */
+#define BayEOS_ActionSuccess 0x0
+#define BayEOS_ActionFailed 0x1
+
+
+
 /* BayEOS Data Frames */
 /* [0x1][0x1][offset][[float]]+...  */
 #define BayEOS_Float32le 0x1
@@ -214,6 +221,10 @@ public:
 	 */
 	uint8_t createMessage(const String &s, uint8_t checksum=0, uint8_t frametype=BayEOS_Message);
 
+	/**
+	 * Create a Action respons in payload
+	 */
+	uint8_t createActionResponse(uint8_t key, uint8_t status);
 
 	/**
 	 * Start a new Frame (set _next to 0)

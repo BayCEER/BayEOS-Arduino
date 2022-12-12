@@ -18,5 +18,17 @@ private:
 };
 
 
+#define SDP800_I2C_ADDR 0x25
+
+class SDP800 {
+public:
+	void begin();
+	void scaleFactor();
+	float read(void);
+private:
+	void calcCRC(uint8_t value, uint8_t *crc);
+	int _scaleFactor; //Will be autodetected by begin
+};
+
 
 #endif

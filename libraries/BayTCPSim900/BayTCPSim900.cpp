@@ -306,10 +306,10 @@ uint8_t BayGPRSInterface::sendSMS(const String &phone, const String &sms){
 	printP("AT+CMGS=\"");//Target phone number
 	print(phone);
 	printlnP("\"");
-	if(wait_for("> ",2000)) return 2;
+	if(wait_for("> ",2000)) return 3;
 	print(sms);
 	write(0x1a);
-	if(wait_for("+CMGS: ",2000)) return 2;
+	if(wait_for("+CMGS: ",2000)) return 4;
 	return 0;
 }
 
