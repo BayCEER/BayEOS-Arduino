@@ -19,7 +19,7 @@
 					"help": {
 						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
 					},
-					"archiveFileName": "BayEOS-Arduino-0.1.17.zip",
+					"archiveFileName": "BayEOS-Arduino-v.0.1.17.zip",
 					"boards": [
 						{
 							"name": "BayEOS Low Power Board"
@@ -37,7 +37,7 @@
 					"help": {
 						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
 					},
-					"archiveFileName": "BayEOS-Arduino-0.1.18.zip",
+					"archiveFileName": "BayEOS-Arduino-v.0.1.18.zip",
 					"boards": [
 						{
 							"name": "BayEOS Low Power Board"
@@ -55,7 +55,7 @@
 					"help": {
 						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
 					},
-					"archiveFileName": "BayEOS-Arduino-0.2.0.zip",
+					"archiveFileName": "BayEOS-Arduino-v.0.2.0.zip",
 					"boards": [
 						{
 							"name": "BayEOS Low Power Board"
