@@ -333,7 +333,6 @@ void initLCB() {
 
   blinkLED(2);
   adjust_OSCCAL();
-
 #ifdef GPRS_CONFIG
   tx_res = client.begin(38400);
   if (! tx_res) myRTC.adjust(client.now());

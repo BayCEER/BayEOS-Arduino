@@ -17,6 +17,7 @@ public:
 
 class NTC_Calc: public NTC_Sensor {
 public:
+	NTC_Calc(float nt):NTC_Sensor(nt){}
 	float readResistance(void);
 };
 

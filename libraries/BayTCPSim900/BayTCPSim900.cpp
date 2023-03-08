@@ -322,7 +322,7 @@ uint8_t BayGPRSInterface::begin(long baud,uint8_t unlock_only){
 	println();
 	printP("AT+IPR=");
 	println(_baud);
-	wait_forOK(200);
+	if(wait_forOK(200)) changeIPR(baud);
 	return init(unlock_only);
 }
 

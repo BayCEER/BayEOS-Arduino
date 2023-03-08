@@ -32,4 +32,15 @@ float readChannel(uint8_t nr, uint16_t delaytime=20){
 	return v;
 }
 
+long readADC(uint8_t nr, uint16_t delaytime=20){
+	digitalWrite(ADR_A,nr&0x1);
+	digitalWrite(ADR_B,nr&0x2);
+	digitalWrite(ADR_C,nr&0x4);
+	digitalWrite(INHIB,LOW);
+	delay(delaytime);
+	long v=adc.read();
+	digitalWrite(INHIB,HIGH);
+	return v;
+}
+
 
