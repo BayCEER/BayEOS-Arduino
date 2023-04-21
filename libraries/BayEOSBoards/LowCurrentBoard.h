@@ -340,8 +340,11 @@ void initLCB() {
 	pinMode(LED_PIN, OUTPUT);
 #endif
 #if WITHRAINGAUGE
-	digitalWrite(2,HIGH); //Enable Pullup on Pin 2 == INT0
-	attachInterrupt(0,rain_isr,FALLING);
+#ifndef RAINGAUGEPIN
+#define RAINGAUGEPIN 2
+#endif
+	digitalWrite(RAINGAUGEPIN,HIGH); //Enable Pullup on Pin 2 == INT0
+	attachInterrupt(digitalPinToInterrupt(RAINGAUGEPIN),rain_isr,FALLING);
 	rain_count=0;
 	rain_event=0;
 #endif

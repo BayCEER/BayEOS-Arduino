@@ -72,7 +72,7 @@ void setup()
   startLCB();
   digitalWrite(POWER_PIN, HIGH);
   client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
-
+  delayLCB(1000);
   blinkLED(client.begin(38400) + 1);
   delay(2000);
   blinkLED(client.sendMessage("Board started") + 1);
@@ -125,11 +125,11 @@ void loop() {
     client.writeToBuffer();
     measurements++;
     if (measurements >= SEND_COUNT & bat_voltage > MIN_VOLTAGE) {
-      blinkLED(client.begin(38400) + 1);
-      uint8_t tx_res = client.sendMultiFromBuffer(1000);
-      blinkLED(tx_res + 1);
+      delayLCB(1000);
+      uint8_t tx_res = client.begin(38400);
+      blinkLED(tx_res + 1);  //connect to network
       while (! tx_res && myBuffer.available() && ! ISSET_ACTION(0)) {
-        tx_res = client.sendMultiFromBuffer(1000);
+        tx_res = client.sendMultiFromBuffer(3000);
         blinkLED(tx_res + 1);
       }
       if (! myBuffer.available()) measurements = 0;

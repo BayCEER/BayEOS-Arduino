@@ -52,6 +52,7 @@ void setup()
   startLCB(); //some settings and blink three times
   client.readConfigFromStringPGM(PSTR(GPRS_CONFIG)); //read GPRS config into RAM
   adjust_OSCCAL(); //tune clock of ATMega to make serial communication more stable
+  delayLCB(1000);
   blinkLED(client.begin(38400) + 1); //start the GPRS-Modem (e.g. connect to network)
   //one time blinking indicates all ok - more denotes an error. For details look at function definition
   delay(2000);
@@ -83,10 +84,11 @@ void loop() {
     if (measurements >= SEND_COUNT & bat_voltage > MIN_VOLTAGE) { //time to send data
       digitalWrite(POWER_PIN, HIGH); //power up modem
       adjust_OSCCAL();
-      blinkLED(client.begin(38400) + 1); //connect to network
-      uint8_t tx_res = 0;
+      delayLCB(1000);
+      uint8_t tx_res = client.begin(38400);
+      blinkLED(tx_res + 1);  //connect to network
       while (! tx_res && myBuffer.available() && ! ISSET_ACTION(0)) {
-        tx_res = client.sendMultiFromBuffer(1000); //send 1000 bytes from flash storage
+        tx_res = client.sendMultiFromBuffer(3000); //send 3000 bytes from flash storage
         blinkLED(tx_res + 1);
       }
       if (! myBuffer.available()) measurements = 0; //all data sent from flash storage
