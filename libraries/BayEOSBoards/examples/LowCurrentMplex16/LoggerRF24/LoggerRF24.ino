@@ -1,15 +1,27 @@
-#define SAMPLING_INT 30
-#define PRERESISTOR 10000.0
-//When inividual preresistorvalues are given PRERESITOR is ignored
-//#define PRERESISTORS {9955.0, 9964.0, 9956.0, 9966.0, 9955.0, 9972.0, 9975.0, 9972.0, 9945.0, 9962.0, 9988.0, 9957.0, 9957.0, 9964.0, 9950.0, 9954.0 }
+/*
+   Logger-Sketch for Read-Out via RF24
+   use BaySerialRF24/LoggerConnector as receiver
+*/
+
+#define SAMPLING_INT 60
+#define PRE_RESISTOR 14300
 /* Factor to NTC10 - e.g. 0.5 for NTC5, 0.3 for NTC3 ...*/
 #define NTC10FACTOR 0.5
 #define MCPPOWER_PIN 6
+#define NRF24_TRYINT 60
+#define BLINK_ON_LOGGING_DISABLED 1
+const uint8_t channel = 0x70;
+const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
+
+#define BAT_WARNING 3800
+
+
+//channel map and unit map must not exceed 98 characters!
 char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8;T9;T10;T11;T12;T13,T14;T15;T16";
 char unit_map[] = "ms;V;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C";
 
 #include <BayEOSBufferSPIFlash.h>
-#include <BaySerial.h>
+#include <BaySerialRF24.h>
 #include <BayEOSLogger.h>
 #include <Sleep.h>
 #include <Wire.h>
@@ -29,19 +41,18 @@ float ntc10_R2T(float r) {
          4.20199 * log_r * log_r - 0.09586 * log_r * log_r * log_r;
 }
 
-#define CONNECTED_PIN 9
 #define TICKS_PER_SECOND 16
-uint8_t connected = 0;
 
 
-BaySerial client(Serial);
+RF24 radio(9, 10);
+BaySerialRF24 client(radio, 50, 3); //wait maximum 100ms for ACK
 SPIFlash flash(8); //CS-Pin of SPI-Flash
 BayEOSBufferSPIFlash myBuffer;
 BayEOSLogger myLogger;
 #include <LowCurrentBoard.h>
 
 void delayLogger(unsigned long d) {
-  if (connected) {
+  if (client.connected) {
     unsigned long s = millis();
     while ((millis() - s) < d) {
       myLogger.handleCommand();
@@ -77,8 +88,7 @@ void measure() {
 
   digitalWrite(POWER_PIN, HIGH);
   analogReference(INTERNAL);
-  if (digitalRead(CONNECTED_PIN))
-    myLogger._bat = (1.1 * 320 / 100 / 1023 * analogRead(A0)) * 1000;
+  myLogger._bat = (1.1 * 200 / 100 / 1023 * analogRead(A0)) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
@@ -91,11 +101,7 @@ void measure() {
     delayLogger(10);
     mcp342x.runADC(0);
     delayLogger(mcp342x.getADCTime());
-#ifdef PRERESISTORS
-    strom = span / preresistors[ch]; //current in A
-#else
-    strom = span / PRERESISTOR; //current in A
-#endif
+    strom = span / PRE_RESISTOR; //current in A
 
     mcp342x.runADC(1);
     delayLogger(mcp342x.getADCTime());
@@ -122,15 +128,17 @@ void measure() {
 
 
 
+
 void setup() {
   pinMode(MCPPOWER_PIN, OUTPUT);
   pinMode(POWER_PIN, OUTPUT);
-  pinMode(CONNECTED_PIN, INPUT_PULLUP);
   myBuffer.init(flash);
   myBuffer.setRTC(myRTC); //Nutze RTC absolut!
+  client.init(channel, adr);
+  radio.powerDown();
   client.setBuffer(myBuffer);
   //register all in BayEOSLogger
-  myLogger.init(client, myBuffer, myRTC, 60, 2500); //min_sampling_int = 60
+  myLogger.init(client, myBuffer, myRTC, 120, BAT_WARNING); //min_sampling_int = 120
   //disable logging as RTC has to be set first!!
   myLogger._logging_disabled = 1;
   myLogger.setChannelMap(channel_map);
@@ -138,12 +146,15 @@ void setup() {
   Wire.begin();
   mcp342x.reset();
   mcp342x.storeConf(rate, gain);
-  pinMode(A0, OUTPUT);
   pinMode(A1, OUTPUT);
   pinMode(A2, OUTPUT);
   pinMode(A3, OUTPUT);
   initLCB(); //init time2
 }
+
+
+unsigned long last_try = -NRF24_TRYINT;
+
 
 void loop() {
   if (! myLogger._logging_disabled && (myLogger._mode == LOGGER_MODE_LIVE ||
@@ -151,35 +162,29 @@ void loop() {
     last_measurement = myRTC.get();
     measure();
   }
-  myLogger.run(connected);
+  myLogger.run(client.connected);
 
-  if (! connected && myLogger._logging_disabled) {
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, HIGH);
-    delayLCB(200);
-    digitalWrite(LED_BUILTIN, LOW);
-    delayLCB(800);
-    pinMode(LED_BUILTIN, INPUT);
-  }
-
-  //sleep until timer2 will wake us up...
-  if (! connected) {
-    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
-  }
-
-  //check if still connected
-  if (connected && digitalRead(CONNECTED_PIN)) {
-    client.flush();
-    client.end();
+  if (! client.connected) {
     myLogger._mode = 0;
-    connected = 0;
-  }
+    //sleep until timer2 will wake us up...
+    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
 
-  //Connected pin is pulled to GND
-  if (!connected && ! digitalRead(CONNECTED_PIN)) {
-    connected = 1;
-    adjust_OSCCAL();
-    client.begin(38400);
+    //check if receiver is present
+    if ((myRTC.get() - last_try) > NRF24_TRYINT) {
+      blinkLED(0);
+      last_try = myRTC.get();
+      client.sendTestByte();
+#if BLINK_ON_LOGGING_DISABLED
+      if (! client.connected && myLogger._logging_disabled) {
+        last_try -= (NRF24_TRYINT - 5);
+        blinkLED(10);
+      }
+#endif
+    }
+  } else if ((millis() - client.last_activity) > 30000) {
+    //check if still connected
+    last_try = myRTC.get();
+    client.sendTestByte();
   }
 
 }

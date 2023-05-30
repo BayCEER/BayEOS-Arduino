@@ -125,17 +125,19 @@ RTC_Timer2 myRTC;
 volatile long rtc_seconds_correct;
 #endif
 
-#ifdef GPRS_CONFIG
+
+#if defined(GPRS_CONFIG)
 #include <BayTCPSim900.h>
 BayGPRS client(Serial, 0); //No Power Pin
-#else
-#ifdef WLAN_CONFIG
+#elif defined(SIM800_CONFIG)
+#include <BaySIM800.h>
+BaySIM800 client = BaySIM800(Serial);
+#elif defined(WLAN_CONFIG)
 #include <BayTCPESP8266.h>
 BayESP8266 client(Serial, WLAN_PIN);
-#else
+#else 
 #include <BaySerial.h>
 BaySerialESP client(Serial,WLAN_PIN);
-#endif
 #endif
 
 
@@ -301,22 +303,19 @@ void initLCB() {
   client.setBuffer(myBuffer);
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
-#ifdef GPRS_CONFIG
-#define ESP01 0
+#if defined(GPRS_CONFIG)
   client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
-#else
-#ifdef WLAN_CONFIG
-#define ESP01 1
+#elif defined(SIM800_CONFIG)
+  client.readConfigFromStringPGM(PSTR(SIM800_CONFIG));
+#elif defined(WLAN_CONFIG)
   client.readConfigFromStringPGM(PSTR(WLAN_CONFIG));
 #else
-#define ESP01 1
   client.begin(38400);
   client.powerUp();
   while(client.isReady()){
     blinkLED(2);
     delay(1500);
   }
-#ifndef WLAN_CONFIG
 #ifdef ROUTER_NAME
   while (tx_res=client.setName(ROUTER_NAME)){
     if(tx_res==10+strlen(ROUTER_NAME)) break;
@@ -324,27 +323,22 @@ void initLCB() {
     delay(tx_res*500+2000);
   }
 #endif
-#endif
  client.powerDown();
 #endif
-//  client.begin(9600);
-//  client.changeIPR(38400);
-#endif
 
-  blinkLED(2);
+  blinkLED(3);
   adjust_OSCCAL();
-#ifdef GPRS_CONFIG
+#if defined(GPRS_CONFIG) || defined(SIM800_CONFIG) 
   delayLCB(1000);
   tx_res = client.begin(38400);
   if (! tx_res) myRTC.adjust(client.now());
-#else
-#ifdef WLAN_CONFIG
+#elif defined(WLAN_CONFIG)
   tx_res = client.begin(38400);
 #else
   client.powerUp();
   tx_res=0;
 #endif
-#endif
+
   blinkLED(tx_res + 1);
   /*
      1 == OK
@@ -356,8 +350,10 @@ void initLCB() {
      7 == No SIM Card
   */
   delay(2000);
-
-  tx_res = client.sendMessage("Router started");
+  client.startFrame(BayEOS_Message);
+  client.addToPayload("Router started");
+  client.writeToBuffer();
+  tx_res = client.sendMultiFromBuffer();
   blinkLED(tx_res + 1);
   delay(1000 + tx_res * 500);
 
@@ -632,7 +628,7 @@ void checkAction0(void){
 #if ESP01
       client.powerUp();
 #endif
-      tx_res = client.sendMultiFromBuffer(1000);
+      tx_res = client.sendMultiFromBuffer(3000);
       if(tx_res) tx_error++;
       else tx_error=0;
       blinkLED(tx_res + 1);
@@ -646,7 +642,7 @@ void checkAction0(void){
 
       while (! tx_res && myBuffer.available() && ! ISSET_ACTION(0)) {
         handleRF24();
-        tx_res = client.sendMultiFromBuffer(1000);
+        tx_res = client.sendMultiFromBuffer(3000);
         blinkLED(tx_res + 1);
       }
     } else

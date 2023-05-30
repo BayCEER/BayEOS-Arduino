@@ -171,7 +171,7 @@ void BayTCPInterface::printPostHeader(uint16_t size) {
 	strcat(_base64buffer+70, ":");
 	strcat(_base64buffer+70, _password);
 	base64_encode(_base64buffer, (char*) _base64buffer+70, strlen(_base64buffer+70));
-	_base64buffer[base64_enc_len(strlen(_base64buffer+70))] = 0;
+	//_base64buffer[base64_enc_len(strlen(_base64buffer+70))] = 0;
 	println(_base64buffer); //BASE64
 #if BayTCP_DEBUG_INPUT
 	BayTCP_DEBUG_INTERFACE.println(_base64buffer);
@@ -216,8 +216,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize) {
 		size += 30;	//Double size and add 30 - This is just a guess. "bayeosframes[]=base64(frame)"
 		if (size < 150)
 			size = 150; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
-		size += 7 + strlenURLencoded(_sender) + 1 + 9
-				+ strlenURLencoded(_password);
+		size += 7 + strlenURLencoded(_sender); // + 1 + 9 + strlenURLencoded(_password);
 		if (size > maxsize)
 			size = maxsize;
 	}
@@ -227,10 +226,9 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize) {
 	//Send Body - first part (sender)
 	printP("sender=");
 	printURLencoded(_sender);
-	printP("&password=");
-	printURLencoded(_password);
-	uint16_t postsize = 7 + strlenURLencoded(_sender) + 1 + 9
-			+ strlenURLencoded(_password);
+//	printP("&password=");
+//	printURLencoded(_password);
+	uint16_t postsize = 7 + strlenURLencoded(_sender); //+ 1 + 9	+ strlenURLencoded(_password);
 	uint16_t mtusize = postsize;
 
 	//Send Body - second part (frames)
@@ -241,7 +239,7 @@ uint8_t BayTCPInterface::sendMultiFromBuffer(uint16_t maxsize) {
 			mtusize = 0;
 		}
 		base64_encode(_base64buffer, (char*) _payload, getPacketLength());
-		_base64buffer[base64_enc_len(getPacketLength())] = 0;
+//		_base64buffer[base64_enc_len(getPacketLength())] = 0;
 		framesize = 1 + 15 + strlenURLencoded(_base64buffer);
 		postsize += framesize;
 		if (postsize <= size) { //Still space in the POST for the frame
@@ -308,8 +306,7 @@ uint8_t BayTCPInterface::sendMultiFromBufferWithAckPayload(uint16_t maxsize) {
 		size += 30;	//Double size and add 30 - This is just a guess. "bayeosframes[]=base64(frame)"
 		if (size < 150)
 			size = 150; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
-		size += 7 + strlenURLencoded(_sender) + 1 + 9
-				+ strlenURLencoded(_password);
+		size += 7 + strlenURLencoded(_sender); // + 1 + 9 + strlenURLencoded(_password);
 		if (size > maxsize)
 			size = maxsize;
 	}
@@ -319,10 +316,9 @@ uint8_t BayTCPInterface::sendMultiFromBufferWithAckPayload(uint16_t maxsize) {
 	//Send Body - first part (sender)
 	printP("sender=");
 	printURLencoded(_sender);
-	printP("&password=");
-	printURLencoded(_password);
-	uint16_t postsize = 7 + strlenURLencoded(_sender) + 1 + 9
-			+ strlenURLencoded(_password);
+//	printP("&password=");
+//	printURLencoded(_password);
+	uint16_t postsize = 7 + strlenURLencoded(_sender); // + 1 + 9 + strlenURLencoded(_password);
 	uint16_t mtusize = postsize;
 
 	//Send Body - second part (frames)
@@ -333,7 +329,7 @@ uint8_t BayTCPInterface::sendMultiFromBufferWithAckPayload(uint16_t maxsize) {
 			mtusize = 0;
 		}
 		base64_encode(_base64buffer, (char*) _payload, getPacketLength());
-		_base64buffer[base64_enc_len(getPacketLength())] = 0;
+		//_base64buffer[base64_enc_len(getPacketLength())] = 0;
 		framesize = 1 + 15 + strlenURLencoded(_base64buffer);
 		postsize += framesize;
 		if (postsize <= size) { //Still space in the POST for the frame
@@ -406,22 +402,22 @@ uint8_t BayTCPInterface::sendPayload(void) {
 	}
 
 	base64_encode(_base64buffer, (char*) _payload, getPacketLength());
-	_base64buffer[base64_enc_len(getPacketLength())] = 0;
+	//_base64buffer[base64_enc_len(getPacketLength())] = 0;
 
 	uint8_t size = strlenURLencoded(_base64buffer);
-	size += 7 + strlenURLencoded(_sender) + 1 + 9 + strlenURLencoded(_password)
+	size += 7 + strlenURLencoded(_sender) //+ 1 + 9 + strlenURLencoded(_password)
 			+ 1 + 15;
 
 	printPostHeader(size);
 
 	//Redo Base64 encoding! buffer is overwritten in printPostHeader!
 	base64_encode(_base64buffer, (char*) _payload, getPacketLength());
-	_base64buffer[base64_enc_len(getPacketLength())] = 0;
+	//_base64buffer[base64_enc_len(getPacketLength())] = 0;
 
 	printP("sender=");
 	printURLencoded(_sender);
-	printP("&password=");
-	printURLencoded(_password);
+//	printP("&password=");
+//	printURLencoded(_password);
 	printP("&bayeosframes[]=");
 	printURLencoded(_base64buffer); //BASE64
 	println();

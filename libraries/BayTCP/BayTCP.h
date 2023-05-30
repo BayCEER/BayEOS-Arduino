@@ -12,7 +12,7 @@
 
 
 #ifndef BayTCP_BUFFER
-#define BayTCP_BUFFER 137
+#define BayTCP_BUFFER 138
 #endif
 
 #define BayTCP_CONFIG_SERVER 0

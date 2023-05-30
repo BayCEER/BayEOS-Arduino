@@ -106,8 +106,8 @@ void loop()
         client.sendOrBuffer();
         client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
       }
-      digitalWrite(A1, ch & 0x8);
-      digitalWrite(A0, ch & 0x4);
+      digitalWrite(A0, ch & 0x8);
+      digitalWrite(A1, ch & 0x4);
       digitalWrite(A3, ch & 0x2);
       digitalWrite(A2, ch & 0x1);
       delayLCB(10);

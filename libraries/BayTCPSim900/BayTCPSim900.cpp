@@ -21,17 +21,23 @@ uint8_t BayGPRSInterface::changeIPR(long baud) {
 	for (uint8_t i = 0; i < 4; i++) {
 		i_begin(t_baud[i]);
 		skipChars();
-		printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
-		delay(100);
-		println();
-		printP("AT+IPR=");
-		println(_baud);
-		if (!wait_forOK(200)) {
-			i_end();
-			i_begin(_baud);
-			return 0;
-		}
+		uint8_t tries=5;
+		do {
+			printlnP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
+			if(!wait_forOK(1000)){
+				printP("AT+IPR=");
+				println(_baud);
+				if (!wait_forOK(200)) {
+					i_end();
+					i_begin(_baud);
+					return 0;
+				}
+
+			}
+			tries--;
+		} while(tries);
 		i_end();
+
 	}
 	return 1;
 
@@ -40,77 +46,60 @@ uint8_t BayGPRSInterface::init(uint8_t unlock_only){
 	uint8_t count=0;
 	init_start:
 	uint8_t i=0;
-	printP("AT"); //Wake up
-	delay(200);
-	println();
-	wait_forOK(1000);
-	printlnP("AT"); //Check communication
-	if(! wait_forOK(200)){
-		//communication ok!
-		printlnP("ATE0"); //Command echo off
-		wait_forOK(500);
-		printlnP("AT+CSCLK=2"); //Auto-Sleepmode
-		wait_forOK(500);
-		//Check PIN
-		printlnP("AT+CPIN?");
-		while(wait_forPGM(PSTR("+CPIN: "),5000,7,_base64buffer)){
-			printlnP("AT");
-			wait_forOK(200);
-			printlnP("AT+CFUN=0");
-			//Disable
-			wait_forOK(10000);
-			printlnP("AT+CFUN=1");
-			//delay(2000);
-			//Enable
-			wait_forOK(10000);
-			printlnP("AT");
-			wait_forOK(200);
-			printlnP("AT+CPIN?");
-			i++;
-			if(i>2) return 6;
-		}
-		if(_base64buffer[5]=='U') return 3; //SIM PUK
-		if(_base64buffer[5]=='I'){ //SIM PIN
-			printlnP("AT");
-			wait_forOK(200);
-			printP("AT+CPIN=\"");
-			print(_pin);
-			println("\"");
-			if(wait_forOK(30000)) {
-			  return 2; //Wrong PIN
-			}
-			wait_for("SMS Ready",(unlock_only?5000:60000));
-		}
-		//Return here - Moden will try to connect and attach in the background!
-		if(unlock_only) return 0;
-		// Waiting for Modem to Connect
-		for(i=0;i<127;i++){
-			if(isRegistered()) break;
-			delay(500);
-		}
-		if(i==127) return 4;
-		for(i=0;i<127;i++){
-			if(isAttached()) break;
-			delay(500);
-		}
-		if(i==127) return 5;
-		return 0;
-	}
-
-	softReset();
-	softSwitch();
-	i_begin(_baud);
 	skipChars();
-	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
-	delay(100);
-	println();
-	printP("AT+IPR=");
-	println(_baud);
+	printlnP("AT"); //Wake up
 	wait_forOK(200);
-	count++;
-
-	if(count>1) return 1;
-	goto init_start;
+	printlnP("AT");	
+	if(wait_forOK(1000)) return 1;
+	//communication ok!
+	printlnP("ATE0"); //Command echo off
+	wait_forOK(500);
+	printlnP("AT+CSCLK=0"); //Auto-Sleepmode
+	wait_forOK(500);
+	//Check PIN
+	printlnP("AT+CPIN?");
+	while(wait_forPGM(PSTR("+CPIN: "),5000,7,_base64buffer)){
+		printlnP("AT");
+		wait_forOK(200);
+		printlnP("AT+CFUN=0");
+		//Disable
+		wait_forOK(10000);
+		printlnP("AT+CFUN=1");
+		//delay(2000);
+		//Enable
+		wait_forOK(10000);
+		printlnP("AT");
+		wait_forOK(200);
+		printlnP("AT+CPIN?");
+		i++;
+		if(i>2) return 6;
+	}
+	if(_base64buffer[5]=='U') return 3; //SIM PUK
+	if(_base64buffer[5]=='I'){ //SIM PIN
+		printlnP("AT");
+		wait_forOK(200);
+		printP("AT+CPIN=\"");
+		print(_pin);
+		println("\"");
+		if(wait_forOK(30000)) {
+			return 2; //Wrong PIN
+		}
+		wait_for("SMS Ready",(unlock_only?5000:60000));
+	}
+	//Return here - Moden will try to connect and attach in the background!
+	if(unlock_only) return 0;
+	// Waiting for Modem to Connect
+	for(i=0;i<127;i++){
+		if(isRegistered()) break;
+		delay(500);
+	}
+	if(i==127) return 4;
+	for(i=0;i<127;i++){
+		if(isAttached()) break;
+		delay(500);
+	}
+	if(i==127) return 5;
+	return 0;
 }
 
 void BayGPRSInterface::softSwitch(void){
@@ -294,6 +283,8 @@ void BayGPRSInterface::disconnect(void){
 	//init();
 	printlnP("AT+CIPCLOSE");
 	wait_forOK(2000);
+	printlnP("AT+CSCLK=2"); //Auto-Sleepmode
+	wait_forOK(500);
 //	printlnP("AT+CIPSHUT");
 //	wait_forOK(2000);
 }
@@ -317,12 +308,10 @@ uint8_t BayGPRSInterface::begin(long baud,uint8_t unlock_only){
 	_baud=baud;
 	i_begin(_baud);
 	skipChars();
-	printP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
-	delay(100);
-	println();
-	printP("AT+IPR=");
-	println(_baud);
-	if(wait_forOK(200)) changeIPR(baud);
+	printlnP("AT"); //Wake up
+	wait_forOK(200);
+	printlnP("AT"); //Will autoconfigure BAUD-Rate - Auto BAUD-Rate did not work with Sleep-Mode!
+	if(wait_forOK(1000)) changeIPR(baud);
 	return init(unlock_only);
 }
 

@@ -42,12 +42,11 @@ void setup()
   mcp342x.reset();
   pinMode(POWER_PIN,OUTPUT);
   digitalWrite(POWER_PIN,HIGH);
-  mcp342x.storeConf(3, 0); //14bit,0 gain
-  Serial.println(batLCB);
+  mcp342x.storeConf(1, 0); //14bit,0 gain
   batLCB = 3.3*analogRead(A7)/1023*POWER_DIVIDER;
   Serial.print("Bat Voltage: ");
   Serial.println(batLCB);
-  digitalWrite(POWER_PIN,LOW);
+  //digitalWrite(POWER_PIN,LOW);
   
   Serial.println("Test done");
   Serial.flush();
@@ -62,9 +61,7 @@ void setup()
 
 
 void loop() {
-  if(ISSET_ACTION(0)){
   digitalWrite(MCPPOWER_PIN, HIGH);
-  client.startDataFrame();
   for (uint8_t ch = 0; ch < 16; ch++) {
     digitalWrite(A0, ch & 0x8);
     digitalWrite(A1, ch & 0x4);
@@ -78,17 +75,11 @@ void loop() {
     mcp342x.runADC(1);
     delay(mcp342x.getADCTime());
     span = mcp342x.getData();
-    client.addChannelValue(span/strom);
+    Serial.print(span/strom/1000);
+    Serial.print(" ");
   }
   digitalWrite(MCPPOWER_PIN, LOW);
-  client.sendOrBuffer();
-  }
-  if (ISSET_ACTION(7)) {
-    UNSET_ACTION(7);
-    client.sendFromBuffer();
-  }
-  Serial.flush();
-  sleepLCB();
+  Serial.println();
 
  
 }
