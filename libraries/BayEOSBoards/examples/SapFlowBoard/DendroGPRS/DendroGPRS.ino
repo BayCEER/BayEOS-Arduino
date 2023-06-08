@@ -25,7 +25,9 @@
 #define SAMPLING_INT 64
 #define SEND_COUNT 60 /*collect 60 measurements before send... */
 #define MIN_VOLTAGE 3.8
-#define GPRS_CONFIG "132.180.112.128|80|gateway/frame/saveFlat|gregor@IT|FOSBayCEER|DendroGPRS|iot.1nce.net||||"
+// SIM800-Config string. -- new Library
+// Gateway-url|login|password|Origin (== Board unique identifier)|apn of sim-card|apn-user|apn-pw|PIN
+#define SIM800_CONFIG "http://132.180.112.128/gateway/frame/saveFlat|import@IT|import|MyGPRS-Dendro|iot.1nce.net||||"
 //END user configruation
 //**********************************************
 
@@ -35,8 +37,8 @@
 #include <BayEOSBufferSPIFlash.h>
 unsigned long last_sent;
 
-#include <BayTCPSim900.h>
-BayGPRS client = BayGPRS(Serial, 0);
+#include <BaySIM800.h>
+BaySIM800 client = BaySIM800(Serial);
 
 
 //Configuration
@@ -71,7 +73,7 @@ void setup()
   client.setBuffer(myBuffer);
   startLCB();
   digitalWrite(POWER_PIN, HIGH);
-  client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
+  client.readConfigFromStringPGM(PSTR(SIM800_CONFIG));  //read GPRS config into RAM
   delayLCB(1000);
   blinkLED(client.begin(38400) + 1);
   delay(2000);

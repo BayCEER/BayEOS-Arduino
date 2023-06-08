@@ -1,5 +1,5 @@
 # BayEOS-Arduino-lib
-This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 1.8.x
+This is the repository for [BayEOS](http://www.bayceer.uni-bayreuth.de/bayeos/) Arduino libraries. The libraries are designed to compile with Arduino IDE 2.x
 
 ## Installation
 1. Copy the URL (https://raw.githubusercontent.com/BayCEER/BayEOS-Arduino/master/package_BayEOS_index.json) to your additional boardmanager-URLs in your arduino IDE preferences (file/preferences)
@@ -13,34 +13,61 @@ This library relays on some third party libraries (see below). To ease up instal
 these libraries have been included into this repository.
 
 ## Usage
-A typical example sketch for sending sensordata and messages to a BayEOS gateway
-look like this:
+A typical example sketch for sending sensordata
+look like this. The sketch is optimized for very low power comsumption and unstable
+networks.
 
-    //Include a BayEOS Transport Class
-    #include <BayTCPEth.h>
-    //Please enter a valid Mac and IP
-    byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xEA };
-    BayEth client;
+    define SAMPLING_INT 32
+    #define RF24CHANNEL 0x66
+    #define RF24ADDRESS 0x45c431ae12LL
+    #define WITH_CHECKSUM 1
 
-    void setup(void){
-      pinMode(10,OUTPUT);
-      //Ethernet.begin(mac,ip);
-      Ethernet.begin(mac);
+    #include <BayEOSBufferSPIFlash.h>
+    SPIFlash flash(8);
+    BayEOSBufferSPIFlash myBuffer;
 
-      //BayEOS Gateway Configuration
-      client.readConfigFromStringPGM(PSTR("192.168.0.1|80|gateway/frame/saveFlat|import|import|TestEth|||||"));
+    #include <BayRF24.h>
+    BayRF24 client = BayRF24(9, 10);
+
+    #include <LowCurrentBoard.h>
+
+    void setup()
+    {
+      client.init(RF24ADDRESS, RF24CHANNEL);
+      myBuffer.init(flash); //This will restore old pointers
+      myBuffer.skip(); //This will move read pointer to write pointer
+      myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); //use RTC but relativ -- delay only
+      client.setBuffer(myBuffer, 100); //use skip!
+      initLCB(); //init time2
+      readBatLCB();
+      startLCB();
     }
-    void loop(void){
-      //Construct DataFrame
-      client.startDataFrame();
-      client.addChannelValue(73.43);
-      client.addChannelValue(3.18);
-      client.addChannelValue(millis()/1000);
-      client.sendPayload();
-      //Send a message
-      client.sendMessage("Just a message!");
-      delay(5000);
-    }
+
+
+    void loop() {
+      if (ISSET_ACTION(0)) {
+        UNSET_ACTION(0);
+        //eg measurement
+        //Note we start a INT-Dataframe here
+        //Only Values between -32768 and +32767 can be sent
+        client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
+        client.addChannelValue(millis());
+        client.addChannelValue(1000 * batLCB);
+    #if WITH_CHECKSUM
+        client.addChecksum();
+    #endif
+        sendOrBufferLCB();
+        //Read battery voltage _after_ long uptime!!!
+        readBatLCB();
+      }
+
+      if (ISSET_ACTION(7)) {
+        UNSET_ACTION(7);
+        client.sendFromBuffer(); //send data from buffer
+      }
+      sleepLCB(); //most time board sleeps here
+}
+
 
 ## Content
 ### Included unmodified third party libraries

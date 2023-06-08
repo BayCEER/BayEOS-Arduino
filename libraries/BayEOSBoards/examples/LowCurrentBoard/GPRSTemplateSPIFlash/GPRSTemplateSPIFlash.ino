@@ -16,18 +16,29 @@
 #define SAMPLING_INT 60
 #define SEND_COUNT 60 /*collect 60 measurements before send... */
 #define MIN_VOLTAGE 3.8 /*minimum voltage for send operation */
-// GPRS-Config string.
+
+// SIM800-Config string. -- new Library
+// Gateway-url|login|password|Origin (== Board unique identifier)|apn of sim-card|apn-user|apn-pw|PIN
+#define SIM800_CONFIG "http://132.180.112.128/gateway/frame/saveFlat|import@IT|import|MyGPRS-Board|iot.1nce.net||||"
+
+// GPRS-Config string. -- old TCP-Library
 // Gateway-IP|PORT|path on server|login|password|Origin (== Board unique identifier)|apn of sim-card|apn-user|apn-pw|PIN
-#define GPRS_CONFIG "132.180.112.128|80|gateway/frame/saveFlat|import@IT|import|MyGPRS-Board|iot.1nce.net||||"
+//#define GPRS_CONFIG "132.180.112.128|80|gateway/frame/saveFlat|import@IT|import|MyGPRS-Board|iot.1nce.net||||"
+
 //END user configruation
 //**********************************************
+
+#if defined(GPRS_CONFIG)
+#include <BayTCPSim900.h>
+BayGPRS client = BayGPRS(Serial, 0);
+#else
+#include <BaySIM800.h>
+BaySIM800 client = BaySIM800(Serial);
+#endif
 
 
 #include <BayEOSBufferSPIFlash.h>
 unsigned long last_sent;
-
-#include <BayTCPSim900.h>
-BayGPRS client = BayGPRS(Serial, 0);
 
 
 SPIFlash flash(8); //Standard SPIFlash Instanz
@@ -50,7 +61,11 @@ void setup()
   client.setBuffer(myBuffer); //connect the buffer to the transport client
   digitalWrite(POWER_PIN, HIGH); //power up GPRS-Modem
   startLCB(); //some settings and blink three times
+#if defined(GPRS_CONFIG)
   client.readConfigFromStringPGM(PSTR(GPRS_CONFIG)); //read GPRS config into RAM
+#else
+  client.readConfigFromStringPGM(PSTR(SIM800_CONFIG)); //read GPRS config into RAM
+#endif
   adjust_OSCCAL(); //tune clock of ATMega to make serial communication more stable
   delayLCB(1000);
   blinkLED(client.begin(38400) + 1); //start the GPRS-Modem (e.g. connect to network)

@@ -5,7 +5,8 @@
  * 
  */
 
-#define GPRS_CONFIG "132.180.112.55|80|gateway/frame/saveFlat|import|import|GPRS-RB|pinternet.interkom.de|||1812|"
+#define SIM800_CONFIG "http://132.180.112.55/gateway/frame/saveFlat|import|import|GPRS-RB|pinternet.interkom.de|||1812|"
+//#define GPRS_CONFIG "132.180.112.55|80|gateway/frame/saveFlat|import|import|GPRS-RB|pinternet.interkom.de|||1812|"
 //#define POWER_PIN 6
 //#define WLAN_CONFIG "192.168.2.108|80|gateway/frame/saveFlat|import|import|WLAN-RB|WIFISSID|secretPW|||"
 

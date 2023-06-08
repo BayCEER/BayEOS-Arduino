@@ -194,7 +194,7 @@ uint8_t BaySIM800::post(void){
 		printlnP_OK("AT+SSLOPT=0,1",200);	
 	}
     printlnP("AT+HTTPACTION=1");
-    if(wait_forPGM(PSTR("+HTTPACTION: 1,200"),5000)){
+    if(wait_forPGM(PSTR("+HTTPACTION: 1,200"),25000)){
 		_tx_error_count++;
 		return 1;
 	} else {
