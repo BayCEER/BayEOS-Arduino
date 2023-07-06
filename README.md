@@ -17,7 +17,7 @@ A typical example sketch for sending sensordata
 look like this. The sketch is optimized for very low power comsumption and unstable
 networks.
 
-    define SAMPLING_INT 32
+    #define SAMPLING_INT 32
     #define RF24CHANNEL 0x66
     #define RF24ADDRESS 0x45c431ae12LL
     #define WITH_CHECKSUM 1
@@ -40,7 +40,7 @@ networks.
       client.setBuffer(myBuffer, 100); //use skip!
       initLCB(); //init time2
       readBatLCB();
-      startLCB();
+      startLCB(); //Board blinks 3x
     }
 
 
@@ -56,7 +56,7 @@ networks.
     #if WITH_CHECKSUM
         client.addChecksum();
     #endif
-        sendOrBufferLCB();
+        sendOrBufferLCB(); //Board blinks 1 time on success and 2 times on error
         //Read battery voltage _after_ long uptime!!!
         readBatLCB();
       }

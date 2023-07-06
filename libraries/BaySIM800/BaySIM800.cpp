@@ -36,8 +36,9 @@ uint8_t BaySIM800::init(void){
 		printlnP_OK("AT",200);
 		printlnP("AT+CPIN?");
 		i++;
-		if(i>2) return 6;
+		if(i>2) return 8;
 	}
+	if(_base64buffer[4]=='I') return 7; //NOT INSERTED
 	if(_base64buffer[5]=='U') return 3; //SIM PUK
 	if(_base64buffer[5]=='I'){ //SIM PIN
 		printlnP_OK("AT",200);
@@ -47,19 +48,24 @@ uint8_t BaySIM800::init(void){
 		if(wait_forOK(30000)) {
 			return 2; //Wrong PIN
 		}
-		wait_for("SMS Ready",20000);
 	}
+	for(i=0;i<127;i++){
+		printlnP("AT+CPIN?");
+		if(! wait_for("+CPIN: READY",200)) break;
+	}
+	if(i==127) return 4; //No +CPIN: READY
+
 	// Waiting for Modem to Connect
 	for(i=0;i<127;i++){
 		if(isRegistered()) break;
 		delay(500);
 	}
-	if(i==127) return 4;
+	if(i==127) return 5;
 	for(i=0;i<127;i++){
 		if(isAttached()) break;
 		delay(500);
 	}
-	if(i==127) return 5;
+	if(i==127) return 6;
 
     printlnP_OK("AT+HTTPTERM",200);
     printlnP_OK("AT+SAPBR=0,1",200);

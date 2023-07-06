@@ -19,8 +19,8 @@ void setup()
   myBuffer.init(flash); //This will restore old pointers
   //myBuffer.reset(); //This will set all pointers to zero
   myBuffer.skip(); //This will move read pointer to write pointer
-  myBuffer.setRTC(myRTC, 0); //Nutze RTC relativ!
-  client.setBuffer(myBuffer, 20); //use skip!
+  myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); //use the rtc clock but relative
+  client.setBuffer(myBuffer, 120); //use skip!
   initLCB(); //init time2
   readBatLCB();
   startLCB();

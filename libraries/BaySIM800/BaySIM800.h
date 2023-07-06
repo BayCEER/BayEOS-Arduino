@@ -53,9 +53,10 @@ public:
 	 * 1 == Communication-ERROR
 	 * 2 == PIN failed
 	 * 3 == PIN locked
-	 * 4 == Not CREG
-	 * 5 == Not CGATT
-	 * 6 == No SIM Card
+	 * 4 == No CPIN READY
+	 * 5 == Not CREG
+	 * 6 == Not CGATT
+	 * 7 == No SIM Card
 	 *
 	 * if unlock_only is set, function returns already after unlocking the modem
 	 */
