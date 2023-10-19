@@ -115,17 +115,7 @@ uint8_t BayEOSBufferSPIFlash::write(const uint8_t *b, uint8_t length) {
 
 uint8_t BayEOSBufferSPIFlash::write_flash(unsigned long pos, const uint8_t *b,
 		uint8_t length) {
-	uint8_t tries = 0;
-	while (!_flash->writeByteArray(pos, b, length, true)) {
-		delay(10);
-		tries++;
-		if (tries > 2) {
-#if SERIAL_DEBUG
-			Serial.println("Write flash failed");
-#endif
-			return 0;
-		}
-	}
+	if(!_flash->writeByteArray(pos, b, length, false)) return 0;
 	return length;
 }
 
@@ -149,13 +139,7 @@ int BayEOSBufferSPIFlash::read(uint8_t *dest, int length) {
 
 int BayEOSBufferSPIFlash::read_flash(unsigned long pos, uint8_t *dest,
 		int length) {
-	uint8_t tries = 0;
-	while (!_flash->readByteArray(pos, dest, length)) {
-		delay(10);
-		tries++;
-		if (tries > 2)
-			return 0;
-	}
+	if(!_flash->readByteArray(pos, dest, length)) return 0;
 	return length;
 }
 

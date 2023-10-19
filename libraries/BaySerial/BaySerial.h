@@ -31,6 +31,11 @@
 #define TX_BREAK 0x3
 #define TX_BUSY 0x4
 
+#define BaySerialESP_NAME 0x1
+#define BaySerialESP_GATEWAY 0x2
+#define BaySerialESP_USER 0x3
+#define BaySerialESP_PW 0x4
+
 #include <inttypes.h>
 #include <BayEOS.h>
 #include <BayEOSCommands.h>
@@ -153,9 +158,18 @@ public:
 	uint8_t isReady();
 
 	/*
-	 * Sets the Name of the client an returns the strlen
+	 * Sets the Name of the client an returns the strlen + 10
+	 * results < 10 indicate errors
+	 * requires BaySerialRouterESP 1.2
 	 */
 	uint8_t setName(char* name);
+
+	/*
+	 * Sets the Config of the client an returns the strlen + 10
+	 * results < 10 indicate errors
+	 * requires BaySerialRouterESP 1.3
+	 */
+	uint8_t setConfig(char* value, uint8_t field);
 
 
 	/*

@@ -65,6 +65,7 @@ void HX711Array::shiftIn(uint8_t nr) {
 		for (j = 0; j < _length; j++) {
 			_p[nr + 4 * j] |= digitalRead(_dout[j]) << (7 - i);
 		}
+       	delayMicroseconds(1);
 	}
 }
 
@@ -191,7 +192,6 @@ long HX711Array::read_average_with_filter(long* res, unsigned long max_deviation
 
 
 void HX711Array::power_down() {
-	digitalWrite(_pd_sck, LOW);
 	digitalWrite(_pd_sck, HIGH);
 }
 

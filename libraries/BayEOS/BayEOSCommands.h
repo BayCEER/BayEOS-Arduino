@@ -28,6 +28,8 @@
 // Returns [0x3][0x31][command][uint8_t]
 #define ROUTER_SET_NAME 0x4
 // Returns [0x3][0x31][command][uint8_t]
+#define ROUTER_SET_CONFIG 0x5
+// Returns [0x3][0x31][command][uint8_t]
 
 
 

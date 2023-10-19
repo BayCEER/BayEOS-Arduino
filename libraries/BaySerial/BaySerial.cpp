@@ -234,6 +234,20 @@ uint8_t BaySerialESP::setName(char* name){
 	else return 4; //wrong response
 }
 
+uint8_t BaySerialESP::setConfig(char* value,uint8_t field){
+	startCommand(BayEOS_RouterCommand);
+	addToPayload((uint8_t) ROUTER_SET_CONFIG);
+	addToPayload(field);
+	addToPayload(value);
+	addToPayload((uint8_t) 0);
+	if(sendPayload()) return 2; //no ack
+	if(readIntoPayload()) return 3; //no response
+	if(getPayload(2)==ROUTER_SET_CONFIG && getPayload(1)==BayEOS_RouterCommand) return getPayload(3);
+	else return 4; //wrong response
+}
+
+
+
 uint8_t BaySerialESP::sendMultiFromBuffer(uint16_t maxsize){
 	if(! _buffer->available()) return 0;
 	uint8_t res=isReady();

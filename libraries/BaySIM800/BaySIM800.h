@@ -113,7 +113,7 @@ protected:
 	void skipChars(void);
 	uint8_t wait_forOK(uint16_t timeout);
 	uint8_t wait_forPGM(const char* str, uint16_t timeout,uint8_t bytes=0, char* buffer=NULL);
-	uint8_t wait_for_available(uint16_t* timeout,int bytes=1);
+	uint8_t wait_for_available(int bytes=1);
 	void printPGM(const char *str);
 	void printlnPGM(const char *str);
 	uint8_t printlnPGM(const char *str, uint16_t timeout);
@@ -133,6 +133,7 @@ protected:
 	char _base64buffer[BaySIM800_BUFFER];
 	uint8_t _tx_error_count;
 	uint16_t _mtu;
+	uint16_t _timeout;
 	static const char* const _urlencodedChars;
 
 };

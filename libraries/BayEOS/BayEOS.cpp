@@ -17,21 +17,21 @@ void BayEOS::startDataFrame(uint8_t subtype, uint8_t checksum) {
 	addToPayload(subtype);
 }
 
-void BayEOS::startOriginFrame(const String &o, uint8_t routed) {
+void BayEOS::startOriginFrame(const char* o, uint8_t routed) {
 	if(routed) startFrame((uint8_t) BayEOS_RoutedOriginFrame);
 	else startFrame((uint8_t) BayEOS_OriginFrame);
-	addToPayload((uint8_t) o.length());
+	addToPayload((uint8_t) strlen(o));
 	addToPayload(o);
 }
 
-void BayEOS::startDataFrameWithOrigin(uint8_t subtype, const String &o,
+void BayEOS::startDataFrameWithOrigin(uint8_t subtype, const char* o,
 		uint8_t checksum, uint8_t routed) {
 	_next = 0;
 	if (checksum)
 		addToPayload((uint8_t) BayEOS_ChecksumFrame);
 	if(routed) addToPayload((uint8_t) BayEOS_RoutedOriginFrame);
 	else addToPayload((uint8_t) BayEOS_OriginFrame);
-	addToPayload((uint8_t) o.length());
+	addToPayload((uint8_t) strlen(o));
 	addToPayload(o);
 	addToPayload((uint8_t) BayEOS_DataFrame);
 	addToPayload(subtype);
@@ -258,9 +258,10 @@ uint8_t BayEOS::addToPayload(const uint8_t* c) {
 	}
 	return _success;
 }
-uint8_t BayEOS::addToPayload(const String &s) {
-	for (uint8_t i = 0; i < s.length(); i++) {
-		_success = addToPayload((uint8_t) s[i]);
+uint8_t BayEOS::addToPayload(const char* s) {
+	while(*s){
+		_success = addToPayload((uint8_t) *s);
+		s++;
 	}
 	return _success;
 }
@@ -285,19 +286,19 @@ uint8_t BayEOS::addToPayload(long l) {
 	return addToPayload(&l, 4);
 }
 
-uint8_t BayEOS::sendError(const String &s) {
+uint8_t BayEOS::sendError(const char* s) {
 	startFrame((uint8_t) BayEOS_ErrorMessage);
 	addToPayload(s);
 	return sendPayload();
 }
 
-uint8_t BayEOS::sendMessage(const String &s) {
+uint8_t BayEOS::sendMessage(const char* s) {
 	startFrame((uint8_t) BayEOS_Message);
 	addToPayload(s);
 	return sendPayload();
 }
 
-uint8_t BayEOS::createMessage(const String &s,uint8_t checksum, uint8_t frametype) {
+uint8_t BayEOS::createMessage(const char* s,uint8_t checksum, uint8_t frametype) {
 	_next = 0;
 	uint8_t ret;
 	if (checksum)
@@ -342,48 +343,27 @@ uint8_t BayEOS::readBinaryFromBuffer(unsigned long pos, unsigned long stop,
 }
 
 uint8_t BayEOS::readFromBuffer(void) {
-	while (_buffer->available()) {
-		_buffer->initNextPacket();
-		if(_buffer->packetLength()>_buffer->available()){
-			//invalid packet!!
-			_buffer->skip();
-			return 0;
-		}
-		if (!_buffer->packetLength() || _buffer->packetLength()>BayEOS_MAX_PAYLOAD) {
-			_buffer->next(); //skip empty or too long packet
-			continue;
-		}
-		if (_buffer->rtc()) {
-			switch(_buffer->_timeType){
-			case RTC_RELATIVE_MILLIS:
-				startDelayedFrame(
-						(_buffer->getTime() - _buffer->packetMillis()) * 1000);
-				break;
-			case RTC_RELATIVE_SECONDS:
-				startDelayedSecondFrame((_buffer->getTime() - _buffer->packetMillis()));
-				break;
-			case RTC_ABSOLUTE_SECONDS:
-				startTimestampFrame(_buffer->packetMillis());
-				break;
+	if(! _buffer->available()) return 0;
+	_buffer->initNextPacket();
+	if (_buffer->rtc()) {
+		switch(_buffer->_timeType){
+		case RTC_RELATIVE_MILLIS:
+			startDelayedFrame((_buffer->getTime() - _buffer->packetMillis()) * 1000);
+			break;
+		case RTC_RELATIVE_SECONDS:
+			startDelayedSecondFrame((_buffer->getTime() - _buffer->packetMillis()));
+			break;
+		case RTC_ABSOLUTE_SECONDS:
+			startTimestampFrame(_buffer->packetMillis());
+			break;
 
-			}
-
-		} else
-			startDelayedFrame(millis() - _buffer->packetMillis());
-
-		if (getPayloadBytesLeft() < _buffer->packetLength()) {
-			_buffer->next(); //skip packet - now way to send this...
-			continue;
 		}
-		_buffer->readPacket(&_payload[_next]);
-		if(_payload[_next]==0){
-			_buffer->next(); //skip invalid frame
-			continue;
-		}
-		_next += _buffer->packetLength();
-		return _buffer->packetLength();
-	}
-	return 0;
+
+	} else	startDelayedFrame(millis() - _buffer->packetMillis());
+
+	_buffer->readPacket(&_payload[_next]);
+	_next += _buffer->packetLength();
+	return _buffer->packetLength();
 }
 
 uint8_t BayEOS::sendOrBuffer(void) {

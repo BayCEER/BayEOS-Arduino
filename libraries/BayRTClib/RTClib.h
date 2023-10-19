@@ -40,6 +40,7 @@ class RTC_Timer2 : public RTC {
 public:
     void begin() {}
     void adjust(const DateTime& dt);
+    void adjust(unsigned long sec);
     DateTime now();
     volatile long _seconds;
     unsigned long get();

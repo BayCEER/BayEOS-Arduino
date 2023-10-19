@@ -126,7 +126,7 @@ uint8_t BaySIM800::isRegistered(void){
 	printlnP("AT+CREG?");
 	wait_forPGM(PSTR("+CREG: "),2000,3,_base64buffer);
 	if(_base64buffer[2]=='1'|| _base64buffer[2]=='5') return 1; //Connected or Roaming
-	else return 0;
+	return 0;
 }
 
 uint8_t BaySIM800::isAttached(void){
@@ -184,7 +184,6 @@ uint8_t BaySIM800::postHeader(uint16_t size){
 	printlnP_OK("\"",200);
     printP("AT+HTTPPARA=\"URL\",\"");
     _serial->print(_url);
-	//wait_forOK(500);
     if(printlnP_OK("\"",200)) return(3);
     printlnP_OK("AT+HTTPPARA=\"CONTENT\",\"application/x-www-form-urlencoded\"",200);
     printP("AT+HTTPDATA=");
@@ -321,13 +320,11 @@ uint8_t BaySIM800::sendMultiFromBuffer(uint16_t maxsize,bool ack_payload) {
 
 void BaySIM800::printPGM(const char *str) {
 	skipChars();
-	char c;
-	while (true) {
-		c = pgm_read_byte(str);
-		if (!c)
-			break;
+	char c=pgm_read_byte(str);;
+	while (c) {
 		_serial->write(c);
 		str++;
+		c = pgm_read_byte(str);
 	}
 }
 
@@ -465,13 +462,13 @@ void BaySIM800::setConfigPointers(void) {
 	}
 }
 
-uint8_t BaySIM800::wait_for_available(uint16_t* timeout, int bytes) {
+uint8_t BaySIM800::wait_for_available(int bytes) {
 	while (_serial->available() < bytes) {
 		delay(1);
-		(*timeout)--;
-		if (*timeout == 0) {
+		if (_timeout == 0) {
 			return 1;
 		}
+		_timeout--;
 	}
 	return 0;
 }
@@ -482,6 +479,7 @@ uint8_t BaySIM800::wait_forOK(uint16_t timeout) {
 
 uint8_t BaySIM800::wait_forPGM(const char* str, uint16_t timeout,
 		uint8_t bytes, char* buffer) {
+	_timeout=timeout;
 	uint8_t length = 0;
 	while (true) {
 		_base64buffer[length] = pgm_read_byte(str);
@@ -491,12 +489,12 @@ uint8_t BaySIM800::wait_forPGM(const char* str, uint16_t timeout,
 		length++;
 	}
 
-	if (wait_for_available(&timeout, length))
+	if (wait_for_available(length))
 		return 1;
 	uint8_t offset = 0;
 	char c;
 	while (true) {
-		if (wait_for_available(&timeout))
+		if (wait_for_available())
 			return 1;
 		c = _serial->read();
 		if (offset < length) {
@@ -508,7 +506,7 @@ uint8_t BaySIM800::wait_forPGM(const char* str, uint16_t timeout,
 
 		if (offset == length) {
 			if (bytes && buffer != NULL) {
-				if (wait_for_available(&timeout, bytes))
+				if (wait_for_available(bytes))
 					return 1;
 				offset = 0;
 				while (offset < bytes) {

@@ -14,7 +14,8 @@ const uint8_t channel = 0x70;
 const uint8_t adr[] = {0x12, 0xae, 0x31, 0xc4, 0x45};
 
 #define BAT_WARNING 3800
-
+#define BAT_DIVIDER 3.3 * (100+100) / 100
+#define BAT_REFERENCE DEFAULT
 
 //channel map and unit map must not exceed 98 characters!
 char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8;T9;T10;T11;T12;T13,T14;T15;T16";
@@ -87,8 +88,8 @@ void measure() {
 
 
   digitalWrite(POWER_PIN, HIGH);
-  analogReference(INTERNAL);
-  myLogger._bat = (1.1 * 200 / 100 / 1023 * analogRead(A0)) * 1000;
+  analogReference(BAT_REFERENCE);
+  myLogger._bat = (BAT_DIVIDER * analogRead(A7) / 1023 ) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
@@ -101,6 +102,7 @@ void measure() {
     delayLogger(10);
     mcp342x.runADC(0);
     delayLogger(mcp342x.getADCTime());
+    span = mcp342x.getData();
     strom = span / PRE_RESISTOR; //current in A
 
     mcp342x.runADC(1);

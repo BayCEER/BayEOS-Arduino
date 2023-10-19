@@ -228,40 +228,23 @@ void BayEOSBuffer::next(void) {
 }
 
 uint8_t BayEOSBuffer::addPacket(const uint8_t *payload, uint8_t length) {
-	uint8_t tries = 0;
-	while (tries < 5) {
-		makeFreeSpace(length + 5);
-		b_seek(_write_pos);
-		unsigned long time = getTime();
-		uint8_t* b = (uint8_t *) &time;
-		bool time_write_error=(! b_write(b, 4));
-		if (!b_write(length) || time_write_error) { //This should never happen -- but in case we will make a valid length!
-			b_seek(_write_pos+4);
-			uint8_t length_failed = b_read();
-			makeFreeSpace((uint16_t) 5 + length_failed);
-			b_seek(_write_pos+5);
-			if(length_failed){
-				b_seek(_write_pos+5);
-				b_write(0x0); //invalid frame
-				if(length_failed>1)
-					b_write(payload, length_failed - 1); //make sure to write (free pages in flash!)
-			}
-			_write_pos += length_failed + 5;
-			if (_write_pos >= _max_length)
-				_write_pos -= _max_length;
-			tries++;
-		} else {
-			b_write(payload, length);
-			_write_pos	+= length + 5;
-			if (_write_pos >= _max_length)
-				_write_pos -= _max_length;
-			flush();
-			return length + 5;
-		}
-
+	makeFreeSpace(length + 5);
+	b_seek(_write_pos);
+	unsigned long time = getTime();
+	uint8_t* b = (uint8_t *) &time;
+	bool error = false;
+	error=! b_write(b, 4);
+	if(! error) error=! b_write(length);
+	if(! error) error=! b_write(payload, length);
+	if(! error){
+		_write_pos	+= length + 5;
+		if (_write_pos >= _max_length)
+			_write_pos -= _max_length;
+		flush();
+		return length + 5;		
+	} else {//This should never happen
+		return 0;
 	}
-	flush();
-	return 0;
 }
 
 uint8_t BayEOSBuffer::packetLength(void) {

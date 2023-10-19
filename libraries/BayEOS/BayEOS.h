@@ -209,17 +209,17 @@ public:
 	/**
 	 * Send Error Message
 	 */
-	uint8_t sendError(const String &s);
+	uint8_t sendError(const char* s);
 
 	/**
 	 * Send Message
 	 */
-	uint8_t sendMessage(const String &s);
+	uint8_t sendMessage(const char* s);
 
 	/**
 	 * Create a Message in payload
 	 */
-	uint8_t createMessage(const String &s, uint8_t checksum=0, uint8_t frametype=BayEOS_Message);
+	uint8_t createMessage(const char* s, uint8_t checksum=0, uint8_t frametype=BayEOS_Message);
 
 	/**
 	 * Create a Action respons in payload
@@ -239,7 +239,7 @@ public:
 	/**
 	 * Set the start of the payload buffer to be a valid origin or routedOrigin frame
 	 */
-	void startOriginFrame(const String &o, uint8_t routed=0);
+	void startOriginFrame(const char* o, uint8_t routed=0);
 
 	/**
 	 * Set first two bytes of payload buffer and set _next to 2
@@ -251,7 +251,7 @@ public:
 	 *
 	 * just call addChannelValue() to add values
 	 */
-	void startDataFrameWithOrigin(uint8_t subtype,const String &o,uint8_t checksum=0,uint8_t routed=0);
+	void startDataFrameWithOrigin(uint8_t subtype,const char* o,uint8_t checksum=0,uint8_t routed=0);
 
 	/**
 	 * Adds a channel value to the payload
@@ -355,7 +355,7 @@ public:
 	/**
 	 * Add String to payload buffer
 	 */
-	uint8_t addToPayload(const String &s);
+	uint8_t addToPayload(const char* s);
 
 	/**
 	 * Add float (4 byte) to payload buffer

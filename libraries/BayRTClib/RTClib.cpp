@@ -254,6 +254,12 @@ void RTC_Timer2::adjust(const DateTime& dt) {
     interrupts();
 }
 
+void RTC_Timer2::adjust(unsigned long sec) {
+	noInterrupts();
+    _seconds = sec;
+    interrupts();
+}
+
 DateTime RTC_Timer2::now() {
 	noInterrupts();
     unsigned long s=_seconds;

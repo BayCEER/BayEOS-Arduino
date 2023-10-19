@@ -97,12 +97,12 @@ ISR(TIMER2_OVF_vect) {
 		current_micros=micros();
 		adjust_osccal_flag++;
 		if(adjust_osccal_flag>2){
-			if((current_micros-last_micros)>(1005000L/TICKS_PER_SECOND)){
+			if((current_micros-last_micros)>(1006000L/TICKS_PER_SECOND)){
 				if(OSCCAL) OSCCAL--;
 				else adjust_osccal_flag=0; //reached limit!
 			}
-			else if((current_micros-last_micros)<(995000L/TICKS_PER_SECOND)){
-				if(OSCCAL<255) OSCCAL++;
+			else if((current_micros-last_micros)<(994000L/TICKS_PER_SECOND)){
+				if(OSCCAL<252) OSCCAL++;
 				else adjust_osccal_flag=0; //reached limit!
 			}
 			else {
@@ -145,8 +145,13 @@ ISR(TIMER2_OVF_vect) {
 
 				else
 					action0_pending_count=0;
-				if(action0_pending_count>RESET_COUNT)
+				if(action0_pending_count>RESET_COUNT){
+					#ifdef RESET_FUN
+					RESET_FUN
+					#endif
 					asm volatile (" jmp 0"); //restart programm
+
+				}
 
 			}
 #endif

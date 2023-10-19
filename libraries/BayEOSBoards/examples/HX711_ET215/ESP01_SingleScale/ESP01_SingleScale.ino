@@ -1,14 +1,17 @@
 #define SAMPLING_INT 32
-#define BOARD_NAME "HX711ESP"
+#define BOARD_NAME "HX711ESP_Single"
 #define SEND_COUNT 60 /*collect 60 measurements before send... */
 #define MIN_VOLTAGE 3.8
 
 #include <HX711Array.h>
+#include <NTC.h>
 
-uint8_t dout[] = {A3, A2, A1, A0};
-uint8_t sck = A4;
+uint8_t dout[] = {6};
+uint8_t sck = 3;
 
 HX711Array scale;
+Scale4PointCal cal;
+NTC_HX711 ntc(scale, 2*470000, 3.0); //adjust resistor values
 
 #include <BayEOSBufferSPIFlash.h>
 
@@ -20,11 +23,6 @@ unsigned long last_sent;
 BaySerialESP client(Serial, 7);
 
 
-#include <DS18B20.h>
-DS18B20 ds1(2, 0, 1);
-DS18B20 ds2(3, 0, 1);
-DS18B20 ds3(4, 0, 1);
-DS18B20 ds4(6, 0, 1);
 float temp;
 
 #include <LowCurrentBoard.h>
@@ -34,24 +32,18 @@ uint16_t measurements = SEND_COUNT;
 
 void setup()
 {
-  ds1.setAllAddr(); //Search for new or removed sensors
-  ds2.setAllAddr();
-  ds3.setAllAddr();
-  ds4.setAllAddr();
-  ds1.setResolution(12);
-  ds2.setResolution(12);
-  ds3.setResolution(12);
-  ds4.setResolution(12);
-
+ 
   myBuffer.init(flash); //This will restore old pointers
   //myBuffer.reset(); //This will set all pointers to zero
   myBuffer.skip(); //This will move read pointer to write pointer
   myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); //Nutze RTC relativ!
   client.setBuffer(myBuffer, 20); // use skip!
   initLCB(); //init time2
-  scale.begin(dout, 4, sck); //start HX711Array with 4 ADCs
+  scale.begin(dout, 1, sck); //start HX711Array with 1 ADCs
   scale.set_gain(128);
   scale.power_down();
+  cal.readConf();
+
   startLCB();
   client.begin(38400);
   client.powerUp();
@@ -76,38 +68,24 @@ void loop() {
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
     //eg measurement
-    ds1.t_conversion(); //Start T-conversion
-    ds2.t_conversion(); //Start T-conversion
-    ds3.t_conversion(); //Start T-conversion
-    ds4.t_conversion(); //Start T-conversion
-    delayLCB(700);
+    ntc.readResistance();
+    temp = ntc.getTemp(0);
 
     scale.power_up();
+    scale.read_average(1);
     long adc = scale.read_average();
     pinMode(7, OUTPUT);
-    digitalWrite(7, HIGH);
+    digitalWrite(POWER_PIN, HIGH);
     delay(2);
     analogReference(DEFAULT);
     float bat_voltage = 3.3 * 200 / 100 / 1023 * analogRead(A7);
 
-    scale.power_down();
-    //Ausgabe der Spannung in mV bei 10V Anregung!
-    float t_mean = 0;
-    ds1.readChannel(1, &temp);
-    t_mean += temp;
-    ds2.readChannel(1, &temp);
-    t_mean += temp;
-    ds3.readChannel(1, &temp);
-    t_mean += temp;
-    ds4.readChannel(1, &temp);
-    t_mean += temp;
-    t_mean /= 4;
-
     client.startDataFrame();
     client.addChannelValue(millis());
     client.addChannelValue(bat_voltage);
-    client.addChannelValue(t_mean);
+    client.addChannelValue(temp);
     client.addChannelValue(adc);
+    client.addChannelValue(cal.getWeight(adc, temp));
 
     client.writeToBuffer();
     measurements++;
@@ -123,7 +101,6 @@ void loop() {
     }
     client.powerDown();
     digitalWrite(POWER_PIN, LOW);
-    //Read battery voltage _after_ long uptime!!!
 
   }
 

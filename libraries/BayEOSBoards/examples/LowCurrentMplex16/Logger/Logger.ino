@@ -7,6 +7,8 @@
 #define MCPPOWER_PIN 6
 char channel_map[] = "time;bat;T1;T2;T3;T4;T5;T6;T7;T8;T9;T10;T11;T12;T13,T14;T15;T16";
 char unit_map[] = "ms;V;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C;C";
+#define BAT_DIVIDER 3.3 * (100+100) / 100
+#define BAT_REFERENCE DEFAULT
 
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySerial.h>
@@ -76,9 +78,9 @@ void measure() {
 
 
   digitalWrite(POWER_PIN, HIGH);
-  analogReference(INTERNAL);
+  analogReference(BAT_REFERENCE);
   if (digitalRead(CONNECTED_PIN))
-    myLogger._bat = (1.1 * 320 / 100 / 1023 * analogRead(A0)) * 1000;
+    myLogger._bat = (BAT_DIVIDER * analogRead(A7) / 1023 ) * 1000;
   values[0] += ((float)myLogger._bat) / 1000;
   digitalWrite(POWER_PIN, LOW);
   digitalWrite(MCPPOWER_PIN, HIGH);
