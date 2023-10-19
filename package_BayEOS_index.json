@@ -12,42 +12,6 @@
 				{
 					"name": "BayEOS AVR Boards",
 					"architecture": "avr",
-					"version": "0.1.17",
-					"category": "BayEOS Arduino",
-					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/refs/tags/v0.1.17.zip",
-					"checksum": "SHA-256:29ba66655aa6932934c2a2fdade0482e8c28d2361fa60f3a3587061a56325b30",
-					"help": {
-						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
-					},
-					"archiveFileName": "BayEOS-Arduino-v.0.1.17.zip",
-					"boards": [
-						{
-							"name": "BayEOS Low Power Board"
-						}
-					],
-					"size": "3699498"
-				},
-				{
-					"name": "BayEOS AVR Boards",
-					"architecture": "avr",
-					"version": "0.1.18",
-					"category": "BayEOS Arduino",
-					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/refs/tags/v0.1.18.zip",
-					"checksum": "SHA-256:30e45eb6cc6e75c77eb12d18ad8bec8791d1b509e273d204cf3bcc34e9635d7e",
-					"help": {
-						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
-					},
-					"archiveFileName": "BayEOS-Arduino-v.0.1.18.zip",
-					"boards": [
-						{
-							"name": "BayEOS Low Power Board"
-						}
-					],
-					"size": "3698607"
-				},
-				{
-					"name": "BayEOS AVR Boards",
-					"architecture": "avr",
 					"version": "0.2.0",
 					"category": "BayEOS Arduino",
 					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/refs/tags/v.0.2.0.zip",
@@ -152,6 +116,24 @@
 						}
 					],
 					"size": "3735345"
+				},
+				{
+					"name": "BayEOS AVR Boards",
+					"architecture": "avr",
+					"version": "0.2.6",
+					"category": "BayEOS Arduino",
+					"url": "https://github.com/BayCEER/BayEOS-Arduino/archive/refs/tags/v0.2.6.zip",
+					"checksum": "SHA-256:44d5f15deedb3143709fc669d417ee8f5c316ad67ce97d9b4a2b27c23eefc8da",
+					"help": {
+						"online": "https://github.com/BayCEER/BayEOS-Arduino/"
+					},
+					"archiveFileName": "BayEOS-Arduino-0.2.6.zip",
+					"boards": [
+						{
+							"name": "BayEOS Low Power Board"
+						}
+					],
+					"size": "3736999"
 				}
 			],
 			"toolsDependencies": [
