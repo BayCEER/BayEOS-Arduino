@@ -26,6 +26,7 @@ uint8_t BaySIM800::init(void){
 	printlnP_OK("ATE0",500); //Command echo off
 	printlnP_OK("AT+CSCLK=0",500); //Auto-Sleepmode off
 	//Check PIN
+	printlnP_OK("AT+CLTS=1",200); //enable clock sync!
 	printlnP("AT+CPIN?");
 	while(wait_forPGM(PSTR("+CPIN: "),5000,7,_base64buffer)){
 		printlnP_OK("AT",200);
@@ -66,7 +67,6 @@ uint8_t BaySIM800::init(void){
 		delay(500);
 	}
 	if(i==127) return 6;
-
     printlnP_OK("AT+HTTPTERM",200);
     printlnP_OK("AT+SAPBR=0,1",200);
     printlnP_OK("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"",200);
@@ -156,6 +156,7 @@ DateTime BaySIM800::now(void){
 	}
 	return dt;
 }
+
 
 uint8_t BaySIM800::postHeader(uint16_t size){
 	uint8_t res;

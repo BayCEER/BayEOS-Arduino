@@ -56,6 +56,8 @@ uint8_t BayGPRSInterface::init(uint8_t unlock_only){
 	wait_forOK(500);
 	printlnP("AT+CSCLK=0"); //Auto-Sleepmode
 	wait_forOK(500);
+	printlnP("AT+CLTS=1"); //enable clock sync!
+	wait_forOK(500);
 	//Check PIN
 	printlnP("AT+CPIN?");
 	while(wait_forPGM(PSTR("+CPIN: "),5000,7,_base64buffer)){
