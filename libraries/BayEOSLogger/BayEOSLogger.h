@@ -27,7 +27,7 @@ public:
 	  _mode=0;
   }
   void init(BayEOS& client,BayEOSBuffer& buffer,RTC& rtc,uint16_t min_sampling_int=10,uint16_t bat_warning=0);
-
+  void restoreReadPointerFromEEPROM(void);
   void setChannelMap(char* map);
   void setUnitMap(char* map);
   void handleCommand1_5(void);

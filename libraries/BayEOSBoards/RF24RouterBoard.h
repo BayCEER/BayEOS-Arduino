@@ -62,8 +62,13 @@ uint8_t gprs_status; //1 = 0n, 0 = Off
 #define WLAN_PIN 7
 #endif
 
+#ifndef EEPROM_BUFFER_STATUS_POS
+#define EEPROM_BUFFER_STATUS_POS 300
+#endif
 
-
+#ifndef EEPROM_BUFFER_STATUS_BYTE
+#define EEPROM_BUFFER_STATUS_BYTE 0xb0 /* indicates whether there is valid data in the flash buffer */
+#endif
 
 volatile uint16_t ticks;
 volatile uint8_t action;
@@ -131,6 +136,7 @@ volatile long rtc_seconds_correct;
 BayGPRS client(Serial, 0); //No Power Pin
 #elif defined(SIM800_CONFIG)
 #include <BaySIM800.h>
+#include <EEPROM.h>
 BaySIM800 client = BaySIM800(Serial);
 #elif defined(WLAN_CONFIG)
 #include <BayTCPESP8266.h>
@@ -297,8 +303,10 @@ void initLCB() {
 #endif
 
   myBuffer.init(flash); //This will restore old pointers
-  myBuffer.skip();
   myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); //Nutze RTC relativ!
+#ifndef SIM800_CONFIG
+  myBuffer.skip()
+#endif
   //We could also try to use absolute times received from GPRS!
   client.setBuffer(myBuffer);
   pinMode(POWER_PIN, OUTPUT);
@@ -331,7 +339,24 @@ void initLCB() {
 #if defined(GPRS_CONFIG) || defined(SIM800_CONFIG) 
   delayLCB(1000);
   tx_res = client.begin(38400);
+#if defined(SIM800_CONFIG)
+  while (true) {
+    unsigned long time = client.now().get();
+    if (time > 3600L*24*365*20) {
+      myRTC.adjust(time);
+      break;
+    }
+    blinkLED(2);
+	if(EEPROM.read(EEPROM_BUFFER_STATUS_POS)!=EEPROM_BUFFER_STATUS_BYTE){
+    	myBuffer.reset();
+    	EEPROM.write(EEPROM_BUFFER_STATUS_POS,EEPROM_BUFFER_STATUS_BYTE);
+  	}
+
+    delay(2000);
+  }
+#else
   if (! tx_res) myRTC.adjust(client.now());
+#endif
 #elif defined(WLAN_CONFIG)
   tx_res = client.begin(38400);
 #else
@@ -644,6 +669,12 @@ void checkAction0(void){
         handleRF24();
         tx_res = client.sendMultiFromBuffer(3000);
         blinkLED(tx_res + 1);
+#if defined(SIM800_CONFIG)
+		unsigned long time = client.now().get();
+        if (time > 3600L*24*365*20) {
+          myRTC.adjust(time);
+        }
+#endif
       }
     } else
       digitalWrite(POWER_PIN, LOW);

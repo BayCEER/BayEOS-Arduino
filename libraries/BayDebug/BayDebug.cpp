@@ -104,6 +104,7 @@ void BayEOSDebugInterface::parse(uint8_t offset) {
 		parse(offset);
 		break;
 	case BayEOS_DelayedFrame:
+	case BayEOS_DelayedSecondFrame:
 		print("DF: Delay:");
 		println(*(unsigned long*) (_payload + offset + 1));
 		parse(offset + 5);

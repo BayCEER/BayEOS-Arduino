@@ -15,6 +15,9 @@
 #define SAMPLING_INT 60
 #define SEND_COUNT 60   /*collect 60 measurements before send... */
 #define MIN_VOLTAGE 3.8 /*minimum voltage for send operation */
+#define NETWORK_TIME 1 /*use network time*/
+#define EEPROM_BUFFER_STATUS_POS 300 
+#define EEPROM_BUFFER_STATUS_BYTE 0xb0 /* indicates whether there is valid data in the flash buffer */
 // GPRS-Config string.
 // Gateway-IP|PORT|path on server|login|password|Origin (== Board unique identifier)|apn of sim-card|apn-user|apn-pw|PIN
 #define GPRS_CONFIG "132.180.112.128|80|gateway/frame/saveFlat|import@IT|import|MyGPRS-Thermo|iot.1nce.net||||"
@@ -73,7 +76,6 @@ void setup() {
 
   pinMode(POWER_PIN, OUTPUT);
   myBuffer.init(flash);                               //This will restore old pointers
-  myBuffer.skip();                                    //This will skip unsent frames
   myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS);       //use the rtc clock but relative
   client.setBuffer(myBuffer);                         //connect the buffer to the transport client
   digitalWrite(POWER_PIN, HIGH);                      //power up GPRS-Modem
@@ -89,6 +91,23 @@ void setup() {
   client.writeToBuffer();
   blinkLED(client.sendMultiFromBuffer(3000) + 1);  //send a message to the gateway.
   //one time blinking indicates success - more denotes an error. For details look at the function definition
+#if NETWORK_TIME
+  while (true) {
+    unsigned long time = client.now().get();
+    if (time > 3600L*24*365*20) {
+      myRTC.adjust(time);
+      break;
+    }
+    blinkLED(2);
+    delay(2000);
+  }
+  if(EEPROM.read(EEPROM_BUFFER_STATUS_POS)!=EEPROM_BUFFER_STATUS_BYTE){
+    myBuffer.reset();
+    EEPROM.write(EEPROM_BUFFER_STATUS_POS,EEPROM_BUFFER_STATUS_BYTE);
+  }
+#else
+  myBuffer.skip();
+#endif
   Serial.end();                  //Stop Serial (avoids power leakage via TX Pin)
   digitalWrite(POWER_PIN, LOW);  //power down GPRS-Modem
 
@@ -131,9 +150,17 @@ void loop() {
       delayLCB(1000);
       uint8_t tx_res = client.begin(38400);
       blinkLED(tx_res + 1);  //connect to network
-      while (!tx_res && myBuffer.available() && !ISSET_ACTION(0)) {
+      while (!tx_res && myBuffer.available() ) {
         tx_res = client.sendMultiFromBuffer(3000);  //send 1000 bytes from flash storage
         blinkLED(tx_res + 1);
+#if NETWORK_TIME
+        unsigned long time = client.now().get();
+        if (time > 3600L*24*365*20) {
+          myRTC.adjust(time);
+        }
+#endif
+        if(ISSET_ACTION(0)) break;
+
       }
       if (!myBuffer.available()) measurements = 0;  //all data sent from flash storage
       Serial.end();

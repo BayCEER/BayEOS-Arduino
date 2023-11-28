@@ -2,15 +2,6 @@
 #define BaySIM800_h
 
 #define BaySIM800_BUFFER 138
-#define BaySIM800_CONFIG_URL 0
-#define BaySIM800_CONFIG_USER 1
-#define BaySIM800_CONFIG_PASSWORD 2
-#define BaySIM800_CONFIG_SENDER 3
-#define BaySIM800_CONFIG_APN 4
-#define BaySIM800_CONFIG_PROVUSER 5
-#define BaySIM800_CONFIG_PROVPW 6
-#define BaySIM800_CONFIG_PIN 7
-#define BaySIM800_CONFIG_SIZE 140
 
 
 #define printP(x) printPGM(PSTR(x))
@@ -91,13 +82,6 @@ public:
 	DateTime now(void);
 
 protected:
-	void setConfigPointers(void);
-	/**
-	 * get a pointer to a specific config buffer entry
-	 * e.g Serial.print(*getConfigPointer(APN));
-	 */
-	char** getConfigPointer(uint8_t index);
-
 	/**
 	 * Helper functions for different Post requests
 	*/
@@ -118,18 +102,20 @@ protected:
 	void printlnPGM(const char *str);
 	uint8_t printlnPGM(const char *str, uint16_t timeout);
 	void urlDecode(char *str);
-	int strlenURLencoded(const char *str);
+	uint8_t strlenURLencoded(const char *str);
 	void printURLencoded(const char *str);
+	uint8_t URLencoded(char c,bool print=true);
 
-	char _config_buffer[BaySIM800_CONFIG_SIZE];
-	char* _url; //0
-	char* _user; //1
-	char* _password; //2
-	char* _sender; //3
-	char* _apn; //4
-	char* _prov_user; //5
-	char* _prov_pw; //6
-	char* _pin; //7
+	uint8_t getConfig(const char * config,bool print=true,bool urlencoded=false);
+
+	const char* _url; //0
+	const char* _user; //1
+	const char* _password; //2
+	const char* _sender; //3
+	const char* _apn; //4
+	const char* _prov_user; //5
+	const char* _prov_pw; //6
+	const char* _pin; //7
 	char _base64buffer[BaySIM800_BUFFER];
 	uint8_t _tx_error_count;
 	uint16_t _mtu;

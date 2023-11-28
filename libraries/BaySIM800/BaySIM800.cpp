@@ -44,7 +44,7 @@ uint8_t BaySIM800::init(void){
 	if(_base64buffer[5]=='I'){ //SIM PIN
 		printlnP_OK("AT",200);
 		printP("AT+CPIN=\"");
-		_serial->print(_pin);
+		getConfig(_pin);
 		_serial->println("\"");
 		if(wait_forOK(30000)) {
 			return 2; //Wrong PIN
@@ -71,14 +71,14 @@ uint8_t BaySIM800::init(void){
     printlnP_OK("AT+SAPBR=0,1",200);
     printlnP_OK("AT+SAPBR=3,1,\"CONTYPE\",\"GPRS\"",200);
     printP("AT+SAPBR=3,1,\"APN\",\"");
-    _serial->print(_apn);
+    getConfig(_apn);
 	printlnP_OK("\"",200);
     wait_forOK(200);
     printP("AT+SAPBR=3,1,\"USER\",\"");
-    _serial->print(_prov_user);
+    getConfig(_prov_user);
 	printlnP_OK("\"",200);
     printP("AT+SAPBR=3,1,\"PWD\",\"");
-    _serial->print(_prov_pw);
+    getConfig(_prov_pw);
 	printlnP_OK("\"",200);
     
 	return 0;
@@ -87,7 +87,7 @@ uint8_t BaySIM800::init(void){
 
 uint8_t BaySIM800::changeIPR(long baud) {
 	_baud = baud;
-	long t_baud[] = { baud, 9600, 38400, 57600 };
+	uint16_t t_baud[] = { baud, 9600, 38400, 57600 };
 	for (uint8_t i = 0; i < 4; i++) {
 		_serial->begin(t_baud[i]);
 		skipChars();
@@ -175,16 +175,29 @@ uint8_t BaySIM800::postHeader(uint16_t size){
 	if(i>=9) return(2);
     printlnP_OK("AT+HTTPINIT",200);
     printlnP_OK("AT+HTTPPARA=\"CID\",1",200);
-    printlnP_OK("AT+HTTPPARA=\"UA\",\"BaySIM800 1.0\"",200);
-	strcpy(_base64buffer+70, _user);
-	strcat(_base64buffer+70, ":");
-	strcat(_base64buffer+70, _password);
+    printlnP_OK("AT+HTTPPARA=\"UA\",\"BaySIM800 1.1\"",200);
+	char c;
+	uint8_t offset=0;
+	bool password=false;
+	while(true){
+		c=pgm_read_byte(_user+offset);
+		if(c=='|'){
+		  if(password) break;
+		  else{
+			_base64buffer[70+offset]=':';
+			password=true;
+		  }
+		} else 
+			_base64buffer[70+offset]=c;
+		offset++;
+	}
+	_base64buffer[70+offset]=0;
 	base64_encode(_base64buffer, (char*) _base64buffer+70, strlen(_base64buffer+70));
 	printP("AT+HTTPPARA=\"USERDATA\",\"Authorization: Basic ");
 	_serial->print(_base64buffer);
 	printlnP_OK("\"",200);
     printP("AT+HTTPPARA=\"URL\",\"");
-    _serial->print(_url);
+    getConfig(_url);
     if(printlnP_OK("\"",200)) return(3);
     printlnP_OK("AT+HTTPPARA=\"CONTENT\",\"application/x-www-form-urlencoded\"",200);
     printP("AT+HTTPDATA=");
@@ -195,7 +208,7 @@ uint8_t BaySIM800::postHeader(uint16_t size){
 }
 
 uint8_t BaySIM800::post(void){
-	if(_url[4]=='s'){ //https
+	if(pgm_read_byte(_url+4)=='s'){ //https
 		printlnP_OK("AT+HTTPSSL=1",200);
 		printlnP_OK("AT+SSLOPT=0,1",200);	
 	}
@@ -230,14 +243,14 @@ uint8_t BaySIM800::sendPayload(void){
 uint8_t BaySIM800::sendPayloadWithAck(bool ack_payload){
 	base64_encode(_base64buffer, (char*) _payload, getPacketLength());
 	uint8_t size = strlenURLencoded(_base64buffer);
-	size += 7 + strlenURLencoded(_sender) + 1 + 15;
+	size += 7 + getConfig(_sender,false,true) + 1 + 15;
 
 	uint8_t res=postHeader(size);
 	if(res) return(res);
 	//Redo Base64 encoding! buffer is overwritten in postHeader!
 	base64_encode(_base64buffer, (char*) _payload, getPacketLength());
 	printP("sender=");
-	printURLencoded(_sender);
+	getConfig(_sender,true,true);
 	printP("&bayeosframes[]=");
 	printURLencoded(_base64buffer); //BASE64
 	printlnP_OK("",2000);	
@@ -268,7 +281,7 @@ uint8_t BaySIM800::sendMultiFromBuffer(uint16_t maxsize,bool ack_payload) {
 		size += 30;	//Double size and add 30 - This is just a guess. "bayeosframes[]=base64(frame)"
 		if (size < 150)
 			size = 150; //To small sizes may cause a problem because "bayeosframe[]=" does not fit in...
-		size += 7 + strlenURLencoded(_sender); // + 1 + 9 + strlenURLencoded(_password);
+		size += 7 + getConfig(_sender,false,true); 
 		if (size > maxsize)
 			size = maxsize;
 	}
@@ -277,8 +290,7 @@ uint8_t BaySIM800::sendMultiFromBuffer(uint16_t maxsize,bool ack_payload) {
 	if(res) return(res);
 	//Send Body - first part (sender)
 	printP("sender=");
-	printURLencoded(_sender);
-	uint16_t postsize = 7 + strlenURLencoded(_sender); //+ 1 + 9	+ strlenURLencoded(_password);
+	uint16_t postsize = 7 + getConfig(_sender,true,true); 
 
 	//Send Body - second part (frames)
 	uint8_t framesize;
@@ -351,19 +363,6 @@ void BaySIM800::skipChars(void) {
 
 }
 
-int BaySIM800::strlenURLencoded(const char *str) {
-	int count = 0;
-	while (*str) {
-		if (strchr(_urlencodedChars, *str)) {
-			count += 3;
-		} else
-			count++;
-		str++;
-
-	}
-	return count;
-}
-
 void BaySIM800::urlDecode(char *str){
 	char *leader = str;
 	char *follower = str;
@@ -390,6 +389,38 @@ void BaySIM800::urlDecode(char *str){
 	}
 }
 
+uint8_t BaySIM800::URLencoded(char c, bool print)
+{
+	if (strchr(_urlencodedChars, c))
+	{
+		if (print)
+		{
+			_serial->print('%');
+			_serial->print(c, HEX);
+		}
+		return 3;
+	}
+	else
+	{
+		if (print)
+			_serial->print(c);
+		return 1;
+	}
+}
+
+uint8_t BaySIM800::strlenURLencoded(const char *str) {
+	uint8_t count = 0;
+	while (*str) {
+		if (strchr(_urlencodedChars, *str)) {
+			count += 3;
+		} else
+			count++;
+		str++;
+	}
+	return count;
+}
+
+
 
 void BaySIM800::printURLencoded(const char *str) {
 	while (*str) {
@@ -404,64 +435,40 @@ void BaySIM800::printURLencoded(const char *str) {
 }
 
 
+uint8_t BaySIM800::getConfig(const char * config,bool print,bool urlencoded){
+	uint8_t count = 0;
+	char c;
+	while(true){
+	  c=pgm_read_byte(config);
+	  if(c=='|') break;
+	  if(! c) break;
+	  if(print){
+		if(urlencoded) count+=URLencoded(c,true);
+		else{
+			count++;
+			_serial->print(c);
+		}
+	  } else {
+		if(urlencoded) count+=URLencoded(c,false);
+		else count++;		
+	  }
+	  config++;
+	}
+	return count;
+}
+
+
 void BaySIM800::readConfigFromStringPGM(const char *string) {
-	uint8_t offset = 0;
-	while (offset < BaySIM800_CONFIG_SIZE) {
-		_config_buffer[offset] = pgm_read_byte(string);
-		if (!_config_buffer[offset])
-			break;
-		if (_config_buffer[offset] == '|')
-			_config_buffer[offset] = 0;
-		offset++;
-		string++;
-	}
-	setConfigPointers();
+	_url=string;
+	_user=_url+getConfig(_url,false)+1;
+	_password=_user+getConfig(_user,false)+1;
+	_sender=_password+getConfig(_password,false)+1;
+	_apn=_sender+getConfig(_sender,false)+1;
+	_prov_user=_apn+getConfig(_apn,false)+1;
+	_prov_pw=_prov_user+getConfig(_prov_user,false)+1;
+	_pin=_prov_pw+getConfig(_prov_pw,false)+1;
 }
 
-char** BaySIM800::getConfigPointer(uint8_t index) {
-	switch (index) {
-	case BaySIM800_CONFIG_URL:
-		return &_url;
-		break;
-	case BaySIM800_CONFIG_USER:
-		return &_user;
-		break;
-	case BaySIM800_CONFIG_PASSWORD:
-		return &_password;
-		break;
-	case BaySIM800_CONFIG_SENDER:
-		return &_sender;
-		break;
-	case BaySIM800_CONFIG_APN:
-		return &_apn;
-		break;
-	case BaySIM800_CONFIG_PROVPW:
-		return &_prov_pw;
-		break;
-	case BaySIM800_CONFIG_PROVUSER:
-		return &_prov_user;
-		break;
-	case BaySIM800_CONFIG_PIN:
-		return &_pin;
-		break;
-	}
-	return 0;
-
-}
-
-void BaySIM800::setConfigPointers(void) {
-	uint8_t offset = 0;
-	_url = _config_buffer;
-	char** p;
-	for (uint8_t i = 1; i < 8; i++) {
-		if (_config_buffer[offset])
-			offset += strlen(_config_buffer + offset) + 1;
-		else
-			offset++;
-		p = getConfigPointer(i);
-		*p = _config_buffer + offset;
-	}
-}
 
 uint8_t BaySIM800::wait_for_available(int bytes) {
 	while (_serial->available() < bytes) {

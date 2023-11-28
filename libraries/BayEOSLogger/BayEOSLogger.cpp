@@ -112,6 +112,20 @@ void BayEOSLogger::setResetCallback(reset_callback_function callback){
 	_reset_callback=callback;
 }
 
+void BayEOSLogger::restoreReadPointerFromEEPROM(void){
+	readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+
+	if (_long1 > _buffer->writePos() && _long1 < _buffer->endPos()) //invalid region
+		_long1 = _buffer->writePos();
+	if (_long1 >= _buffer->length())
+		_long1 = _buffer->endPos(); //outside buffer end
+	if (_buffer->endPos() == 0 && _buffer->readPos() == 0)
+		_long1 = 0; //empty buffer
+	_buffer->seekReadPointer(_long1);
+	writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+
+}
+
 void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc,
 		uint16_t min_sampling_int, uint16_t bat_warning) {
 	_rtc = &rtc;
@@ -125,16 +139,6 @@ void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc,
 		_sampling_int = _min_sampling_int;
 		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	}
-	readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-
-	if (_long1 > _buffer->writePos() && _long1 < _buffer->endPos()) //invalid region
-		_long1 = _buffer->writePos();
-	if (_long1 >= _buffer->length())
-		_long1 = _buffer->endPos(); //outside buffer end
-	if (_buffer->endPos() == 0 && _buffer->readPos() == 0)
-		_long1 = 0; //empty buffer
-	_buffer->seekReadPointer(_long1);
-	writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
 	_logging_disabled = 0;
 	_next_log = (_rtc->now().get() / _sampling_int) * _sampling_int + _sampling_int;
 }
