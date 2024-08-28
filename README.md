@@ -17,6 +17,7 @@ A typical example sketch for sending sensordata
 look like this. The sketch is optimized for very low power comsumption and unstable
 networks.
 
+```c++
     #define SAMPLING_INT 32
     #define RF24CHANNEL 0x66
     #define RF24ADDRESS 0x45c431ae12LL
@@ -67,7 +68,7 @@ networks.
       }
       sleepLCB(); //most time board sleeps here
 }
-
+```
 
 ## Content
 ### Included unmodified third party libraries
