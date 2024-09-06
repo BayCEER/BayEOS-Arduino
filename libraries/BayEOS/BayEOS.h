@@ -1,6 +1,6 @@
 /** @mainpage BayEOS Arduino Classes
  *
- * S.Holzheu (holzheu@bayceer.uni-bayreuth.de), O.Archner (archner@bayceer.uni-bayreuth.de)
+ * S.Holzheu (stefan.holzheu@uni-bayreuth.de), O.Archner (oliver.archner@uni-bayreuth.de)
  *
  * Source Code is available on
  * https://github.com/BayCEER/BayEOS-Arduino
@@ -21,18 +21,27 @@
  *  @subsection sec2_2 Buffer Classes based on BayEOSBuffer Class
  *  BayEOS Transport Classes may have a pointer to a BayEOSBuffer instance.
  *  When sending the payload fails the BayEOSBuffer can be used to temporary
- *  store the payload for later resend. Currently there are three Buffer implementations:
- *  BayEOSBufferRAM, BayEOSBufferSD and BayEOSBufferSDFat
+ *  store the payload for later resend. Most used implementations are
+ *  BayEOSBufferSPIFlash and BayEOSBufferRAM
  *
  *  @subsection sec2_3 RTC Classes
- *  BayEOSBuffer Class my have a pointer to a RTC instance. With a RTC BayEOSBuffer
+ *  BayEOSBuffer Class may have a pointer to a RTC instance. With a RTC BayEOSBuffer
  *  uses RTC.get().now() to store absolute or relative timestamps instead
  *  of the less accurate millis() function.
  *  RTClib implements some I2C real time clocks (e.g DS3231).
+ *  For the BayEOS-LowCurrentBoard has a clock crystal 32.768 khz. 
+ *  The RTC_Timer2 Class implements the required functions.
  *
  *  @subsection sec2_4 Miscellaneous Classes
- *  There are some sensor classes. Most important the DS18B20 (Dallas OneWire
- *  temperatur sensor) and SRF02 (ultrasonic distance sensor). MCP342x is a class to access a I2C 18-bit AD-converter.
+ *  There are some sensor classes, e.g. the DS18B20 (Dallas OneWire
+ *  temperatur sensor), MLX90614 (IR temperature sensor), BME280 (Temperature, Humidity, Pressure),
+ *  SHT3x ...
+ * 
+ *  HX711Array reads out several HX711 24-bit ADCs used for load cells. 
+ *  MCP342x is a class to access a I2C 18-bit ADC with internal voltage reference.
+ *  MAX11212 is as 16-bit ADC with external voltages reference.
+ * 
+ *  Very important is also the included third party SDI12 class to read out SDI-12 sensors.
  *
  *
  *

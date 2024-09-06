@@ -1,100 +1,121 @@
 #include "BayEOSLogger.h"
-void writeToEEPROM(uint8_t* p, uint8_t length, int offset) {
-	for (uint8_t i = 0; i < length; i++) {
+void writeToEEPROM(uint8_t *p, uint8_t length, int offset)
+{
+	for (uint8_t i = 0; i < length; i++)
+	{
 		EEPROM.write(offset + i, *(p + i));
 	}
 }
 
-void readFromEEPROM(uint8_t* p, uint8_t length, int offset) {
-	for (uint8_t i = 0; i < length; i++) {
+void readFromEEPROM(uint8_t *p, uint8_t length, int offset)
+{
+	for (uint8_t i = 0; i < length; i++)
+	{
 		*(p + i) = EEPROM.read(offset + i);
 	}
 }
 
-void BayEOSLogger::setChannelMap(char* map) {
+void BayEOSLogger::setChannelMap(char *map)
+{
 	_channel_map = map;
 }
 
-void BayEOSLogger::setUnitMap(char* map) {
+void BayEOSLogger::setUnitMap(char *map)
+{
 	_unit_map = map;
 }
 
-void BayEOSLogger::run(bool connected) {
-	//This will only write Data, when _sampling_interval is reached...
+void BayEOSLogger::run(bool connected)
+{
+	// This will only write Data, when _sampling_interval is reached...
 	logData();
-	if (connected) {
-		//live data when in Live
+	if (connected)
+	{
+		// live data when in Live
 		liveData(1000);
 
 		handleCommand();
 
-		//Send binary dump of SD-file
-		//Just one part each time
+		// Send binary dump of SD-file
+		// Just one part each time
 		sendBinaryDump();
 	}
 }
 
-void BayEOSLogger::sendBinaryDump(void) {
+void BayEOSLogger::sendBinaryDump(void)
+{
 	if (_mode != LOGGER_MODE_DUMP)
 		return;
+	_last_communication = _rtc->now().get();
 	uint8_t read = _client->readBinaryFromBuffer(_long1, _long2, _long3);
 	_long1 += read;
 	_long3 += read;
-	//Wrap around!
+	// Wrap around!
 	if (_long1 >= _buffer->length())
 		_long1 -= _buffer->length();
 
 	if (_long1 == _long2)
 		_mode = 0;
 	uint8_t e_count = 0;
-	while (_client->sendPayload() && e_count < 3) {
+	while (_client->sendPayload() && e_count < 3)
+	{
 		delay(50);
-		//send error!
+		// send error!
 		e_count++;
 	}
 	if (e_count >= 3)
 		_mode = 0;
 }
 
-void BayEOSLogger::logData(void) {
+void BayEOSLogger::logData(void)
+{
 	if (_logging_disabled)
 		return;
 	if (_rtc->now().get() < _next_log)
 		return;
-	if (!(_client->getPayload(0) == BayEOS_DataFrame
-			|| _client->getPayload(0) == BayEOS_Message
-			|| _client->getPayload(0) == BayEOS_ErrorMessage))
+	if (!(_client->getPayload(0) == BayEOS_DataFrame || _client->getPayload(0) == BayEOS_Message || _client->getPayload(0) == BayEOS_ErrorMessage))
 		return;
-	if(_framesize>=0){
-		if(_framesize){
-			if(_framesize!=(_client->getPacketLength()+5)) _framesize=-1; //different frame length
-		} else {
-			unsigned long l=_buffer->writePos()-_buffer->endPos();
-			if(l>_buffer->length()) l+=_buffer->length();
-			if(l%_client->getPacketLength()==0) _framesize=_client->getPacketLength()+5;
-			else _framesize=-1;
+	if (_framesize >= 0)
+	{
+		if (_framesize)
+		{
+			if (_framesize != (_client->getPacketLength() + 5))
+				_framesize = -1; // different frame length
+		}
+		else
+		{
+			unsigned long l = _buffer->writePos() - _buffer->endPos();
+			if (l > _buffer->length())
+				l += _buffer->length();
+			if (l % _client->getPacketLength() == 0)
+				_framesize = _client->getPacketLength() + 5;
+			else
+				_framesize = -1;
 		}
 	}
 	_next_log = (_rtc->now().get() / _sampling_int) * _sampling_int + _sampling_int;
-	//Store frame to buffer
-	//will use RTC-time as timestamp
+	// Store frame to buffer
+	// will use RTC-time as timestamp
 	_client->writeToBuffer();
-	if (_buffer->_framesDiscarded) { //Save new read pos to eeprom - Old might not be valid any more!!
+	if (_buffer->_framesDiscarded)
+	{ // Save new read pos to eeprom - Old might not be valid any more!!
 		unsigned long rpos = _buffer->readPos();
-		writeToEEPROM((uint8_t*) &rpos, 4, EEPROM_READ_POS_OFFSET);
+		writeToEEPROM((uint8_t *)&rpos, 4, EEPROM_READ_POS_OFFSET);
 		_buffer->_framesDiscarded = 0;
 	}
 	_logged_flag = 1;
-
 }
 
-void BayEOSLogger::liveData(uint16_t wait) {
+void BayEOSLogger::liveData(uint16_t wait)
+{
 	if (_mode != LOGGER_MODE_LIVE)
 		return;
 	if (_client->sendPayload())
 		_mode = 0;
-	while (wait) {
-		if (_client->available()) {
+	while (wait)
+	{
+		if (_client->available())
+		{
 			handleCommand();
 			return;
 		}
@@ -103,84 +124,86 @@ void BayEOSLogger::liveData(uint16_t wait) {
 	}
 }
 
-void BayEOSLogger::setClient(BayEOS& client) {
+void BayEOSLogger::setClient(BayEOS &client)
+{
 	_client = &client;
 }
 
-
-void BayEOSLogger::setResetCallback(reset_callback_function callback){
-	_reset_callback=callback;
+void BayEOSLogger::setResetCallback(reset_callback_function callback)
+{
+	_reset_callback = callback;
 }
 
-void BayEOSLogger::restoreReadPointerFromEEPROM(void){
-	readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+void BayEOSLogger::restoreReadPointerFromEEPROM(void)
+{
+	readFromEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
 
-	if (_long1 > _buffer->writePos() && _long1 < _buffer->endPos()) //invalid region
+	if (_long1 > _buffer->writePos() && _long1 < _buffer->endPos()) // invalid region
 		_long1 = _buffer->writePos();
 	if (_long1 >= _buffer->length())
-		_long1 = _buffer->endPos(); //outside buffer end
+		_long1 = _buffer->endPos(); // outside buffer end
 	if (_buffer->endPos() == 0 && _buffer->readPos() == 0)
-		_long1 = 0; //empty buffer
+		_long1 = 0; // empty buffer
 	_buffer->seekReadPointer(_long1);
-	writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-
+	writeToEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
 }
 
-void BayEOSLogger::init(BayEOS& client, BayEOSBuffer& buffer, RTC& rtc,
-		uint16_t min_sampling_int, uint16_t bat_warning) {
+void BayEOSLogger::init(BayEOS &client, BayEOSBuffer &buffer, RTC &rtc,
+						uint16_t min_sampling_int, uint16_t bat_warning)
+{
 	_rtc = &rtc;
 	_buffer = &buffer;
 	_client = &client;
 	_min_sampling_int = min_sampling_int;
 	_bat_warning = bat_warning;
 
-	readFromEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
-	if (_sampling_int == 0xffff) {
+	readFromEEPROM((uint8_t *)&_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
+	if (_sampling_int == 0xffff)
+	{
 		_sampling_int = _min_sampling_int;
-		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
+		writeToEEPROM((uint8_t *)&_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 	}
 	_logging_disabled = 0;
 	_next_log = (_rtc->now().get() / _sampling_int) * _sampling_int + _sampling_int;
 }
 
-void BayEOSLogger::handleCommand1_5(void) {
+void BayEOSLogger::handleCommand1_5(void)
+{
 	uint8_t i;
 	if (!_client->available() || _client->readIntoPayload() ||
-	_client->getPayload(0)!=BayEOS_Command)
+		_client->getPayload(0) != BayEOS_Command)
 		return;
 
-	//got command
-	//Serial.println("Got CMD");
+	// got command
+	// Serial.println("Got CMD");
 	uint8_t cmd_api = _client->getPayload(1);
 	uint8_t cmd_response_api = cmd_api;
 
-	/* DISABLED 1.4
-	 //This is for backward compatibility with older LoggerReaders
-	 if(cmd_api==BayEOS_StopData){
-	 _mode = 0;
-	 cmd_api = BayEOS_BufferCommand;
-	 }
-	 */
-	switch (cmd_api) {
+	_last_communication = _rtc->now().get();
+	switch (cmd_api)
+	{
 	case BayEOS_StartBinaryDump:
 		_mode = LOGGER_MODE_DUMP;
 		_long1 = _buffer->endPos();
 		_long2 = _buffer->writePos();
 
-		if (_client->getPacketLength() > 2) { //start
-			for (i = 0; i < 4; i++) {
-				*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		if (_client->getPacketLength() > 2)
+		{ // start
+			for (i = 0; i < 4; i++)
+			{
+				*(((uint8_t *)&_long1) + i) = _client->getPayload(i + 2);
 			}
 		}
-		if (_client->getPacketLength() > 6) { //end
-			for (i = 0; i < 4; i++) {
-				*(((uint8_t*) &_long2) + i) = _client->getPayload(i + 6);
+		if (_client->getPacketLength() > 6)
+		{ // end
+			for (i = 0; i < 4; i++)
+			{
+				*(((uint8_t *)&_long2) + i) = _client->getPayload(i + 6);
 			}
-
 		}
 
-		//if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
-		//else _bufferwrap=0;
+		// if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
+		// else _bufferwrap=0;
 		_long3 = 0;
 		/*
 		 Serial.print("BD\t");
@@ -193,7 +216,8 @@ void BayEOSLogger::handleCommand1_5(void) {
 		break;
 	case BayEOS_SetName:
 		EEPROM.write(EEPROM_NAME_OFFSET, EEPROM_NAME_STARTBYTE);
-		for (i = 2; i < _client->getPacketLength(); i++) {
+		for (i = 2; i < _client->getPacketLength(); i++)
+		{
 			EEPROM.write(EEPROM_NAME_OFFSET + i - 1, _client->getPayload(i));
 		}
 		EEPROM.write(EEPROM_NAME_OFFSET + i - 1, 0);
@@ -201,18 +225,20 @@ void BayEOSLogger::handleCommand1_5(void) {
 		break;
 
 	case BayEOS_SetSamplingInt:
-		for (i = 0; i < 2; i++) {
-			*(((uint8_t*) &_sampling_int) + i) = _client->getPayload(i + 2);
+		for (i = 0; i < 2; i++)
+		{
+			*(((uint8_t *)&_sampling_int) + i) = _client->getPayload(i + 2);
 		}
 		if (_sampling_int < _min_sampling_int)
 			_sampling_int = _min_sampling_int;
-		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
+		writeToEEPROM((uint8_t *)&_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 		cmd_response_api = BayEOS_GetSamplingInt;
 		break;
 
 	case BayEOS_SetTime:
-		for (i = 0; i < 4; i++) {
-			*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		for (i = 0; i < 4; i++)
+		{
+			*(((uint8_t *)&_long1) + i) = _client->getPayload(i + 2);
 		}
 		_rtc->adjust(DateTime(_long1));
 		_logging_disabled = false;
@@ -233,15 +259,18 @@ void BayEOSLogger::handleCommand1_5(void) {
 		 break;
 		 */
 	case BayEOS_BufferCommand:
-		if (_client->getPayload(2) < 5) {
-			switch (_client->getPayload(2)) {
+		if (_client->getPayload(2) < 5)
+		{
+			switch (_client->getPayload(2))
+			{
 			case 1: /* reset Buffer */
 				_buffer->reset();
-				_framesize=0;
-				if(_reset_callback) (*_reset_callback)();
+				_framesize = 0;
+				if (_reset_callback)
+					(*_reset_callback)();
 				break;
 			case 2: /* reset read pointer to last read out position */
-				readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+				readFromEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
 				_buffer->seekReadPointer(_long1);
 				break;
 			case 3: /* set read pointer to current write pos */
@@ -257,34 +286,36 @@ void BayEOSLogger::handleCommand1_5(void) {
 			}
 			_long1 = _buffer->readPos();
 			/* store current read poiter pos to eeprom */
-			writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-			_long1 = _buffer->available(); //will return available bytes
-		} else {
-			switch (_client->getPayload(2)) {
+			writeToEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
+			_long1 = _buffer->available(); // will return available bytes
+		}
+		else
+		{
+			switch (_client->getPayload(2))
+			{
 			case 5:
-				_long1 = _buffer->readPos(); //will return read pos
+				_long1 = _buffer->readPos(); // will return read pos
 				break;
 			case 6:
-				_long1 = _buffer->writePos(); //will return write pos
+				_long1 = _buffer->writePos(); // will return write pos
 				break;
-/*			case 7:
-				_long1 = _buffer->endPos(); //will return end pos
-				break;
-			case 8:
-				_long1 = _buffer->length(); //will return available bytes for new
-				break;
-*/
+				/*			case 7:
+								_long1 = _buffer->endPos(); //will return end pos
+								break;
+							case 8:
+								_long1 = _buffer->length(); //will return available bytes for new
+								break;
+				*/
 			}
-
 		}
 		break;
-
 	}
-	//Command Response
+	// Command Response
 	_client->startCommandResponse(cmd_api);
-	switch (cmd_response_api) {
+	switch (cmd_response_api)
+	{
 	case BayEOS_GetVersion:
-		_client->addToPayload((char*) "1.5",3);
+		_client->addToPayload((char *)"1.5", 3);
 		break;
 	case BayEOS_BufferCommand:
 		_client->addToPayload(_long1);
@@ -307,50 +338,54 @@ void BayEOSLogger::handleCommand1_5(void) {
 	case BayEOS_GetName:
 		i = 1;
 		uint8_t n;
-		if (EEPROM.read(EEPROM_NAME_OFFSET) == EEPROM_NAME_STARTBYTE) {
-			while (n = EEPROM.read(EEPROM_NAME_OFFSET + i)) {
+		if (EEPROM.read(EEPROM_NAME_OFFSET) == EEPROM_NAME_STARTBYTE)
+		{
+			while (n = EEPROM.read(EEPROM_NAME_OFFSET + i))
+			{
 				_client->addToPayload(n);
 				i++;
 			}
 		}
 		break;
 	case BayEOS_GetTime:
-		_client->addToPayload((unsigned long) _rtc->now().get());
+		_client->addToPayload((unsigned long)_rtc->now().get());
 		break;
 	case BayEOS_StartBinaryDump:
 		_client->addToPayload(
-				(_long1 > _long2 ?
-						(_buffer->length() - _long1 + _long2) :
-						(_long2 - _long1)));
+			(_long1 > _long2 ? (_buffer->length() - _long1 + _long2) : (_long2 - _long1)));
 		break;
 	case BayEOS_TimeOfNextFrame:
-		if (_client->readFromBuffer()) {
-			for (i = 0; i < 4; i++) {
-				*((uint8_t*) &_long1 + i) = _client->getPayload(i + 1);
+		if (_client->readFromBuffer())
+		{
+			for (i = 0; i < 4; i++)
+			{
+				*((uint8_t *)&_long1 + i) = _client->getPayload(i + 1);
 			}
 			_client->startCommandResponse(cmd_api);
 			_client->addToPayload(_long1);
-		} else {
+		}
+		else
+		{
 			_client->startCommandResponse(cmd_api);
-			_client->addToPayload((unsigned long) 0xffffffff);
+			_client->addToPayload((unsigned long)0xffffffff);
 		}
 		break;
 	}
 	_client->sendPayload();
-
 }
 
-
-void BayEOSLogger::handleCommand(void) {
+void BayEOSLogger::handleCommand(void)
+{
 	uint8_t i;
 	if (!_client->available() || _client->readIntoPayload() ||
-	_client->getPayload(0)!=BayEOS_Command)
+		_client->getPayload(0) != BayEOS_Command)
 		return;
 
-	//got command
-	//Serial.println("Got CMD");
+	// got command
+	// Serial.println("Got CMD");
 	uint8_t cmd_api = _client->getPayload(1);
 	uint8_t cmd_response_api = cmd_api;
+	_last_communication = _rtc->now().get();
 
 	/* DISABLED 1.4
 	 //This is for backward compatibility with older LoggerReaders
@@ -359,26 +394,30 @@ void BayEOSLogger::handleCommand(void) {
 	 cmd_api = BayEOS_BufferCommand;
 	 }
 	 */
-	switch (cmd_api) {
+	switch (cmd_api)
+	{
 	case BayEOS_StartBinaryDump:
 		_mode = LOGGER_MODE_DUMP;
 		_long1 = _buffer->endPos();
 		_long2 = _buffer->writePos();
 
-		if (_client->getPacketLength() > 2) { //start
-			for (i = 0; i < 4; i++) {
-				*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		if (_client->getPacketLength() > 2)
+		{ // start
+			for (i = 0; i < 4; i++)
+			{
+				*(((uint8_t *)&_long1) + i) = _client->getPayload(i + 2);
 			}
 		}
-		if (_client->getPacketLength() > 6) { //end
-			for (i = 0; i < 4; i++) {
-				*(((uint8_t*) &_long2) + i) = _client->getPayload(i + 6);
+		if (_client->getPacketLength() > 6)
+		{ // end
+			for (i = 0; i < 4; i++)
+			{
+				*(((uint8_t *)&_long2) + i) = _client->getPayload(i + 6);
 			}
-
 		}
 
-		//if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
-		//else _bufferwrap=0;
+		// if(_buffer->available() && _long1>=_long2) _bufferwrap=1;
+		// else _bufferwrap=0;
 		_long3 = 0;
 		/*
 		 Serial.print("BD\t");
@@ -391,7 +430,8 @@ void BayEOSLogger::handleCommand(void) {
 		break;
 	case BayEOS_SetName:
 		EEPROM.write(EEPROM_NAME_OFFSET, EEPROM_NAME_STARTBYTE);
-		for (i = 2; i < _client->getPacketLength(); i++) {
+		for (i = 2; i < _client->getPacketLength(); i++)
+		{
 			EEPROM.write(EEPROM_NAME_OFFSET + i - 1, _client->getPayload(i));
 		}
 		EEPROM.write(EEPROM_NAME_OFFSET + i - 1, 0);
@@ -403,29 +443,33 @@ void BayEOSLogger::handleCommand(void) {
 		cmd_response_api = BayEOS_GetLoggingDisabled;
 		break;
 	case BayEOS_SetSamplingInt:
-		for (i = 0; i < 2; i++) {
-			*(((uint8_t*) &_sampling_int) + i) = _client->getPayload(i + 2);
+		for (i = 0; i < 2; i++)
+		{
+			*(((uint8_t *)&_sampling_int) + i) = _client->getPayload(i + 2);
 		}
 		if (_sampling_int < _min_sampling_int)
 			_sampling_int = _min_sampling_int;
-		writeToEEPROM((uint8_t*) &_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
+		writeToEEPROM((uint8_t *)&_sampling_int, 2, EEPROM_SAMPLING_INT_OFFSET);
 		cmd_response_api = BayEOS_GetSamplingInt;
 		break;
 
 	case BayEOS_SetTime:
-		for (i = 0; i < 4; i++) {
-			*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		for (i = 0; i < 4; i++)
+		{
+			*(((uint8_t *)&_long1) + i) = _client->getPayload(i + 2);
 		}
 		_rtc->adjust(DateTime(_long1));
 		_logging_disabled = false;
 		cmd_response_api = BayEOS_GetTime;
 		break;
 	case BayEOS_Seek:
-		for (i = 0; i < 4; i++) {
-			*(((uint8_t*) &_long1) + i) = _client->getPayload(i + 2);
+		for (i = 0; i < 4; i++)
+		{
+			*(((uint8_t *)&_long1) + i) = _client->getPayload(i + 2);
 		}
 		_buffer->seekReadPointer(_buffer->endPos());
-		while (_buffer->available()) {
+		while (_buffer->available())
+		{
 			_buffer->initNextPacket();
 			if (_buffer->packetMillis() > _long1)
 				break;
@@ -451,15 +495,18 @@ void BayEOSLogger::handleCommand(void) {
 		 break;
 		 */
 	case BayEOS_BufferCommand:
-		if (_client->getPayload(2) < 5) {
-			switch (_client->getPayload(2)) {
+		if (_client->getPayload(2) < 5)
+		{
+			switch (_client->getPayload(2))
+			{
 			case 1: /* reset Buffer */
 				_buffer->reset();
-				_framesize=0;
-				if(_reset_callback) (*_reset_callback)();
+				_framesize = 0;
+				if (_reset_callback)
+					(*_reset_callback)();
 				break;
 			case 2: /* reset read pointer to last read out position */
-				readFromEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
+				readFromEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
 				_buffer->seekReadPointer(_long1);
 				break;
 			case 3: /* set read pointer to current write pos */
@@ -475,34 +522,35 @@ void BayEOSLogger::handleCommand(void) {
 			}
 			_long1 = _buffer->readPos();
 			/* store current read poiter pos to eeprom */
-			writeToEEPROM((uint8_t*) &_long1, 4, EEPROM_READ_POS_OFFSET);
-			_long1 = _buffer->available(); //will return available bytes
-		} else {
-			switch (_client->getPayload(2)) {
+			writeToEEPROM((uint8_t *)&_long1, 4, EEPROM_READ_POS_OFFSET);
+			_long1 = _buffer->available(); // will return available bytes
+		}
+		else
+		{
+			switch (_client->getPayload(2))
+			{
 			case 5:
-				_long1 = _buffer->readPos(); //will return read pos
+				_long1 = _buffer->readPos(); // will return read pos
 				break;
 			case 6:
-				_long1 = _buffer->writePos(); //will return write pos
+				_long1 = _buffer->writePos(); // will return write pos
 				break;
 			case 7:
-				_long1 = _buffer->endPos(); //will return end pos
+				_long1 = _buffer->endPos(); // will return end pos
 				break;
 			case 8:
-				_long1 = _buffer->length(); //will return available bytes for new
+				_long1 = _buffer->length(); // will return available bytes for new
 				break;
-
 			}
-
 		}
 		break;
-
 	}
-	//Command Response
+	// Command Response
 	_client->startCommandResponse(cmd_api);
-	switch (cmd_response_api) {
+	switch (cmd_response_api)
+	{
 	case BayEOS_GetVersion:
-		_client->addToPayload((char*) BayEOS_VERSION,3);
+		_client->addToPayload((char *)BayEOS_LOGGER_VERSION, 3);
 		break;
 	case BayEOS_BufferCommand:
 		_client->addToPayload(_long1);
@@ -528,21 +576,21 @@ void BayEOSLogger::handleCommand(void) {
 	case BayEOS_GetName:
 		i = 1;
 		uint8_t n;
-		if (EEPROM.read(EEPROM_NAME_OFFSET) == EEPROM_NAME_STARTBYTE) {
-			while (n = EEPROM.read(EEPROM_NAME_OFFSET + i)) {
+		if (EEPROM.read(EEPROM_NAME_OFFSET) == EEPROM_NAME_STARTBYTE)
+		{
+			while (n = EEPROM.read(EEPROM_NAME_OFFSET + i))
+			{
 				_client->addToPayload(n);
 				i++;
 			}
 		}
 		break;
 	case BayEOS_GetTime:
-		_client->addToPayload((unsigned long) _rtc->now().get());
+		_client->addToPayload((unsigned long)_rtc->now().get());
 		break;
 	case BayEOS_StartBinaryDump:
 		_client->addToPayload(
-				(_long1 > _long2 ?
-						(_buffer->length() - _long1 + _long2) :
-						(_long2 - _long1)));
+			(_long1 > _long2 ? (_buffer->length() - _long1 + _long2) : (_long2 - _long1)));
 		break;
 	case BayEOS_GetChannelMap:
 		if (_channel_map)
@@ -553,19 +601,26 @@ void BayEOSLogger::handleCommand(void) {
 			_client->addToPayload(_unit_map);
 		break;
 	case BayEOS_TimeOfNextFrame:
-		if (_client->readFromBuffer()) {
-			for (i = 0; i < 4; i++) {
-				*((uint8_t*) &_long1 + i) = _client->getPayload(i + 1);
+		if (_client->readFromBuffer())
+		{
+			for (i = 0; i < 4; i++)
+			{
+				*((uint8_t *)&_long1 + i) = _client->getPayload(i + 1);
 			}
 			_client->startCommandResponse(cmd_api);
 			_client->addToPayload(_long1);
-		} else {
+		}
+		else
+		{
 			_client->startCommandResponse(cmd_api);
-			_client->addToPayload((unsigned long) 0xffffffff);
+			_client->addToPayload((unsigned long)0xffffffff);
 		}
 		break;
 	}
 	_client->sendPayload();
-
 }
 
+int BayEOSLogger::secondsSinceLastCommunication(void)
+{
+	return (int)(_rtc->now().get() - _last_communication);
+}

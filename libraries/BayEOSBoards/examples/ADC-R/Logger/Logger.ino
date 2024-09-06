@@ -171,18 +171,16 @@ void loop() {
   myLogger.run(connected);
 
   if (! connected && myLogger._logging_disabled) {
-    pinMode(LED_BUILTIN, OUTPUT);
     digitalWrite(LED_BUILTIN, HIGH);
     delayLCB(200);
     digitalWrite(LED_BUILTIN, LOW);
     delayLCB(800);
-    pinMode(LED_BUILTIN, INPUT);
   }
 
   //sleep until timer2 will wake us up...
   if (! connected) {
     myLogger._mode = 0;
-    Sleep.sleep(TIMER2_ON, SLEEP_MODE_PWR_SAVE);
+    sleepLCB();
   }
 
   //check if still connected

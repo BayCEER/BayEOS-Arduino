@@ -15,6 +15,10 @@
 #define LCB_BAT_MULTIPLIER 1.1*320/100/1023
 #endif
 
+#ifndef LCB_BAT_REFERENCE
+#define LCB_BAT_REFERENCE INTERNAL
+#endif
+
 #ifndef LCB_BAT_ADCPIN
 #define LCB_BAT_ADCPIN A0
 #endif
@@ -397,7 +401,7 @@ void delayLCB(uint16_t _millis) {
 }
 
 void readBatLCB() {
-	analogReference (INTERNAL);
+	analogReference (LCB_BAT_REFERENCE);
 	pinMode(POWER_PIN, OUTPUT);
 	digitalWrite(POWER_PIN, HIGH);
 	batLCB = LCB_BAT_MULTIPLIER * analogRead(LCB_BAT_ADCPIN);

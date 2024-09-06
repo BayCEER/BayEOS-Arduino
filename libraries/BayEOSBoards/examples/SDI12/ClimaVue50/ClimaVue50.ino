@@ -43,7 +43,7 @@ BayEOSBufferSPIFlash myBuffer;  //BayEOS Buffer
 #include <LowCurrentBoard.h>
 
 
-#include <SDI12.h>^
+#include <SDI12.h>
 SDI12 mySDI12(DATA_PIN);
 
 uint16_t measurements = SEND_COUNT;
@@ -108,7 +108,7 @@ void loop() {
 
     char buffer[100];
     uint8_t i = 0;
-    while (mySDI12.available()) {
+    while (mySDI12.available() && i < 100 ) {
       buffer[i] = mySDI12.read();
       i++;
       if (!mySDI12.available()) delay(10);

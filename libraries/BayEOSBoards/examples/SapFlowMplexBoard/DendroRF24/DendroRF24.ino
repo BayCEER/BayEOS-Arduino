@@ -19,21 +19,17 @@
 */
 
 
-
-// Divider resistors for battery voltage
-#define BOARD_ORIGIN "De2"
-#define SENSOR1_ORIGIN "P07"
-#define SENSOR2_ORIGIN "P08"
-#define SENSOR3_ORIGIN "P09"
-//#define SENSOR4_ORIGIN "P21"
-//#define SENSOR5_ORIGIN "P22"
-//#define SENSOR6_ORIGIN "P23"
-#define RF24CHANNEL 0x66
-#define RF24ADDRESS 0x45c4f1a424
-#define BAT_DIVIDER (100.0 + 100.0) / 100.0
-#define SENSOR_LENGTH 10
+#define BOARD_ORIGIN "D123" /* Not more than 4 Byte!! */
+#define SENSOR1_LENGTH 11
+#define SENSOR2_LENGTH 11
+#define SENSOR3_LENGTH 11
+//#define SENSOR4_LENGTH 11
+//#define SENSOR5_LENGTH 11
+//#define SENSOR6_LENGTH 11
+#define RF24CHANNEL 0x2b 
+#define RF24ADDRESS 0x45f437aebf
 #define SAMPLING_INT 64
-
+#define BAT_DIVIDER (100.0 + 100.0) / 100.0
 
 #include <Wire.h>
 #include <MCP342x.h>
@@ -78,7 +74,7 @@ void setup() {
 }
 
 
-float measureAndSend(uint8_t ch,char* origin) {
+float measure(uint8_t ch,float sensor_length) {
   digitalWrite(A1, ch & 0x4);
   digitalWrite(A2, ch & 0x2);
   digitalWrite(A3, ch & 0x1);
@@ -89,35 +85,50 @@ float measureAndSend(uint8_t ch,char* origin) {
   mcp342x.runADC(1);
   delayLCB(mcp342x.getADCTime());
   v2 = mcp342x.getData();
-  client.startDataFrameWithOrigin(BayEOS_Float32le, origin, 1, 1);
-  client.addChannelValue(v2 / (v1 + v2) * SENSOR_LENGTH * 1000);
-  client.addChecksum();
-  client.sendOrBuffer();
+  return (v2 / (v1 + v2) * sensor_length * 1000);
 }
 
 void loop() {
   if (ISSET_ACTION(0)) {
     UNSET_ACTION(0);
     digitalWrite(MCP_POWER_PIN, HIGH);
+    client.startDataFrameWithOrigin(BayEOS_Float32le, BOARD_ORIGIN, 1, 1);
     delay(2);
-#ifdef SENSOR1_ORIGIN
-    measureAndSend(0,SENSOR1_ORIGIN);
+    uint8_t count=0;
+#ifdef SENSOR1_LENGTH
+    client.addChannelValue(measure(0,SENSOR1_LENGTH),0+3);
+    count++;
 #endif
-#ifdef SENSOR2_ORIGIN
-    measureAndSend(1,SENSOR2_ORIGIN);
+#ifdef SENSOR2_LENGTH
+    client.addChannelValue(measure(1,SENSOR2_LENGTH),1+3);
+    count++;
 #endif
-#ifdef SENSOR3_ORIGIN
-    measureAndSend(2,SENSOR3_ORIGIN);
+#ifdef SENSOR3_LENGTH
+    client.addChannelValue(measure(2,SENSOR3_LENGTH),2+3);
+    count++;
 #endif
-#ifdef SENSOR4_ORIGIN
-    measureAndSend(3,SENSOR4_ORIGIN);
+    if(count>0){
+      client.addChecksum();
+      client.sendOrBuffer();
+      client.startDataFrameWithOrigin(BayEOS_Float32le, BOARD_ORIGIN, 1, 1);
+      count=0;
+    }
+#ifdef SENSOR4_LENGTH
+    client.addChannelValue(measure(3,SENSOR4_LENGTH),3+3);
+    count++;
 #endif
-#ifdef SENSOR5_ORIGIN
-    measureAndSend(4,SENSOR5_ORIGIN);
+#ifdef SENSOR5_LENGTH
+    client.addChannelValue(measure(4,SENSOR5_LENGTH),4+3);
+    count++;
 #endif
-#ifdef SENSOR6_ORIGIN
-    measureAndSend(5,SENSOR6_ORIGIN);
+#ifdef SENSOR6_LENGTH
+    client.addChannelValue(measure(5,SENSOR6_LENGTH),5+3);
+    count++;
 #endif
+    if(count>0){
+      client.addChecksum();
+      client.sendOrBuffer();
+    }
     digitalWrite(MCP_POWER_PIN, LOW);
 
     digitalWrite(POWER_PIN, HIGH);
