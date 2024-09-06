@@ -71,25 +71,32 @@ networks.
 ```
 
 ## Content
-### Included unmodified third party libraries
-1. [SdFat](https://github.com/greiman/SdFat)
-2. [Base64](https://github.com/adamvr/arduino-base64/)
-3. [SPIFlash](https://github.com/Marzogh/SPIFlash/)
+### Included unmodified third party libraries 
+1. [Base64](https://github.com/adamvr/arduino-base64/)
+2. [SPIFlash](https://github.com/Marzogh/SPIFlash/)
 
 ### Included modified third party libraries
-1. [iBoard](https://github.com/andykarpov/iBoardRF24) (some ports from RF24)
-2. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM) (additional constructor)
-3. [UTFT](http://www.rinkydinkelectronics.com/library.php?id=51) (support for on/off)
+1. [I2C_EEPROM](https://github.com/RobTillaart/Arduino/tree/master/libraries/I2C_EEPROM) (additional constructor)
+2. [SDI-12](https://github.com/EnviroDIY/Arduino-SDI-12/tree/master) (adjusted to run with timer1)
 
 ### BayEOS libraries
+
 #### BayEOS
-Provides all transport related classes (e.g. BayRF24, BayXBee, BayEthSim900...)
+Provides all transport related classes (e.g. BayRF24, BaySerial, BaySim800...)
 BayXBee includes a modified version of [XBee](https://github.com/andrewrapp/xbee-arduino)
+
+#### BayEOSBuffer
+Classes to store data locally
+
+#### BayEOSLogger
+Classes and examples to build logger
 
 #### BayEOSBoards
 Provides header files and examples for boards and shield developed by BayCEER
 
-### HardwareSerialPlus
-This is a modified HardwareSerial library with custom serial buffers. The library
-is used to receive packages via XBee. XBee frames comprise up to 100 bytes.
-Having the default Arduino serial buffer with 64 bytes often results in data loss.
+#### BayEOSRTClib
+RTC classes required for BayEOSBuffer
+
+#### BayEOSSensors
+Classes and examples for sensors
+
