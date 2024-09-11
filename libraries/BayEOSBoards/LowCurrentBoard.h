@@ -1,10 +1,75 @@
-/*
- * This is a header file, designed to make scetches of Low Current Board easier
- *
- * It depends on some conventions:
- * 1. bayeos.client must be named "client"
- * 2. Dallas is called "ds"
- * 3. Changes in CONSTANTS must be declared before include
+/**
+ * @page LowCurrentBoard.h BayEOS Low Current Functions
+ * 
+ * BayEOS Low Current Functions are designed to reduce the power consumption of
+ * the board to a minimum
+ * 
+ * ## Actions
+ * 
+ * Timer2 ISR sets the bits of the variable *action* (volatile, uint8_t).
+ *  
+ * Bit 1 is action 0, bit 2 action 1...
+ * 
+ * The macro ISSET_ACTION(nr) checks if the requested bit is set.<br>
+ * The macro UNSET_ACTION(nr) clears the bit.
+ * 
+ * ACTION_COUNT defines the number of different action bits which should be set. 
+ * Default is one. Maximum is seven.
+ * 
+ * if RTC._seconds % SAMPING_INT == 0 -> set action 0<br>
+ * if RTC._seconds % SAMPING_INT == 1 and ACTION_COUNT>1 -> set action 1<br>
+ * if RTC._seconds % SAMPING_INT == 2 and ACTION_COUNT>2 -> set action 2<br>
+ * ...<br>
+ * else set_action 7
+ * 
+ * Action 7 therefore has a special meaning. Normaly it is one a second (if no other action is set)
+ * 
+ * ## TICKS_PER_SECOND
+ * 
+ * defaults to 16. Other allowed settings are 128, 4, 2 and 1. 
+ * 
+ * TICKS_PER_SECONDS defines the maximum sleep time (1 second/TICKS_PER_SECOND) 
+ * of the board.
+ * 
+ * Each tick the variable *ticks* (volatile, uint16_t) is incremented.
+ * 
+ * ## sleepLCB() and delayLCB()
+ * 
+ * sleepLCB() sets the board to sleep mode with timer2 active. It will sleep until next tick
+ * occures.
+ * 
+ * delayLCB() calls sleepLCB() as long as the desired sleep time is reached. 
+ * Sleep time is always greater than desired delay, because sleepLCB() will
+ * last at least one full tick. The first tick is not counted as we do not now how much was
+ * left from the tick when the function was called. 
+ * 
+ * ## initLCB() and startLCB()
+ * 
+ * initLCB() should be called in the setup() function. It sets pin modes 
+ * and initializes the timer2.
+ * 
+ * startLCB should be called at the end of the setup() function. The board LED
+ * will blink three times to indicate the user that the setup has been finished successfully.
+ * 
+ * ## sendOrBufferLCB()
+ * 
+ * This function tries to send the data. When this fails it writes the data to the buffer. 
+ * In contrast to client.sendOrBuffer() sendOrBufferLCB() will give a LED feedback on the sending
+ * result.
+ * 
+ * * Blink once: Sending successful
+ * * Blink two times or more: Sending failed (number of blinks is error code +1)
+ * 
+ * Please note: In order to save battery power sendOrBufferLCB() only blinks 
+ * during the first ten calls. 
+ * 
+ * ## RESET_COUNT
+ * 
+ * Default value is zero. When RESET_COUNT is greater than zero and 
+ * action0 is not cleared when it is set next time, the variable action0_pending_count 
+ * (volatile, uint8_t) is incremented. 
+ * 
+ * When action0_pending_count is greater than RESET_COUNT the ISR resets the board.
  */
 
 #include <Sleep.h>
@@ -48,7 +113,7 @@
 #define UNSET_ACTION(nr) (action&= ~(1<<nr))
 
 #ifndef ACTION_COUNT
-#define ACTION_COUNT 7
+#define ACTION_COUNT 1
 #endif
 
 #ifndef CHECKSUM_FRAMES

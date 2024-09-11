@@ -150,9 +150,7 @@ Note RSSI is negative but without sign as uint8_t
 #define BayEOS_GetName 0x9
 #define BayEOS_SetName 0xa
 #define BayEOS_StartData 0xb
-#define BayEOS_StopData 0xc /** Data 1 = reset buffer, 2 = reset read pointer , 3 = set read pointer to write pointer,
-Still working but depreciated!!
-*/
+#define BayEOS_StopData 0xc /** Data 1 = reset buffer, 2 = reset read pointer , 3 = set read pointer to write pointer, DEPRECIATED!!*/
 #define BayEOS_GetVersion 0xd
 #define BayEOS_GetSamplingInt 0xe
 #define BayEOS_SetSamplingInt 0xf

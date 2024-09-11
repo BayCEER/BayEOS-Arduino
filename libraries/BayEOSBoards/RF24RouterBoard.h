@@ -134,16 +134,10 @@ RTC_Timer2 myRTC;
 volatile long rtc_seconds_correct;
 #endif
 
-#if defined(GPRS_CONFIG)
-#include <BayTCPSim900.h>
-BayGPRS client(Serial, 0); // No Power Pin
-#elif defined(SIM800_CONFIG)
+#if defined(SIM800_CONFIG)
 #include <BaySIM800.h>
 #include <EEPROM.h>
 BaySIM800 client = BaySIM800(Serial);
-#elif defined(WLAN_CONFIG)
-#include <BayTCPESP8266.h>
-BayESP8266 client(Serial, WLAN_PIN);
 #elif defined(SERIAL_CLIENT)
 #if DEBUG_CLIENT
 #include <BayDebug.h>
@@ -348,12 +342,8 @@ void initLCB()
 	client.setBuffer(myBuffer);
 	pinMode(POWER_PIN, OUTPUT);
 	digitalWrite(POWER_PIN, HIGH);
-#if defined(GPRS_CONFIG)
-	client.readConfigFromStringPGM(PSTR(GPRS_CONFIG));
-#elif defined(SIM800_CONFIG)
+#if defined(SIM800_CONFIG)
 	client.readConfigFromStringPGM(PSTR(SIM800_CONFIG));
-#elif defined(WLAN_CONFIG)
-	client.readConfigFromStringPGM(PSTR(WLAN_CONFIG));
 #elif defined(SERIAL_CLIENT)
 #if DEBUG_CLIENT
 	client.begin(38400, 1);
@@ -409,7 +399,7 @@ void initLCB()
 
 	blinkLED(3);
 	adjust_OSCCAL();
-#if defined(GPRS_CONFIG) || defined(SIM800_CONFIG)
+#if defined(SIM800_CONFIG)
 	delayLCB(1000);
 	tx_res = client.begin(38400);
 #if defined(SIM800_CONFIG)
@@ -433,8 +423,6 @@ void initLCB()
 	if (!tx_res)
 		myRTC.adjust(client.now());
 #endif
-#elif defined(WLAN_CONFIG)
-	tx_res = client.begin(38400);
 #elif defined(SERIAL_CLIENT)
 	client.sendMessage("Router started");
 #else

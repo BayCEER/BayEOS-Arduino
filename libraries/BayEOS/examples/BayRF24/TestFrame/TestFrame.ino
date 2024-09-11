@@ -24,7 +24,8 @@ void loop(void)
   // Keep in mind that RF24 frames are limited to 32 byte
   // Overhead is 11 byte (with checksum + delayed frames)
   // When you have more than 5 channels you have to send the data in
-  // several frames or send data as int16
+  // several frames or send data as int16 
+  // (value range -31768 ... 31767, e.g send 23.74°C as 2374)
   // client.startDataFrame(BayEOS_Int16le, WITH_CHECKSUM);
 
 #if WITH_CHECKSUM
@@ -39,5 +40,5 @@ void loop(void)
   else
     Serial.println("ok");
 
-  delay(2000);
+  delay(5000);
 }
