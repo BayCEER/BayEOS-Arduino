@@ -27,7 +27,7 @@ void setup(void) {
   Serial.begin(9600);
   Serial.println("Starting ...");
   Serial.flush();
-  scale.begin(dout, 2, sck); //start HX711Array with 1 ADCs
+  scale.begin(dout, 2, sck); //start HX711Array with 2 ADCs
 }
 
 
@@ -38,6 +38,7 @@ void loop(void) {
   float temp1 = ntc.getTemp(1);
 
   scale.power_up();
+  scale.read(); //dummy read after reading the temperature
   scale.read_average(adc);
   scale.power_down();
   

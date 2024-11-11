@@ -91,12 +91,6 @@ public:
 	void makeFreeSpace(uint16_t length);
 
 	/**
-	 * Gives free space left in buffer
-	 */
-	unsigned long freeSpace(void);
-
-
-	/**
 	 * Read packet to dest
 	 */
 	int readPacket(uint8_t *dest);

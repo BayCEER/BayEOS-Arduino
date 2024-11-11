@@ -385,7 +385,6 @@ void BayEOSLogger::handleCommand(void)
 	// Serial.println("Got CMD");
 	uint8_t cmd_api = _client->getPayload(1);
 	uint8_t cmd_response_api = cmd_api;
-	_last_communication = _rtc->now().get();
 
 	/* DISABLED 1.4
 	 //This is for backward compatibility with older LoggerReaders
@@ -618,6 +617,7 @@ void BayEOSLogger::handleCommand(void)
 		break;
 	}
 	_client->sendPayload();
+	_last_communication = _rtc->now().get();
 }
 
 int BayEOSLogger::secondsSinceLastCommunication(void)
