@@ -142,7 +142,8 @@ DateTime BaySIM800::now(void){
 	uint16_t y;
 	DateTime dt;
 	printlnP("AT+CCLK?");
-	if(! wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer)){ //YY/MM/DD,HH:MM:SS+02
+	if(! wait_forPGM(PSTR("+CCLK: \""),3000,20,_base64buffer)){ //YY/MM/DD,HH:MM:SS-08 
+//"-08" expressed in quarters of an hour, between the local time and GMT; 
 //	Serial.print("LocalTime:");
 //	Serial.println(_base64buffer);
 		y = atoi(_base64buffer+0) + 2000;
@@ -152,7 +153,7 @@ DateTime BaySIM800::now(void){
 		mm = atoi(_base64buffer+12);
 		ss = atoi(_base64buffer+15);
 		dt=DateTime (y, m, d, hh, mm, ss);
-		dt=DateTime(dt.get()-(3600L*atoi(_base64buffer+17))); //Adjust for Timezone!
+		dt=DateTime(dt.get()-(900L*atoi(_base64buffer+17))); //Adjust for Timezone!
 	}
 	return dt;
 }
@@ -198,7 +199,7 @@ uint8_t BaySIM800::postHeader(uint16_t size){
 	printlnP_OK("\"",200);
     printP("AT+HTTPPARA=\"URL\",\"");
     getConfig(_url);
-    if(printlnP_OK("\"",200)) return(3);
+    if(printlnP_OK("\"",5000)) return(3);
     printlnP_OK("AT+HTTPPARA=\"CONTENT\",\"application/x-www-form-urlencoded\"",200);
     printP("AT+HTTPDATA=");
     _serial->print(size);

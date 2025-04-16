@@ -29,6 +29,9 @@ const uint8_t pipe_3[] = {0x96};
 const uint8_t pipe_4[] = {0xab};
 const uint8_t pipe_5[] = {0xbf};
 
+#define EEPROM_BUFFER_STATUS_BYTE 0xc0 /* indicates whether there is valid data in the flash buffer */
+// Change the EEPROM_BUFFER_STATUS_BYTE if you want the board to reset the buffer once
+
 #include <RF24RouterBoard.h>
 
 void setup()

@@ -192,7 +192,7 @@ DateTime BayGPRSInterface::now(void){
 		mm = atoi(_base64buffer+12);
 		ss = atoi(_base64buffer+15);
 		dt=DateTime (y, m, d, hh, mm, ss);
-		dt=DateTime(dt.get()-(3600L*atoi(_base64buffer+17))); //Adjust for Timezone!
+		dt=DateTime(dt.get()-(900L*atoi(_base64buffer+17))); //Adjust for Timezone!
 	}
 	return dt;
 }

@@ -203,6 +203,7 @@ uint8_t BaySerialESP::powerUp(uint8_t tries){
 	while(tries){
 		res=isReady();
 		if(! res) return 0;
+		delay(300);
 		tries--;
 	}
 	return res;

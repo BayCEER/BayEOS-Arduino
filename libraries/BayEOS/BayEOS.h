@@ -67,9 +67,7 @@
  */
 #define BayEOS_RoutedFrame 0x6 /* [0x6][MY_ID][PANID][Original Frame] */
 #define BayEOS_DelayedFrame 0x7 /* [0x7][(unsigned long) delay (msec)][Original Frame] */
-#define BayEOS_RoutedFrameRSSI 0x8 /* [0x9][MY_ID][PANID][RSSI][Original Frame]
-Note RSSI is negative but without sign as uint8_t
-*/
+#define BayEOS_RoutedFrameRSSI 0x8 /* [0x9][MY_ID][PANID][RSSI][Original Frame] Note RSSI is negative but without sign as uint8_t*/
 #define BayEOS_TimestampFrame 0x9 /* [0x9][(unsigned long) timestamp (sec since 2000-01-01 00:00 GMT)][Original Frame] */
 #define BayEOS_BinaryFrame 0xa /* [0xa][(unsigned long) pos][binary data] */
 #define BayEOS_OriginFrame 0xb /* [0xb][origin_length][ORIGIN][Original Frame] -> Origin replaces current origin*/
@@ -199,19 +197,19 @@ public:
 	 * Send current payload buffer
 	 * Has to be overwritten by implementation
 	 */
-	virtual uint8_t sendPayload(void)=0;
+	uint8_t sendPayload(void){return 0;};
 
 	/**
 	 * Read a rx-Packet
 	 * Has to be overwritten by implementation
 	 */
-	virtual uint8_t readIntoPayload(int timeout=5000){return 0;};
+	uint8_t readIntoPayload(int timeout=5000){return 0;};
 
 	/**
 	 * Has RX-data to read
 	 * Has to be overwritten by implementation
 	 */
-	virtual int available(void){ return 0;};
+	int available(void){ return 0;};
 
 	/**
 	 * Send Error Message

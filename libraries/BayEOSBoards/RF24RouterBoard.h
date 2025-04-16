@@ -76,7 +76,7 @@ uint8_t rf24_status; // 1 = 0n, 0 = Off
 #endif
 
 #ifndef EEPROM_BUFFER_STATUS_BYTE
-#define EEPROM_BUFFER_STATUS_BYTE 0xb0 /* indicates whether there is valid data in the flash buffer */
+#define EEPROM_BUFFER_STATUS_BYTE 0xc0 /* indicates whether there is valid data in the flash buffer */
 #endif
 
 volatile uint16_t ticks;
@@ -839,10 +839,9 @@ void checkAction0(void)
 			blinkLED(tx_res + 1);
 #if defined(SIM800_CONFIG)
 			unsigned long time = client.now().get();
-			if (time > 3600L * 24 * 365 * 20)
-			{
+			if ((myRTC.get() - time) < 1000 || (time - myRTC.get()) < 1000 || (!myBuffer.available() && time > 20 * 365 * 24 * 3600))
 				myRTC.adjust(time);
-			}
+
 #endif
 		}
 	}
