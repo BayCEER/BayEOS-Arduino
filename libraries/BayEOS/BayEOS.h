@@ -197,19 +197,19 @@ public:
 	 * Send current payload buffer
 	 * Has to be overwritten by implementation
 	 */
-	uint8_t sendPayload(void){return 0;};
+	virtual uint8_t sendPayload(void){return 0;};
 
 	/**
 	 * Read a rx-Packet
 	 * Has to be overwritten by implementation
 	 */
-	uint8_t readIntoPayload(int timeout=5000){return 0;};
+	virtual uint8_t readIntoPayload(int timeout=5000){return 0;};
 
 	/**
 	 * Has RX-data to read
 	 * Has to be overwritten by implementation
 	 */
-	int available(void){ return 0;};
+	virtual int available(void){ return 0;};
 
 	/**
 	 * Send Error Message

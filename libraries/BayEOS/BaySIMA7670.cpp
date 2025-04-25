@@ -201,6 +201,9 @@ void BaySIMA7670::readAck(void)
 	else
 		_next = 0;
 }
+uint8_t BaySIMA7670::sendPayload(void){
+	return sendPayloadWithAck(false);
+}
 
 uint8_t BaySIMA7670::sendPayloadWithAck(bool ack_payload)
 {
