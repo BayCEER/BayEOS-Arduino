@@ -67,6 +67,10 @@ uint8_t rf24_status; // 1 = 0n, 0 = Off
 #define POWER_PIN 7
 #endif
 
+#ifndef SIMA7670_PIN
+#define SIMA7670_PIN 6
+#endif
+
 #ifndef WLAN_PIN
 #define WLAN_PIN 7
 #endif
@@ -138,6 +142,10 @@ volatile long rtc_seconds_correct;
 #include <BaySIM800.h>
 #include <EEPROM.h>
 BaySIM800 client = BaySIM800(Serial);
+#elif defined(SIMA7670_CONFIG)
+#include <BaySIMA7670.h>
+#include <EEPROM.h>
+BaySIMA7670 client(Serial, SIMA7670_PIN);
 #elif defined(SERIAL_CLIENT)
 #if DEBUG_CLIENT
 #include <BayDebug.h>
@@ -335,7 +343,7 @@ void initLCB()
 
 	myBuffer.init(flash);						  // This will restore old pointers
 	myBuffer.setRTC(myRTC, RTC_RELATIVE_SECONDS); // Nutze RTC relativ!
-#ifndef SIM800_CONFIG
+#if !defined(SIM800_CONFIG) && !defined(SIMA7670_CONFIG)
 	myBuffer.skip();
 #endif
 	// We could also try to use absolute times received from GPRS!
@@ -344,6 +352,8 @@ void initLCB()
 	digitalWrite(POWER_PIN, HIGH);
 #if defined(SIM800_CONFIG)
 	client.readConfigFromStringPGM(PSTR(SIM800_CONFIG));
+#elif defined(SIMA7670_CONFIG)
+	client.readConfigFromStringPGM(PSTR(SIMA7670_CONFIG));
 #elif defined(SERIAL_CLIENT)
 #if DEBUG_CLIENT
 	client.begin(38400, 1);
@@ -399,10 +409,9 @@ void initLCB()
 
 	blinkLED(3);
 	adjust_OSCCAL();
-#if defined(SIM800_CONFIG)
+#if defined(SIM800_CONFIG) || defined(SIMA7670_CONFIG)
 	delayLCB(1000);
 	tx_res = client.begin(38400);
-#if defined(SIM800_CONFIG)
 	while (true)
 	{
 		unsigned long time = client.now().get();
@@ -419,10 +428,6 @@ void initLCB()
 		myBuffer.reset();
 		EEPROM.write(EEPROM_BUFFER_STATUS_POS, EEPROM_BUFFER_STATUS_BYTE);
 	}
-#else
-	if (!tx_res)
-		myRTC.adjust(client.now());
-#endif
 #elif defined(SERIAL_CLIENT)
 	client.sendMessage("Router started");
 #else
@@ -441,7 +446,7 @@ void initLCB()
 	   6 == Not CGATT
 	   7 == No SIM Card
 	*/
-	delay(2000);
+	delay(1000 + tx_res * 500);
 	client.startFrame(BayEOS_Message);
 	client.addToPayload("Router started");
 	client.writeToBuffer();
@@ -837,7 +842,7 @@ void checkAction0(void)
 			handleRF24();
 			tx_res = client.sendMultiFromBuffer(3000);
 			blinkLED(tx_res + 1);
-#if defined(SIM800_CONFIG)
+#if defined(SIM800_CONFIG) || defined(SIMA7670_CONFIG)
 			unsigned long time = client.now().get();
 			if ((myRTC.get() - time) < 1000 || (time - myRTC.get()) < 1000 || (!myBuffer.available() && time > 20 * 365 * 24 * 3600))
 				myRTC.adjust(time);

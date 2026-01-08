@@ -1,11 +1,15 @@
 #include <BayEOSBufferSPIFlash.h>
 #include <BaySIMA7670.h>
 
+
+// You have to change the BAUD-rate of the modul manualy with USB
+// AT+IPREX=38400
+
 // Config string.
 // Gateway-url|login|password|Origin (== Board unique identifier)|apn of sim-card|apn-user|apn-pw|PIN
 #define CONFIG "https://bayeos.bayceer.uni-bayreuth.de/gateway/frame/saveFlat|import@IT|import|A7670E|iot.1nce.net||||"
 
-BaySIMA7670 client(Serial);
+BaySIMA7670 client(Serial, 6);
 SPIFlash flash(8);
 BayEOSBufferSPIFlash myBuffer;
 
